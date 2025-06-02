@@ -1,4 +1,4 @@
-# Vue Refactoring Todo List for UrbanDocs
+# Vue Refactoring Todo List for MWPLU
 
 ## Phase 1: Setup and Foundation (Week 1-2)
 
@@ -59,11 +59,11 @@ src/
 
 ### 1.3 Core Infrastructure
 
-- [ ] Setup Vue Router with route guards for authentication
-- [ ] Setup Pinia for state management
-- [ ] Create Supabase service module
-- [ ] Setup global error handling
-- [ ] Configure Turnstile CAPTCHA integration
+- [x] Setup Vue Router with route guards for authentication
+- [x] Setup Pinia for state management
+- [x] Create Supabase service module
+- [x] Setup global error handling
+- [x] Configure Turnstile CAPTCHA integration
 
 ## Phase 2: Authentication System (Week 2-3)
 
@@ -130,19 +130,19 @@ src/
 
 - [ ] Create PluSynthesisView with tabs:
   - Synthesis tab
-  - Comments & Likes tab
+  - Comments & Ratings tab
   - Sources tab
   - Download tab
 - [ ] Create PluDocument component for displaying synthesis
 - [ ] Create DocumentMeta component for document info
 - [ ] Implement tab navigation
 
-### 4.3 Comments and Likes System
+### 4.3 Comments and Ratings System
 
 - [ ] Create CommentList component
 - [ ] Create CommentItem component
 - [ ] Create CommentForm component
-- [ ] Create LikeButton component
+- [ ] Create RatingButton component
 - [ ] Implement real-time updates with Supabase
 
 ### 4.4 Download Feature

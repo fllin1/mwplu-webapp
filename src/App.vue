@@ -1,85 +1,49 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <div id="app">
+    <!-- Global notification component -->
+    <GlobalNotification />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+    <!-- Loading overlay -->
+    <div
+      v-if="authStore.isLoading && !authStore.isInitialized"
+      class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"
+    >
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p class="mt-4 text-gray-600">Loading...</p>
+      </div>
     </div>
-  </header>
 
-  <RouterView />
+    <!-- Main app content -->
+    <div v-else>
+      <router-view />
+    </div>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<script setup>
+import { onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import GlobalNotification from '@/components/common/GlobalNotification.vue'
+
+const authStore = useAuthStore()
+
+onMounted(async () => {
+  // Initialize auth state
+  await authStore.initializeAuth()
+
+  // Setup auth listener for real-time updates
+  authStore.setupAuthListener()
+})
+</script>
+
+<style>
+/* Global styles */
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
+/* Add any global CSS here */
 </style>
