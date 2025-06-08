@@ -1,5 +1,11 @@
 # Vue Refactoring Todo List for MWPLU
 
+## Architecture Overview
+
+- **Frontend**: Vue 3 SPA hosted on Firebase Hosting
+- **Backend**: Supabase (Database + Edge Functions + Auth)
+- **No Python**: All backend logic in Supabase Edge Functions (TypeScript/JavaScript)
+
 ## Phase 1: Setup and Foundation (Week 1-2)
 
 ### 1.1 Project Setup
@@ -51,7 +57,7 @@ src/
 │   └── PluSynthesisView.vue
 ├── router/          # Vue Router configuration
 ├── stores/          # Pinia state management
-├── services/        # API services
+├── services/        # API services (Supabase connections)
 ├── composables/     # Reusable composition functions
 ├── utils/           # Utility functions
 └── styles/          # Global styles
@@ -69,259 +75,307 @@ src/
 
 ### 2.1 Auth Store (Pinia)
 
-- [ ] Create auth store with state for:
-  - User object
-  - Authentication status
-  - Loading states
-  - Error states
+- [ ] Create auth store (`stores/auth.js`) with:
+  - User state from Supabase Auth
+  - Loading/error states
+  - Computed getters (isAuthenticated, userProfile)
 - [ ] Implement auth actions:
-  - Login
-  - Signup
-  - Logout
-  - Email confirmation
-  - Session management
+  - `signIn()` - Supabase Auth signInWithPassword
+  - `signUp()` - Supabase Auth signUp
+  - `signOut()` - Supabase Auth signOut
+  - `confirmEmail()` - Handle email confirmation
+  - `initializeAuth()` - Check existing session on app load
 
 ### 2.2 Auth Components
 
-- [ ] Create LoginForm component
-- [ ] Create SignupForm component
-- [ ] Create ConfirmationView component
-- [ ] Create AuthGuard composable for protected routes
-- [ ] Implement Turnstile CAPTCHA component
+- [ ] Create `LoginForm.vue` with Turnstile integration
+- [ ] Create `SignupForm.vue` with Turnstile integration
+- [ ] Create `ConfirmationView.vue` for email verification
+- [ ] Create `useAuthGuard` composable for route protection
+- [ ] Create `TurnstileWidget.vue` component
 
-### 2.3 Auth Services
+### 2.3 Supabase Auth Integration
 
-- [ ] Create auth service module connecting to your Python functions
-- [ ] Implement token management
-- [ ] Setup auto-refresh for sessions
-- [ ] Add error handling and user feedback
+- [ ] Implement session persistence with Supabase
+- [ ] Add auth state listeners for real-time updates
+- [ ] Configure Row Level Security (RLS) policies
+
+## Phase 2.5: Analytics Setup (Week 3)
+
+### 2.5.1 Google Analytics 4 Implementation
+
+- [ ] Create GA4 property in Google Analytics
+- [ ] Install Vue gtag plugin:
+
+  ```bash
+  npm install vue-gtag-next
+  ```
+
+- [ ] Configure GA4 in `main.js` with:
+  - Page view tracking
+  - User ID tracking (hashed)
+  - Custom dimensions for user type
+- [ ] Create `composables/useAnalytics.js` for:
+  - Track custom events
+  - Track user actions
+  - Track errors
+
+### 2.5.2 Analytics Events to Track
+
+- [ ] Authentication events:
+  - `login` - successful login
+  - `signup` - new user registration
+  - `logout` - user logout
+- [ ] PLU interaction events:
+  - `plu_view` - viewing a PLU synthesis
+  - `plu_download` - downloading a document
+  - `plu_comment` - adding a comment
+  - `plu_rate` - rating a document
+- [ ] User flow events:
+  - `city_selected` - city selection
+  - `zone_selected` - complete zone selection
+  - `search_performed` - if search implemented
+- [ ] Conversion events:
+  - `contact_form_submitted`
+  - `payment_initiated` (future)
+  - `subscription_completed` (future)
+
+### 2.5.3 Privacy Compliance
+
+- [ ] Implement cookie consent banner
+- [ ] Create privacy policy page
+- [ ] Add GA4 anonymize IP setting
+- [ ] Allow users to opt-out of tracking
+- [ ] Ensure GDPR compliance for EU users
 
 ## Phase 3: Layout and Navigation (Week 3-4)
 
 ### 3.1 Layout Components
 
-- [ ] Create AppHeader component with:
-  - Navigation menu
-  - User profile dropdown
-  - Responsive mobile menu
-- [ ] Create AppFooter component
-- [ ] Create AppLayout wrapper component
-- [ ] Create LoadingSpinner component
-- [ ] Create NotificationToast component
+- [ ] Create `AppHeader.vue`:
+  - Logo and navigation links
+  - User menu (when authenticated)
+  - Mobile hamburger menu
+- [ ] Create `AppFooter.vue` with legal links
+- [ ] Create `AppLayout.vue` as main layout wrapper
+- [ ] Create `BaseSpinner.vue` for loading states
+- [ ] Create `BaseNotification.vue` for user feedback
 
 ### 3.2 Navigation Setup
 
-- [ ] Configure all routes in router/index.js
-- [ ] Implement navigation guards for protected routes
-- [ ] Setup redirect logic for unauthenticated users
-- [ ] Create breadcrumb component for PLU pages
+- [ ] Define routes in `router/index.js`:
+  - Public routes: home, login, signup, terms
+  - Protected routes: profile, plu-synthesis/*
+  - Future routes: blog/*, docs/*, payment/*
+- [ ] Implement navigation guards using auth store
+- [ ] Add route transitions for better UX
+- [ ] Create `BreadcrumbNav.vue` for PLU pages
+
 
 ## Phase 4: Core Features Migration (Week 4-6)
 
-### 4.1 Home Page
+### 4.1 Home Page with PLU Selection
 
-- [ ] Create CitySelector component
-- [ ] Create ZoningSelector component
-- [ ] Create ZoneSelector component
-- [ ] Implement selection flow with Pinia store
-- [ ] Add loading states and error handling
+- [ ] Create `stores/plu.js` for PLU selection state
+- [ ] Create `CitySelector.vue` - dropdown with search
+- [ ] Create `ZoningSelector.vue` - dependent on city
+- [ ] Create `ZoneSelector.vue` - dependent on zoning
+- [ ] Implement selection flow:
+  1. Load cities from Supabase
+  2. Update available zonings on city change
+  3. Update available zones on zoning change
+  4. Navigate to synthesis page on complete selection
+- [ ] Add analytics tracking for selection flow
 
 ### 4.2 PLU Synthesis Page
 
-- [ ] Create PluSynthesisView with tabs:
-  - Synthesis tab
-  - Comments & Ratings tab
-  - Sources tab
-  - Download tab
-- [ ] Create PluDocument component for displaying synthesis
-- [ ] Create DocumentMeta component for document info
-- [ ] Implement tab navigation
+- [ ] Create `PluSynthesisView.vue` main container
+- [ ] Create `PluTabs.vue` for tab navigation:
+  - Synthesis content
+  - Comments & Ratings
+  - Source documents
+  - Download options
+- [ ] Create `PluContent.vue` for synthesis display
+- [ ] Create `PluMetadata.vue` for document info
+- [ ] Fetch PLU data from Supabase based on route params
 
 ### 4.3 Comments and Ratings System
 
-- [ ] Create CommentList component
-- [ ] Create CommentItem component
-- [ ] Create CommentForm component
-- [ ] Create RatingButton component
-- [ ] Implement real-time updates with Supabase
+- [ ] Create Supabase tables: comments, ratings
+- [ ] Create `CommentSection.vue` container
+- [ ] Create `CommentItem.vue` for single comment
+- [ ] Create `CommentForm.vue` with validation
+- [ ] Create `RatingWidget.vue` (1-5 stars)
+- [ ] Setup Supabase real-time subscriptions for updates
 
 ### 4.4 Download Feature
 
-- [ ] Create DownloadSection component
-- [ ] Implement download tracking
-- [ ] Add download progress indicator
-- [ ] Handle different file formats
+- [ ] Create `DownloadSection.vue` with options
+- [ ] Implement secure file URLs with Supabase Storage
+- [ ] Track downloads in Supabase database
+- [ ] Show download count and last updated date
+- [ ] Track download events in GA4 with document details
 
 ## Phase 5: Additional Features (Week 6-8)
 
 ### 5.1 Contact Form
 
-- [ ] Create ContactView page
-- [ ] Create ContactForm component with validation
-- [ ] Integrate with backend service
-- [ ] Add success/error notifications
+- [ ] Create `ContactView.vue` page
+- [ ] Create Supabase Edge Function for email sending
+- [ ] Add form validation and Turnstile
+- [ ] Store submissions in Supabase for tracking
 
 ### 5.2 User Profile
 
-- [ ] Create ProfileView with sections:
-  - Personal information
-  - Password change
-  - Preferences
-  - Activity history
-- [ ] Create ProfileEdit component
-- [ ] Implement profile update functionality
+- [ ] Create `ProfileView.vue` with sections:
+  - Account info (read-only email)
+  - Change password functionality
+  - Download history
+  - Comment history
+- [ ] Create `ProfileSettings.vue` component
+- [ ] Connect to Supabase user metadata
 
-### 5.3 Error Pages
+### 5.3 Error Handling
 
-- [ ] Create 404 page component
-- [ ] Create generic error page component
-- [ ] Setup error boundary for app-wide error catching
+- [ ] Create `NotFoundView.vue` (404 page)
+- [ ] Create `ErrorView.vue` (generic errors)
+- [ ] Implement Vue error boundaries
+- [ ] Add Sentry or similar for error tracking
 
 ## Phase 6: Future Features Preparation (Week 8-9)
 
 ### 6.1 Blog Infrastructure
 
-- [ ] Create blog folder structure:
+- [ ] Design Supabase schema for blog posts
+- [ ] Create basic blog components:
 
   ```text
-  views/blog/
-  ├── BlogListView.vue
-  ├── BlogPostView.vue
-  └── BlogEditorView.vue
+  components/blog/
+  ├── BlogCard.vue
+  ├── BlogPost.vue
+  └── BlogComments.vue
   ```
 
-- [ ] Create BlogPost component
-- [ ] Create BlogComment component
-- [ ] Setup blog routing
+- [ ] Setup blog routes and views
 
-### 6.2 Documentation Pages
+### 6.2 Documentation System
 
-- [ ] Create docs folder structure:
+- [ ] Design documentation structure in Supabase
+- [ ] Create documentation components:
 
   ```text
-  views/docs/
-  ├── DocsLayout.vue
-  ├── TutorialView.vue
-  └── GuideView.vue
+  components/docs/
+  ├── DocsSidebar.vue
+  ├── DocsContent.vue
+  └── DocsSearch.vue
   ```
 
-- [ ] Create DocsSidebar component
-- [ ] Create DocsContent component
+### 6.3 Payment System Foundation
 
-### 6.3 Payment System Preparation
+- [ ] Choose payment provider (Stripe recommended)
+- [ ] Design subscription schema in Supabase
+- [ ] Create payment component shells
+- [ ] Plan Supabase Edge Functions for payment webhooks
 
-- [ ] Create payment folder structure
-- [ ] Research and choose payment provider (Stripe, PayPal, etc.)
-- [ ] Create PaymentForm component skeleton
-- [ ] Create SubscriptionManager component skeleton
+### 6.4 City Voting Feature
 
-### 6.4 City Pool Feature
-
-- [ ] Create CityPollView component
-- [ ] Create VotingCard component
-- [ ] Create PollResults component
+- [ ] Design voting schema in Supabase
+- [ ] Create `CityPollView.vue`
+- [ ] Create `VoteCard.vue` component
+- [ ] Implement voting logic with user limits
 
 ## Phase 7: Optimization and Polish (Week 9-10)
 
 ### 7.1 Performance Optimization
 
-- [ ] Implement lazy loading for routes
-- [ ] Setup component lazy loading
-- [ ] Optimize bundle size with tree shaking
-- [ ] Implement image lazy loading
-- [ ] Add PWA capabilities
+- [ ] Implement route-level code splitting
+- [ ] Add `<Suspense>` for async components
+- [ ] Optimize images with lazy loading
+- [ ] Enable Vite build optimizations
+- [ ] Add service worker for offline capability
 
-### 7.2 UI/UX Improvements
+### 7.2 UI/UX Refinements
 
-- [ ] Add loading skeletons
-- [ ] Implement smooth transitions
-- [ ] Add micro-interactions
-- [ ] Ensure mobile responsiveness
-- [ ] Implement dark mode (optional)
+- [ ] Add skeleton screens for loading states
+- [ ] Implement view transitions API
+- [ ] Add hover/focus states consistently
+- [ ] Ensure full mobile responsiveness
+- [ ] Consider adding dark mode toggle
 
-### 7.3 Testing
+### 7.3 Testing Strategy
 
-- [ ] Setup unit testing with Vitest
-- [ ] Write tests for critical components
-- [ ] Setup E2E testing with Cypress
-- [ ] Test authentication flows
-- [ ] Test PLU document access flow
+- [ ] Setup Vitest for unit tests
+- [ ] Test critical auth flows
+- [ ] Test PLU selection workflow
+- [ ] Add Playwright for E2E tests
+- [ ] Test Supabase RLS policies
 
 ## Phase 8: Deployment (Week 10)
 
-### 8.1 Build Configuration
+### 8.1 Production Build
 
-- [ ] Configure production build settings
-- [ ] Setup environment-specific configurations
-- [ ] Optimize build for production
+- [ ] Configure Vite production build
+- [ ] Set up environment variables for production
+- [ ] Minimize bundle size (analyze with rollup-plugin-visualizer)
+- [ ] Generate and test production build locally
 
-### 8.2 Firebase Setup
+### 8.2 Firebase Hosting Setup
 
-- [ ] Update firebase.json for Vue SPA
-- [ ] Configure hosting rewrites for Vue Router
-- [ ] Setup preview channels
-- [ ] Test deployment process
+- [ ] Update `firebase.json`:
+  ```json
+  {
+    "hosting": {
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{
+        "source": "**",
+        "destination": "/index.html"
+      }]
+    }
+  }
+  ```
+- [ ] Setup GitHub Actions for CI/CD
+- [ ] Configure preview channels for testing
+- [ ] Set up production and staging environments
 
 ### 8.3 Migration Strategy
 
-- [ ] Plan gradual migration approach
-- [ ] Setup feature flags for gradual rollout
-- [ ] Create rollback plan
-- [ ] Document deployment process
+- [ ] Deploy Vue version to subdomain first (e.g., beta.mwplu.com)
+- [ ] Run both versions in parallel initially
+- [ ] Gradually redirect traffic to Vue version
+- [ ] Monitor for issues and user feedback
+- [ ] Plan sunset date for vanilla JS version
 
-## Best Practices to Follow
+## Key Implementation Notes
 
-### Code Organization
-
-- Keep components small and focused
-- Use composition API for complex logic
-- Extract reusable logic into composables
-- Use TypeScript for better type safety (optional but recommended)
+### Supabase Integration
+- All API calls go through Supabase client
+- Use RLS policies for security
+- Leverage real-time subscriptions where needed
+- Store files in Supabase Storage
 
 ### State Management
+- Auth state in Pinia auth store
+- PLU selection in Pinia plu store
+- UI state (modals, notifications) in Pinia ui store
+- Form state kept local to components
 
-- Use Pinia stores for global state
-- Keep component state local when possible
-- Implement proper error handling in stores
-- Use getters for computed values
+### Security Considerations
+- Never expose Supabase service key
+- Use RLS policies for all tables
+- Validate all inputs client and server side
+- Implement rate limiting on Edge Functions
 
-### Styling
+### Development Workflow
+1. Work on one feature at a time
+2. Test locally with Supabase local development
+3. Deploy to Firebase preview channel
+4. Get feedback before merging to production
+5. Use feature flags for gradual rollout
 
-- Use CSS modules or scoped styles
-- Consider using Tailwind CSS or UnoCSS
-- Maintain consistent naming conventions
-- Create design tokens for consistency
-
-### Security
-
-- Always validate user input
-- Implement proper CORS handling
-- Use environment variables for sensitive data
-- Follow Vue security best practices
-
-## Learning Resources
-
-Since you're new to Vue, here are essential resources:
-
-1. **Vue 3 Documentation**: https://vuejs.org/guide/
-2. **Vue Router**: https://router.vuejs.org/
-3. **Pinia Documentation**: https://pinia.vuejs.org/
-4. **Vue Composition API**: https://vuejs.org/guide/extras/composition-api-faq.html
-5. **Vite Documentation**: https://vitejs.dev/
-
-## Migration Tips
-
-1. **Start Small**: Begin with authentication system as it's self-contained
-2. **Component by Component**: Convert one page at a time
-3. **Maintain Both Versions**: Keep vanilla JS version running while building Vue version
-4. **Test Thoroughly**: Test each migrated feature before moving to the next
-5. **Use Vue DevTools**: Essential for debugging and understanding component state
-
-## Notes on Firebase App Hosting
-
-Since you mentioned potentially switching to Firebase App Hosting:
-
-- It's beneficial if you plan to use SSR (Server-Side Rendering) with Nuxt
-- For a standard Vue SPA, regular Firebase Hosting is sufficient
-- App Hosting is better for SEO and initial load performance
-- Consider this after completing the basic migration
+## Success Metrics
+- [ ] All current features working in Vue version
+- [ ] Page load time under 3 seconds
+- [ ] Lighthouse score above 90
+- [ ] Zero critical security vulnerabilities
+- [ ] Positive user feedback on new version

@@ -15,8 +15,9 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// TODO: Change to production URL and key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL_DEV
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY_DEV
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL or Anon Key is missing. Check your .env file.')
