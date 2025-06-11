@@ -4,9 +4,17 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { errorHandlerPlugin } from './services/errorHandler'
+import { useAuthStore } from '@/stores/auth'
 
 // Import global styles
-import './styles/main.css'
+import './styles/variables.css'
+import './styles/reset.css'
+import './styles/base.css'
+import './styles/focus.css'
+import './styles/utilities.css'
+import './styles/forms.css'
+import './styles/buttons.css'
+import './styles/messages.css'
 
 const app = createApp(App)
 
@@ -20,5 +28,23 @@ app.use(router)
 // Setup global error handling
 app.use(errorHandlerPlugin)
 
-// Mount app
-app.mount('#app')
+// Initialize auth store and setup auth listener
+const initializeApp = async () => {
+  const authStore = useAuthStore()
+
+  // Setup auth state change listener
+  authStore.setupAuthListener()
+
+  // Initialize auth state (check for existing session)
+  await authStore.initializeAuth()
+
+  // Mount app after auth initialization
+  app.mount('#app')
+}
+
+// Initialize the app
+initializeApp().catch((error) => {
+  console.error('Failed to initialize app:', error)
+  // Mount app anyway to show error state
+  app.mount('#app')
+})

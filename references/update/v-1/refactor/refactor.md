@@ -75,11 +75,11 @@ src/
 
 ### 2.1 Auth Store (Pinia)
 
-- [ ] Create auth store (`stores/auth.js`) with:
+- [x] Create auth store (`stores/auth.js`) with:
   - User state from Supabase Auth
   - Loading/error states
   - Computed getters (isAuthenticated, userProfile)
-- [ ] Implement auth actions:
+- [x] Implement auth actions:
   - `signIn()` - Supabase Auth signInWithPassword
   - `signUp()` - Supabase Auth signUp
   - `signOut()` - Supabase Auth signOut
@@ -88,89 +88,88 @@ src/
 
 ### 2.2 Auth Components
 
-- [ ] Create `LoginForm.vue` with Turnstile integration
-- [ ] Create `SignupForm.vue` with Turnstile integration
-- [ ] Create `ConfirmationView.vue` for email verification
-- [ ] Create `useAuthGuard` composable for route protection
-- [ ] Create `TurnstileWidget.vue` component
+- [x] Create `LoginForm.vue` with Turnstile integration
+- [x] Create `SignupForm.vue` with Turnstile integration
+- [x] Create `ConfirmationView.vue` for email verification
+- [x] Create `useAuthGuard` composable for route protection
+- [x] Create `TurnstileWidget.vue` component
 
 ### 2.3 Supabase Auth Integration
 
-- [ ] Implement session persistence with Supabase
-- [ ] Add auth state listeners for real-time updates
-- [ ] Configure Row Level Security (RLS) policies
+- [x] Implement session persistence with Supabase
+- [x] Add auth state listeners for real-time updates
+- [x] Configure Row Level Security (RLS) policies
 
 ## Phase 2.5: Analytics Setup (Week 3)
 
 ### 2.5.1 Google Analytics 4 Implementation
 
-- [ ] Create GA4 property in Google Analytics
-- [ ] Install Vue gtag plugin:
+- [x] Create GA4 property in Google Analytics
+- [x] Install Vue gtag plugin:
 
   ```bash
   npm install vue-gtag-next
   ```
 
-- [ ] Configure GA4 in `main.js` with:
+- [x] Configure GA4 in `main.js` with:
   - Page view tracking
   - User ID tracking (hashed)
   - Custom dimensions for user type
-- [ ] Create `composables/useAnalytics.js` for:
+- [x] Create `composables/useAnalytics.js` for:
   - Track custom events
   - Track user actions
   - Track errors
 
 ### 2.5.2 Analytics Events to Track
 
-- [ ] Authentication events:
+- [x] Authentication events:
   - `login` - successful login
   - `signup` - new user registration
   - `logout` - user logout
-- [ ] PLU interaction events:
+- [x] PLU interaction events:
   - `plu_view` - viewing a PLU synthesis
   - `plu_download` - downloading a document
   - `plu_comment` - adding a comment
   - `plu_rate` - rating a document
-- [ ] User flow events:
+- [x] User flow events:
   - `city_selected` - city selection
   - `zone_selected` - complete zone selection
   - `search_performed` - if search implemented
-- [ ] Conversion events:
+- [x] Conversion events:
   - `contact_form_submitted`
   - `payment_initiated` (future)
   - `subscription_completed` (future)
 
 ### 2.5.3 Privacy Compliance
 
-- [ ] Implement cookie consent banner
-- [ ] Create privacy policy page
-- [ ] Add GA4 anonymize IP setting
-- [ ] Allow users to opt-out of tracking
-- [ ] Ensure GDPR compliance for EU users
+- [x] Implement cookie consent banner
+- [x] Create privacy policy page
+- [x] Add GA4 anonymize IP setting
+- [x] Allow users to opt-out of tracking
+- [x] Ensure GDPR compliance for EU users
 
 ## Phase 3: Layout and Navigation (Week 3-4)
 
 ### 3.1 Layout Components
 
-- [ ] Create `AppHeader.vue`:
+- [x] Create `AppHeader.vue`:
   - Logo and navigation links
   - User menu (when authenticated)
   - Mobile hamburger menu
-- [ ] Create `AppFooter.vue` with legal links
-- [ ] Create `AppLayout.vue` as main layout wrapper
-- [ ] Create `BaseSpinner.vue` for loading states
-- [ ] Create `BaseNotification.vue` for user feedback
+- [x] Create `AppFooter.vue` with legal links
+- [x] Create `AppLayout.vue` as main layout wrapper
+- [x] Create `BaseSpinner.vue` for loading states
+- [x] Create `BaseNotification.vue` for user feedback
 
 ### 3.2 Navigation Setup
 
-- [ ] Define routes in `router/index.js`:
+- [x] Define routes in `router/index.js`:
   - Public routes: home, login, signup, terms
   - Protected routes: profile, plu-synthesis/*
   - Future routes: blog/*, docs/*, payment/*
-- [ ] Implement navigation guards using auth store
-- [ ] Add route transitions for better UX
-- [ ] Create `BreadcrumbNav.vue` for PLU pages
-
+- [x] Implement navigation guards using auth store
+- [x] Add route transitions for better UX
+- [x] Create `BreadcrumbNav.vue` for PLU pages
 
 ## Phase 4: Core Features Migration (Week 4-6)
 
@@ -322,6 +321,7 @@ src/
 ### 8.2 Firebase Hosting Setup
 
 - [ ] Update `firebase.json`:
+
   ```json
   {
     "hosting": {
@@ -334,6 +334,7 @@ src/
     }
   }
   ```
+
 - [ ] Setup GitHub Actions for CI/CD
 - [ ] Configure preview channels for testing
 - [ ] Set up production and staging environments
@@ -349,24 +350,28 @@ src/
 ## Key Implementation Notes
 
 ### Supabase Integration
+
 - All API calls go through Supabase client
 - Use RLS policies for security
 - Leverage real-time subscriptions where needed
 - Store files in Supabase Storage
 
 ### State Management
+
 - Auth state in Pinia auth store
 - PLU selection in Pinia plu store
 - UI state (modals, notifications) in Pinia ui store
 - Form state kept local to components
 
 ### Security Considerations
+
 - Never expose Supabase service key
 - Use RLS policies for all tables
 - Validate all inputs client and server side
 - Implement rate limiting on Edge Functions
 
 ### Development Workflow
+
 1. Work on one feature at a time
 2. Test locally with Supabase local development
 3. Deploy to Firebase preview channel
@@ -374,6 +379,7 @@ src/
 5. Use feature flags for gradual rollout
 
 ## Success Metrics
+
 - [ ] All current features working in Vue version
 - [ ] Page load time under 3 seconds
 - [ ] Lighthouse score above 90

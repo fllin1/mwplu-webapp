@@ -1,0 +1,79 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# MWPLU Project Context
+
+## Overview
+MWPLU is a web platform for accessing synthesized French urban planning documents (PLU). Users authenticate to access city zoning documents, comment, rate, and download them.
+
+## Architecture
+- **Frontend**: Vue 3 SPA with Vite, Vue Router, Pinia
+- **Backend**: Supabase (Database, Auth, Edge Functions, Storage)
+- **Hosting**: Firebase Hosting
+- **Security**: Cloudflare Turnstile CAPTCHA
+
+## Design Philosophy
+**Minimalist and functional** - Clean interface focusing on essential elements only. Every component serves a clear purpose.
+
+### Colors
+- **Primary**: Black text on white backgrounds
+- **Accent**: Primary black for interactive elements
+- **Status**: Green for success, Red for errors, Grey for information
+
+### Typography
+- Font: Lato (Google Fonts)
+- Clean, readable, consistent sizing
+
+### Visual Elements
+- Buttons: 2px border radius
+- Forms/Cards: 4px border radius with subtle shadows
+- Consistent spacing based on 4px grid
+
+## CSS Architecture
+**Global styles** (imported in main.js):
+- CSS variables/design tokens (colors, spacing, typography)
+- CSS reset for browser consistency
+- Base typography (body, headings)
+- Focus states for accessibility
+
+**Component styles** (scoped in .vue files):
+- All component-specific styling
+- Import global variables as needed
+- Use scoped styles to prevent conflicts
+
+**No global component styles** - buttons, forms, cards etc. should be styled within their respective Vue components (manually or with frameworks).
+
+## User Flow
+1. **Landing** → Authentication (Login/Signup with CAPTCHA)
+2. **Dashboard** → Select City → Zoning → Zone
+3. **PLU Page** → View synthesis, comments, sources, downloads
+4. Protected routes require authentication
+
+## Component Structure
+Components are organized by feature:
+- `common/` - Reusable base components
+- `auth/` - Authentication related
+- `layout/` - Header, footer, navigation
+- `plu/` - PLU document features
+
+## Code Patterns
+- **Composables** for reusable logic
+- **Services** for API calls to Supabase
+- **Stores** (Pinia) for global state
+- **Props/Events** for component communication
+
+## Key Principles
+- Displayed text in French
+- Mobile responsive design
+- User-friendly error messages
+- Secure by default (RLS policies, input validation)
+- Performance optimized (lazy loading, caching)
+
+## Development Guidelines
+- Use Vue 3 Composition API
+- Follow Vue style guide conventions
+- Keep components small and focused
+- Handle loading and error states
+- Write descriptive commit messages

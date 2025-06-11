@@ -46,7 +46,7 @@ export const dbService = {
       const { data, error } = await supabase
         .from('zonings')
         .select('*')
-        .eq('city_Id', cityId)
+        .eq('city_id', cityId)
         .order('name')
 
       if (error) throw error
@@ -272,7 +272,7 @@ export const dbService = {
       let isRated = false
       if (user) {
         // Check if current user rated
-        const { data: userRating, error: RatingError } = await supabase
+        const { data: userRating, error: ratingError } = await supabase
           .from('ratings')
           .select('id')
           .eq('document_id', documentId)
@@ -303,7 +303,7 @@ export const dbService = {
   // Contact form (store in Supabase instead of Firebase function)
   async submitContact(name, email, message) {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('contact_messages')
         .insert({
           name,

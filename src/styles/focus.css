@@ -1,0 +1,34 @@
+/* Remove default focus outline */
+*:focus {
+  outline: none;
+}
+
+/* Add custom focus styles for keyboard users */
+*:focus-visible {
+  outline: 2px solid var(--color-primary-black);
+  outline-offset: 2px;
+}
+
+/* Special focus styles for form inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-black);
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary-black);
+  color: var(--color-white);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-button);
+  z-index: var(--z-tooltip);
+}
+
+.skip-link:focus {
+  top: var(--space-2);
+}

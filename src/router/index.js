@@ -17,15 +17,32 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 // Import your views
+import DashboardView from '@/views/DashboardView.vue'
 import HomeView from '@/views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
-import SignupView from '@/views/SignupView.vue'
-import ConfirmationView from '@/views/ConfirmationView.vue'
-import ResetPasswordView from '@/views/ResetPasswordView.vue'
-import ProfileView from '@/views/ProfileView.vue'
-import PluSynthesisView from '@/views/PluSynthesisView.vue'
-import ContactView from '@/views/ContactView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import PluSynthesisView from '@/views/PluSynthesisView.vue'
+import ProfileView from '@/views/ProfileView.vue'
+
+// Auth views
+import LoginView from '@/views/auth/LoginView.vue'
+import SignupView from '@/views/auth/SignupView.vue'
+import ConfirmationView from '@/views/auth/ConfirmationView.vue'
+import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
+
+// Docs views
+import DocumentationView from '@/views/docs/DocumentationView.vue'
+
+// Info views
+import AboutView from '@/views/info/AboutView.vue'
+import ContactView from '@/views/info/ContactView.vue'
+import DonationView from '@/views/info/DonationView.vue'
+
+// Policies views
+import CookiesView from '@/views/policies/CookiesView.vue'
+import LegalNoticeView from '@/views/policies/LegalNoticeView.vue'
+import PrivacyView from '@/views/policies/PrivacyView.vue'
+import SalesPolicyView from '@/views/policies/SalesPolicyView.vue'
+import TermsView from '@/views/policies/TermsView.vue'
 
 const routes = [
   {
@@ -80,7 +97,16 @@ const routes = [
     name: 'profile',
     component: ProfileView,
     meta: {
-      title: 'Profile - MWPLU',
+      title: 'Profil - MWPLU',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: DashboardView,
+    meta: {
+      title: 'Tableau de bord - MWPLU',
       requiresAuth: true,
     },
   },
@@ -99,6 +125,78 @@ const routes = [
     component: ContactView,
     meta: {
       title: 'Contact - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/info/about',
+    name: 'about',
+    component: AboutView,
+    meta: {
+      title: 'À propos - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/info/donation',
+    name: 'donation',
+    component: DonationView,
+    meta: {
+      title: 'Nous soutenir - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/docs/documentation',
+    name: 'documentation',
+    component: DocumentationView,
+    meta: {
+      title: 'Documentation - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/policies/legal',
+    name: 'legal',
+    component: LegalNoticeView,
+    meta: {
+      title: 'Mentions légales - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/policies/terms',
+    name: 'terms',
+    component: TermsView,
+    meta: {
+      title: "Conditions Générales d'Utilisation - MWPLU",
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/policies/privacy',
+    name: 'privacy',
+    component: PrivacyView,
+    meta: {
+      title: 'Politique de confidentialité - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/policies/cookies',
+    name: 'cookies',
+    component: CookiesView,
+    meta: {
+      title: 'Politique de cookies - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/policies/sales',
+    name: 'sales',
+    component: SalesPolicyView,
+    meta: {
+      title: 'Politiques de Ventes - MWPLU',
       requiresAuth: false,
     },
   },
@@ -164,7 +262,7 @@ router.beforeEach(async (to, from, next) => {
 })
 
 // After navigation
-router.afterEach((to) => {
+router.afterEach(() => {
   // You can add analytics tracking here if needed
   // gtag('config', 'GA_TRACKING_ID', { page_path: to.path })
 })
