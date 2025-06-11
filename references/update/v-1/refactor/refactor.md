@@ -175,16 +175,16 @@ src/
 
 ### 4.1 Home Page with PLU Selection
 
-- [ ] Create `stores/plu.js` for PLU selection state
-- [ ] Create `CitySelector.vue` - dropdown with search
-- [ ] Create `ZoningSelector.vue` - dependent on city
-- [ ] Create `ZoneSelector.vue` - dependent on zoning
-- [ ] Implement selection flow:
+- [x] Create `stores/plu.js` for PLU selection state
+- [x] Create `CitySelector.vue` - dropdown with search
+- [x] Create `ZoningSelector.vue` - dependent on city
+- [x] Create `ZoneSelector.vue` - dependent on zoning
+- [x] Implement selection flow:
   1. Load cities from Supabase
   2. Update available zonings on city change
   3. Update available zones on zoning change
   4. Navigate to synthesis page on complete selection
-- [ ] Add analytics tracking for selection flow
+- [x] Add analytics tracking for selection flow
 
 ### 4.2 PLU Synthesis Page
 

@@ -283,6 +283,66 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Google Sign In
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true)
+      clearError()
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+
+      if (error) throw error
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Google sign-in error:', error)
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Google Sign Up
+  const signUpWithGoogle = async () => {
+    try {
+      setLoading(true)
+      clearError()
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+
+      if (error) throw error
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Google sign-up error:', error)
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Listen to auth changes
   const setupAuthListener = () => {
     supabase.auth.onAuthStateChange((event, session) => {
@@ -359,6 +419,8 @@ export const useAuthStore = defineStore('auth', () => {
     updatePassword,
     updateProfile,
     resendConfirmation,
+    signInWithGoogle,
+    signUpWithGoogle,
     setupAuthListener,
     setError,
     clearError,

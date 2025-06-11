@@ -51,6 +51,29 @@
       </span>
     </div>
 
+    <!-- Phone Number Field (Optional) -->
+    <div class="form-group">
+      <label for="phone" class="form-label">
+        Numéro de téléphone
+        <span class="optional">(optionnel)</span>
+      </label>
+      <input
+        id="phone"
+        v-model="form.phone"
+        type="tel"
+        class="form-input"
+        :class="{ 'error': errors.phone }"
+        placeholder="+33 1 23 45 67 89"
+        autocomplete="tel"
+        @blur="validatePhone"
+        @input="clearFieldError('phone')"
+      />
+      <span v-if="errors.phone" class="error-message">
+        {{ errors.phone }}
+      </span>
+      <span class="form-hint">Format recommandé : +33 1 23 45 67 89</span>
+    </div>
+
     <!-- Password Field -->
     <div class="form-group">
       <label for="password" class="form-label">
@@ -212,6 +235,22 @@
       <span v-else>Créer mon compte</span>
     </button>
 
+    <!-- OAuth Divider -->
+    <div class="oauth-divider">
+      <span class="divider-text">ou</span>
+    </div>
+
+    <!-- Google Sign-Up Button -->
+    <button
+      type="button"
+      @click="handleGoogleSignUp"
+      class="google-button"
+      :disabled="isLoading"
+    >
+      <img src="@/assets/icons/socials/google.svg" alt="Google" class="google-icon" />
+      <span>Continuer avec Google</span>
+    </button>
+
     <!-- Login Link -->
     <div class="form-footer">
       <p>
@@ -271,6 +310,7 @@ export default {
     const form = reactive({
       name: '',
       email: '',
+      phone: '',
       password: '',
       confirmPassword: '',
       acceptTerms: false,
@@ -299,8 +339,7 @@ export default {
         length: password.length >= 8,
         uppercase: /[A-Z]/.test(password),
         lowercase: /[a-z]/.test(password),
-        number: /\d/.test(password),
-        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        number: /\d/.test(password)
       }
     })
 
@@ -368,6 +407,33 @@ export default {
       return true
     }
 
+    const validatePhone = () => {
+      const phone = form.phone.trim()
+
+      // Phone is optional, so empty is valid
+      if (!phone) {
+        delete errors.phone
+        return true
+      }
+
+      // French phone number patterns
+      const frenchPhonePattern = /^(?:\+33|0)[1-9](?:[. -]?\d{2}){4}$/
+      const internationalPhonePattern = /^\+\d{1,3}[. -]?\d{1,14}$/
+
+      if (!frenchPhonePattern.test(phone) && !internationalPhonePattern.test(phone)) {
+        errors.phone = 'Format de téléphone invalide'
+        return false
+      }
+
+      if (phone.length > 20) {
+        errors.phone = 'Le numéro de téléphone est trop long'
+        return false
+      }
+
+      delete errors.phone
+      return true
+    }
+
     const validatePassword = () => {
       const password = form.password
       if (!password) {
@@ -390,10 +456,6 @@ export default {
       }
       if (!checks.number) {
         errors.password = 'Le mot de passe doit contenir au moins un chiffre'
-        return false
-      }
-      if (!checks.special) {
-        errors.password = 'Le mot de passe doit contenir au moins un caractère spécial'
         return false
       }
 
@@ -450,6 +512,7 @@ export default {
     const canSubmit = computed(() => {
       return validateName() &&
              validateEmail() &&
+             validatePhone() &&
              validatePassword() &&
              validateConfirmPassword() &&
              validateTerms() &&
@@ -475,12 +538,12 @@ export default {
       globalError.value = 'La vérification a expiré. Veuillez recommencer.'
     }
 
-    /**
+        /**
      * Form submission
      */
     const handleSubmit = async () => {
-      if (!validateName() || !validateEmail() || !validatePassword() ||
-          !validateConfirmPassword() || !validateTerms()) {
+      if (!validateName() || !validateEmail() || !validatePhone() ||
+          !validatePassword() || !validateConfirmPassword() || !validateTerms()) {
         globalError.value = 'Veuillez corriger les erreurs ci-dessus'
         return
       }
@@ -526,6 +589,30 @@ export default {
     }
 
     /**
+     * Handle Google sign-up
+     */
+    const handleGoogleSignUp = async () => {
+      try {
+        isLoading.value = true
+        globalError.value = ''
+
+        const result = await authStore.signUpWithGoogle()
+
+        if (result.success) {
+          // Google OAuth redirects automatically
+          emit('success', { provider: 'google' })
+        } else {
+          globalError.value = result.error || 'Échec de l\'inscription avec Google'
+        }
+      } catch (error) {
+        console.error('Google sign-up error:', error)
+        globalError.value = 'Une erreur inattendue s\'est produite avec Google'
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    /**
      * Component initialization
      */
     onMounted(() => {
@@ -552,6 +639,7 @@ export default {
       canSubmit,
       validateName,
       validateEmail,
+      validatePhone,
       validatePassword,
       validateConfirmPassword,
       clearFieldError,
@@ -560,7 +648,8 @@ export default {
       onCaptchaVerified,
       onCaptchaError,
       onCaptchaExpired,
-      handleSubmit
+      handleSubmit,
+      handleGoogleSignUp
     }
   }
 }
@@ -608,6 +697,18 @@ export default {
 
 .required {
   color: var(--color-error);
+}
+
+.optional {
+  color: var(--color-gray-500);
+  font-weight: var(--font-weight-normal);
+}
+
+.form-hint {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
 }
 
 .form-input {
@@ -823,8 +924,8 @@ export default {
 .global-error {
   margin-bottom: var(--space-4);
   padding: var(--space-3);
-  background-color: #FEF2F2;
-  border: 1px solid var(--color-error);
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-radius: var(--radius-form);
   color: var(--color-error);
   font-size: var(--font-size-sm);
@@ -889,6 +990,68 @@ export default {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.oauth-divider {
+  margin: var(--space-6) 0;
+  position: relative;
+  text-align: center;
+}
+
+.oauth-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-gray-300);
+}
+
+.divider-text {
+  background-color: var(--color-white);
+  padding: 0 var(--space-4);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+}
+
+.google-button {
+  width: 100%;
+  padding: var(--space-3);
+  background-color: var(--color-white);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.google-button:hover:not(:disabled) {
+  background-color: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+  box-shadow: var(--shadow-sm);
+}
+
+.google-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.google-button:focus {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .form-footer {

@@ -167,14 +167,16 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding-top: 72px; /* Space for fixed header (48px logo + 24px padding) */
 }
 
 .main-content.full-height {
-  min-height: calc(100vh - 64px - 200px); /* Viewport minus header and footer approximate heights */
+  min-height: calc(100vh - 136px - 200px); /* Viewport minus header (72px + 64px) and footer approximate heights */
 }
 
 .main-content.padded {
   padding: var(--space-6) 0;
+  padding-top: calc(72px + var(--space-6)); /* Header space + content padding */
 }
 
 .content-container {
@@ -212,8 +214,13 @@ export default {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .main-content {
+    padding-top: 64px; /* Smaller mobile header */
+  }
+
   .main-content.padded {
     padding: var(--space-4) 0;
+    padding-top: calc(64px + var(--space-4)); /* Header space + content padding */
   }
 
   .content-container {
@@ -221,7 +228,7 @@ export default {
   }
 
   .main-content.full-height {
-    min-height: calc(100vh - 56px - 180px); /* Adjusted for mobile header/footer heights */
+    min-height: calc(100vh - 120px - 180px); /* Adjusted for mobile header/footer heights */
   }
 }
 

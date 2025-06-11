@@ -15,7 +15,7 @@
 
         <!-- Signup Form -->
         <div class="auth-form-section">
-          <SignupForm />
+          <SignupForm @success="onSignupSuccess" />
 
           <!-- Navigation Links -->
           <div class="auth-navigation-links">
@@ -65,6 +65,7 @@
  * - Accessible and user-friendly
  * - Legal compliance information
  */
+import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import SignupForm from '@/components/auth/SignupForm.vue'
 
@@ -77,7 +78,22 @@ export default {
   },
 
   setup() {
-    return {}
+    const router = useRouter()
+
+    /**
+     * Handle successful signup
+     */
+    const onSignupSuccess = async (data) => {
+      console.log('Signup successful:', data)
+
+      // Navigate to dashboard or intended route
+      const redirect = router.currentRoute.value.query.redirect || '/dashboard'
+      await router.push(redirect)
+    }
+
+    return {
+      onSignupSuccess
+    }
   }
 }
 </script>

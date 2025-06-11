@@ -107,6 +107,22 @@
       <span v-else>Se connecter</span>
     </button>
 
+    <!-- OAuth Divider -->
+    <div class="oauth-divider">
+      <span class="divider-text">ou</span>
+    </div>
+
+    <!-- Google Sign-In Button -->
+    <button
+      type="button"
+      @click="handleGoogleSignIn"
+      class="google-button"
+      :disabled="isLoading"
+    >
+      <img src="@/assets/icons/socials/google.svg" alt="Google" class="google-icon" />
+      <span>Continuer avec Google</span>
+    </button>
+
     <!-- Sign Up Link -->
     <div class="form-footer">
       <p>
@@ -330,6 +346,30 @@ export default {
     }
 
     /**
+     * Handle Google sign-in
+     */
+    const handleGoogleSignIn = async () => {
+      try {
+        isLoading.value = true
+        globalError.value = ''
+
+        const result = await authStore.signInWithGoogle()
+
+        if (result.success) {
+          // Google OAuth redirects automatically, so we don't need to handle navigation here
+          emit('success', { provider: 'google' })
+        } else {
+          globalError.value = result.error || 'Échec de la connexion avec Google'
+        }
+      } catch (error) {
+        console.error('Google sign-in error:', error)
+        globalError.value = 'Une erreur inattendue s\'est produite avec Google'
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    /**
      * Initialize component
      * Setup any needed initial state
      */
@@ -363,7 +403,8 @@ export default {
       onCaptchaError,
       onCaptchaExpired,
       handleForgotPassword,
-      handleSubmit
+      handleSubmit,
+      handleGoogleSignIn
     }
   }
 }
@@ -543,8 +584,8 @@ export default {
 .global-error {
   margin-bottom: var(--space-4);
   padding: var(--space-3);
-  background-color: #FEF2F2;
-  border: 1px solid var(--color-error);
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-radius: var(--radius-form);
   color: var(--color-error);
   font-size: var(--font-size-sm);
@@ -593,6 +634,73 @@ export default {
   border-top: 2px solid var(--color-white);
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.oauth-divider {
+  margin: var(--space-6) 0;
+  position: relative;
+  text-align: center;
+}
+
+.oauth-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-gray-300);
+}
+
+.divider-text {
+  background-color: var(--color-white);
+  padding: 0 var(--space-4);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+}
+
+.google-button {
+  width: 100%;
+  padding: var(--space-3);
+  background-color: var(--color-white);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.google-button:hover:not(:disabled) {
+  background-color: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+  box-shadow: var(--shadow-sm);
+}
+
+.google-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.google-button:focus {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .form-footer {

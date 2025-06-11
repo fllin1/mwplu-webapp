@@ -12,7 +12,7 @@
 
 .error-message {
   color: var(--color-error);
-  background: var(--color-error);
+  background: var(--color-error-bg);
 }
 
 .status-message {

@@ -9,32 +9,35 @@
           </div>
           <h2 class="auth-title">Connexion</h2>
           <p class="auth-subtitle">
-            Accédez aux synthèses de documents d'urbanisme
+            Accédez à votre compte pour consulter les synthèses PLU
           </p>
         </div>
 
         <!-- Login Form -->
         <div class="auth-form-section">
-          <LoginForm />
+          <LoginForm @success="onLoginSuccess" @forgot-password="onForgotPassword" />
 
           <!-- Navigation Links -->
           <div class="auth-navigation-links">
-            <router-link to="/reset-password" class="nav-link">
-              Mot de passe oublié ?
-            </router-link>
-            <span class="nav-separator">•</span>
-            <router-link to="/signup" class="nav-link">
-              Créer un compte
-            </router-link>
+            <p class="nav-text">
+              Pas encore de compte ?
+              <router-link to="/signup" class="nav-link">
+                Créer un compte
+              </router-link>
+            </p>
           </div>
         </div>
 
         <!-- Additional Info -->
         <div class="auth-footer">
           <p class="footer-text">
-            Première visite ?
-            <router-link to="/info/about" class="footer-link">
-              Découvrez MWPLU
+            En vous connectant, vous acceptez nos
+            <router-link to="/policies/terms" class="footer-link">
+              conditions d'utilisation
+            </router-link>
+            et notre
+            <router-link to="/policies/privacy" class="footer-link">
+              politique de confidentialité
             </router-link>
           </p>
         </div>
@@ -49,18 +52,21 @@
  * @description User login page with integrated form and navigation
  *
  * Features:
- * - Uses new AppLayout wrapper
+ * - Uses AppLayout wrapper with proper header spacing
  * - Integrates LoginForm component with all functionality
  * - Clean, minimalist design matching production site
  * - Responsive layout for all screen sizes
- * - Proper navigation and help links
+ * - Proper navigation and legal links
+ * - Google OAuth integration
  *
  * Design Principles:
  * - Centered layout with proper spacing
  * - Consistent typography and colors
  * - Clear visual hierarchy
  * - Accessible and user-friendly
+ * - Legal compliance information
  */
+import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoginForm from '@/components/auth/LoginForm.vue'
 
@@ -72,9 +78,37 @@ export default {
     LoginForm
   },
 
-  // Auto-focus handled by LoginForm component
   setup() {
-    return {}
+    const router = useRouter()
+
+    /**
+     * Handle successful login
+     */
+    const onLoginSuccess = async (data) => {
+      console.log('Login successful:', data)
+
+      // Navigate to dashboard or intended route
+      const redirect = router.currentRoute.value.query.redirect || '/dashboard'
+      await router.push(redirect)
+    }
+
+    /**
+     * Handle forgot password request
+     */
+    const onForgotPassword = (email) => {
+      console.log('Forgot password for:', email)
+
+      // Navigate to reset password page with pre-filled email
+      router.push({
+        path: '/reset-password',
+        query: { email: email || '' }
+      })
+    }
+
+    return {
+      onLoginSuccess,
+      onForgotPassword
+    }
   }
 }
 </script>
@@ -91,12 +125,12 @@ export default {
 
 .auth-container {
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
   padding: var(--space-8);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-form);
   background-color: var(--color-white);
   box-shadow: var(--shadow-md);
 }
@@ -112,8 +146,8 @@ export default {
 
 .logo-text {
   font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-extrabold);
-  color: var(--color-color-black);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-black);
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -121,12 +155,12 @@ export default {
 .auth-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-color-black);
+  color: var(--color-black);
   margin: var(--space-4) 0 var(--space-2) 0;
 }
 
 .auth-subtitle {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   color: var(--color-gray-700);
   margin: 0;
   line-height: 1.5;
@@ -134,21 +168,23 @@ export default {
 
 /* Form Container */
 .auth-form-section {
-  /* Form styles are mostly handled by LoginForm component directly */
   display: flex;
   flex-direction: column;
-  gap: var(--space-6); /* Gap for form elements */
+  gap: var(--space-6);
 }
 
 /* Navigation */
 .auth-navigation-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+  text-align: center;
   margin-top: var(--space-6);
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-gray-200);
+}
+
+.nav-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin: 0;
 }
 
 .nav-link {
@@ -160,7 +196,7 @@ export default {
 }
 
 .nav-link:hover {
-  color: var(--color-blue-dark);
+  color: var(--color-blue-hover);
   text-decoration: underline;
 }
 
@@ -168,11 +204,6 @@ export default {
   outline: 2px solid var(--color-blue);
   outline-offset: 2px;
   border-radius: var(--radius-button);
-}
-
-.nav-separator {
-  color: var(--color-gray-400);
-  font-size: var(--font-size-sm);
 }
 
 /* Footer */
@@ -184,6 +215,7 @@ export default {
   font-size: var(--font-size-sm);
   color: var(--color-gray-600);
   margin: 0;
+  line-height: 1.6;
 }
 
 .footer-link {
@@ -194,7 +226,7 @@ export default {
 }
 
 .footer-link:hover {
-  color: var(--color-blue-dark);
+  color: var(--color-blue-hover);
   text-decoration: underline;
 }
 
@@ -223,18 +255,12 @@ export default {
   }
 
   .auth-navigation-links {
-    flex-direction: column;
-    gap: var(--space-3);
     margin-top: var(--space-4);
     padding-top: var(--space-3);
   }
 
-  .nav-link {
+  .nav-text {
     font-size: var(--font-size-sm);
-  }
-
-  .nav-separator {
-    display: none;
   }
 
   .footer-text {

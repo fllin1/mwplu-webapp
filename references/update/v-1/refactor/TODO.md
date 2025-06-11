@@ -10,9 +10,10 @@
 ### Sign-up
 
 - [ ] Assert auth system
-- [ ] Correct the "error messages" color issue (the text seems to be in the same color as the box background = red on red)
-- [ ] Remove the need for a special character for the pass word
-- [ ] Maybe add phone number
+- [x] Google Auth
+- [x] Correct the "error messages" color issue (the text seems to be in the same color as the box background = red on red)
+- [x] Remove the need for a special character for the pass word
+- [x] Maybe add phone number
 
 ### Login
 
@@ -22,4 +23,4 @@
 
 ## Features
 
-- [ ] Comprehend what the breadcrumbs is for
+- [ ] Add breadcrumbs on pages
