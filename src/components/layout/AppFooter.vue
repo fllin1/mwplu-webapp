@@ -254,7 +254,7 @@ export default {
 }
 
 .footer-legal a:hover {
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   transform: translateY(-1px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }

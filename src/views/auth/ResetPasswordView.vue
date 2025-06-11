@@ -161,7 +161,7 @@ export default {
 .logo-text {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-extrabold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -169,7 +169,7 @@ export default {
 .auth-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin: var(--space-4) 0 var(--space-2) 0;
 }
 
@@ -212,7 +212,7 @@ export default {
   border-radius: var(--radius-button);
   background-color: var(--color-white);
   font-size: var(--font-size-md);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -267,7 +267,7 @@ export default {
 .alert-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-1);
 }
 
@@ -280,7 +280,7 @@ export default {
 
 .alert-message-text strong {
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
 }
 
 /* Navigation */
@@ -347,7 +347,7 @@ export default {
 
 .btn-secondary {
   background-color: transparent;
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   border-color: var(--color-gray-300);
 }
 

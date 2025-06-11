@@ -1,136 +1,50 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { dbService } from '@/services/supabase'
+import { usePluStore } from '@/stores/plu'
+import { useAnalytics } from '@/composables/useAnalytics'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
+import CitySelector from '@/components/plu/CitySelector.vue'
+import ZoningSelector from '@/components/plu/ZoningSelector.vue'
+import ZoneSelector from '@/components/plu/ZoneSelector.vue'
 
 // Composables
 const router = useRouter()
-
-// Local state
-const isLoading = ref(false)
-const errorMessage = ref('')
-const cities = ref([])
-const zonings = ref([])
-const zones = ref([])
-
-// Selection state
-const selection = reactive({
-  cityId: '',
-  zoningId: '',
-  zoneId: ''
-})
+const pluStore = usePluStore()
+const { trackEvent } = useAnalytics()
 
 // Computed
-const canViewSynthesis = computed(() => {
-  return selection.cityId && selection.zoningId && selection.zoneId
-})
-
-const cityPlaceholderText = computed(() => {
-  return selection.cityId ? 'Sélectionnez un zonage' : "Sélectionnez d'abord une ville"
-})
-
-const zonePlaceholderText = computed(() => {
-  return selection.zoningId ? 'Sélectionnez une zone' : "Sélectionnez d'abord un zonage"
-})
+const isLoading = computed(() => pluStore.isLoading)
+const errorMessage = computed(() => pluStore.error)
+const canViewSynthesis = computed(() => pluStore.canViewSynthesis)
 
 // Methods
-const loadCities = async () => {
-  try {
-    isLoading.value = true
-    errorMessage.value = ''
-
-    const result = await dbService.getCities()
-
-    if (result.success) {
-      cities.value = result.data
-    } else {
-      errorMessage.value = 'Erreur lors du chargement des communes'
-    }
-  } catch (error) {
-    console.error('Error loading cities:', error)
-    errorMessage.value = 'Une erreur inattendue s\'est produite'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const onCityChange = async () => {
-  if (!selection.cityId) {
-    zonings.value = []
-    zones.value = []
-    selection.zoningId = ''
-    selection.zoneId = ''
-    return
-  }
-
-  try {
-    isLoading.value = true
-    errorMessage.value = ''
-    selection.zoningId = ''
-    selection.zoneId = ''
-    zones.value = []
-
-    const result = await dbService.getZonings(selection.cityId)
-
-    if (result.success) {
-      zonings.value = result.data
-    } else {
-      errorMessage.value = 'Erreur lors du chargement des zonages'
-    }
-  } catch (error) {
-    console.error('Error loading zonings:', error)
-    errorMessage.value = 'Une erreur inattendue s\'est produite'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const onZoningChange = async () => {
-  if (!selection.zoningId) {
-    zones.value = []
-    selection.zoneId = ''
-    return
-  }
-
-  try {
-    isLoading.value = true
-    errorMessage.value = ''
-    selection.zoneId = ''
-
-    const result = await dbService.getZones(selection.zoningId)
-
-    if (result.success) {
-      zones.value = result.data
-    } else {
-      errorMessage.value = 'Erreur lors du chargement des zones'
-    }
-  } catch (error) {
-    console.error('Error loading zones:', error)
-    errorMessage.value = 'Une erreur inattendue s\'est produite'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const onZoneChange = () => {
-  errorMessage.value = ''
-}
-
 const viewPluSynthesis = () => {
   if (!canViewSynthesis.value) return
+
+  const params = pluStore.getSelectionParams()
+  if (!params) return
+
+  // Track analytics event
+  trackEvent('plu_synthesis_access', {
+    city_name: pluStore.selectedCity?.name,
+    zoning_name: pluStore.selectedZoning?.name,
+    zone_name: pluStore.selectedZone?.name,
+    ...params
+  })
 
   // Navigate to PLU synthesis page with selection parameters
   router.push({
     name: 'plu-synthesis',
-    query: {
-      city: selection.cityId,
-      zoning: selection.zoningId,
-      zone: selection.zoneId
-    }
+    query: params
   })
+}
+
+const handleSelectionComplete = (selectionData) => {
+  // Auto-navigate or show completion state
+  console.log('Selection complete:', selectionData)
 }
 
 // Typewriter effect logic
@@ -170,8 +84,11 @@ function applyTypewriterEffect(element, text, speed) {
 }
 
 // Initialize
-onMounted(() => {
-  loadCities()
+onMounted(async () => {
+  // Initialize PLU store (loads cities)
+  await pluStore.initializeSelection()
+
+  // Typewriter effect
   const subtitleElement = document.getElementById("typewriter-subtitle");
   const textToType = "MWPLU - 2025";
   const typingSpeed = 85;
@@ -199,65 +116,17 @@ onMounted(() => {
         <div class="grid">
           <!-- City Selection -->
           <div class="grid-col-4 form-group">
-            <label for="city-select" class="form-label">Ville</label>
-            <select
-              id="city-select"
-              v-model="selection.cityId"
-              class="form-select"
-              :disabled="isLoading"
-              @change="onCityChange"
-            >
-              <option value="">Sélectionnez une ville</option>
-              <option
-                v-for="city in cities"
-                :key="city.id"
-                :value="city.id"
-              >
-                {{ city.name }}
-              </option>
-            </select>
+            <CitySelector />
           </div>
 
           <!-- Zoning Selection -->
           <div class="grid-col-4 form-group">
-            <label for="zoning-select" class="form-label">Zonage</label>
-            <select
-              id="zoning-select"
-              v-model="selection.zoningId"
-              class="form-select"
-              :disabled="isLoading || !selection.cityId"
-              @change="onZoningChange"
-            >
-              <option value="">{{ cityPlaceholderText }}</option>
-              <option
-                v-for="zoning in zonings"
-                :key="zoning.id"
-                :value="zoning.id"
-              >
-                {{ zoning.name }}
-              </option>
-            </select>
+            <ZoningSelector />
           </div>
 
           <!-- Zone Selection -->
           <div class="grid-col-4 form-group">
-            <label for="zone-select" class="form-label">Zone</label>
-            <select
-              id="zone-select"
-              v-model="selection.zoneId"
-              class="form-select"
-              :disabled="isLoading || !selection.zoningId"
-              @change="onZoneChange"
-            >
-              <option value="">{{ zonePlaceholderText }}</option>
-              <option
-                v-for="zone in zones"
-                :key="zone.id"
-                :value="zone.id"
-              >
-                {{ zone.name }}
-              </option>
-            </select>
+            <ZoneSelector @selection-complete="handleSelectionComplete" />
           </div>
         </div>
 
@@ -302,7 +171,7 @@ onMounted(() => {
   margin-bottom: 3rem;
   overflow: hidden;
   text-align: center;
-  background: var(--primary-white);
+  background: var(--color-white);
 }
 
 .hero-section::before {
@@ -327,7 +196,7 @@ onMounted(() => {
   font-size: 2.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: var(--primary-black);
+  color: var(--color-black);
 }
 
 .hero-section .lead {
@@ -336,7 +205,7 @@ onMounted(() => {
 }
 
 .form-home {
-  background: var(--primary-white);
+  background: var(--color-white);
   border-radius: 4px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

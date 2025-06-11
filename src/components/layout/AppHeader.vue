@@ -334,7 +334,7 @@ export default {
 
 .nav-link {
   text-decoration: none;
-  color: var(--primary-black);
+  color: var(--color-black);
   font-weight: var(--font-weight-medium);
   padding: 8px 12px;
   transition: all 0.2s ease;
@@ -379,7 +379,7 @@ export default {
 
 .auth-button-secondary {
   background-color: transparent;
-  color: var(--primary-black);
+  color: var(--color-black);
   border: 1px solid var(--color-gray-300);
 }
 
@@ -424,7 +424,7 @@ export default {
 }
 
 .user-name {
-  color: var(--primary-black);
+  color: var(--color-black);
   font-weight: var(--font-weight-medium);
 }
 
@@ -444,7 +444,7 @@ export default {
 .dropdown-item {
   display: block;
   padding: 10px 16px;
-  color: var(--primary-black);
+  color: var(--color-black);
   text-decoration: none;
   transition: background-color 0.15s ease;
   border: none;
@@ -489,7 +489,7 @@ export default {
   position: absolute;
   height: 2px;
   width: 100%;
-  background: var(--primary-black);
+  background: var(--color-black);
   border-radius: 9px;
   opacity: 1;
   left: 0;

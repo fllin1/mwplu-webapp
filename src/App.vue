@@ -18,6 +18,9 @@
     <div v-else>
       <router-view />
     </div>
+
+    <!-- Cookie consent banner -->
+    <CookieBanner />
   </div>
 </template>
 
@@ -25,6 +28,7 @@
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import GlobalNotification from '@/components/common/GlobalNotification.vue'
+import CookieBanner from '@/components/common/CookieBanner.vue'
 
 const authStore = useAuthStore()
 

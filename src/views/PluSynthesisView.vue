@@ -599,7 +599,7 @@ export default {
 
 .plu-main-title {
   font-size: var(--font-size-3xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-2);
   line-height: 1.2;
 }
@@ -637,7 +637,7 @@ export default {
 .stat-number {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   display: block;
   margin-bottom: var(--space-1);
 }
@@ -683,7 +683,7 @@ export default {
 
 .tab-button:hover:not(.tab-button--active) {
   background-color: var(--color-gray-100);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
 }
 
 .tab-button--active {
@@ -716,7 +716,7 @@ export default {
 
 .section-heading {
   font-size: var(--font-size-xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-gray-200);
@@ -724,7 +724,7 @@ export default {
 
 .section-subheading {
   font-size: var(--font-size-lg);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-4);
 }
 
@@ -749,7 +749,7 @@ export default {
 .synthesis-text-content :deep(h1),
 .synthesis-text-content :deep(h2),
 .synthesis-text-content :deep(h3) {
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-top: var(--space-8);
   margin-bottom: var(--space-4);
 }
@@ -781,7 +781,7 @@ export default {
 .rule-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-2);
 }
 
@@ -865,7 +865,7 @@ export default {
   border-radius: var(--radius-button);
   background-color: var(--color-white);
   font-size: var(--font-size-md);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   resize: vertical;
   min-height: 100px;
@@ -937,7 +937,7 @@ export default {
 
 .comment-author {
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
 }
 
 .comment-date {
@@ -999,7 +999,7 @@ export default {
 .source-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-1);
 }
 
@@ -1069,7 +1069,7 @@ export default {
 .download-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-1);
 }
 
@@ -1107,7 +1107,7 @@ export default {
 
 .btn-secondary {
   background-color: transparent;
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   border: 1px solid var(--color-gray-300);
 }
 

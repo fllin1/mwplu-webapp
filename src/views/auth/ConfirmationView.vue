@@ -180,7 +180,7 @@ onUnmounted(() => {
 .auth-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-2);
 }
 
@@ -205,7 +205,7 @@ onUnmounted(() => {
 
 .confirmation-content-title {
   font-size: var(--font-size-xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-2);
 }
 
@@ -228,7 +228,7 @@ onUnmounted(() => {
 .confirmation-info-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-3);
 }
 
@@ -318,7 +318,7 @@ onUnmounted(() => {
 
 .btn-secondary {
   background-color: transparent;
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   border: 1px solid var(--color-gray-300);
 }
 

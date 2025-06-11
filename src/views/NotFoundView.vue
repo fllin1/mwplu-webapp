@@ -123,7 +123,7 @@ export default {
 .error-title {
   font-size: 6rem;
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin: 0 0 var(--space-4) 0;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -132,7 +132,7 @@ export default {
 .error-subtitle {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin: 0 0 var(--space-4) 0;
 }
 
@@ -166,7 +166,7 @@ export default {
 
 .help-title {
   font-size: var(--font-size-xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-4);
 }
 
@@ -206,7 +206,7 @@ export default {
 
 .btn-secondary {
   background-color: transparent;
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   border-color: var(--color-gray-300);
 }
 

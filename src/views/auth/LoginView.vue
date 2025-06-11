@@ -113,7 +113,7 @@ export default {
 .logo-text {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-extrabold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -121,7 +121,7 @@ export default {
 .auth-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin: var(--space-4) 0 var(--space-2) 0;
 }
 

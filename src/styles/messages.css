@@ -16,7 +16,7 @@
 }
 
 .status-message {
-  color: var(--primary-black);
+  color: var(--color-black);
   background: var(--color-info);
 }
 
@@ -28,21 +28,21 @@
 }
 
 .alert-success {
-  color: var(--primary-black);
+  color: var(--color-black);
   background-color: #d4edda;
 }
 
 .alert-info {
-  color: var(--primary-black);
+  color: var(--color-black);
   background-color: var(--color-info);
 }
 
 .alert-warning {
-  color: var(--primary-black);
+  color: var(--color-black);
   background-color: var(--color-error);
 }
 
 .alert-danger {
-  color: var(--primary-black);
+  color: var(--color-black);
   background-color: var(--color-error);
 }

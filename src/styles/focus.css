@@ -5,7 +5,7 @@
 
 /* Add custom focus styles for keyboard users */
 *:focus-visible {
-  outline: 2px solid var(--color-primary-black);
+  outline: 2px solid var(--color-color-black);
   outline-offset: 2px;
 }
 
@@ -14,7 +14,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-primary-black);
+  box-shadow: 0 0 0 2px var(--color-color-black);
 }
 
 /* Skip to main content link */
@@ -22,7 +22,7 @@ select:focus-visible {
   position: absolute;
   top: -40px;
   left: 0;
-  background: var(--color-primary-black);
+  background: var(--color-color-black);
   color: var(--color-white);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-button);

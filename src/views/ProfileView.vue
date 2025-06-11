@@ -322,7 +322,7 @@ export default {
 
 .page-title {
   font-size: var(--font-size-3xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-4);
   line-height: 1.2;
 }
@@ -365,7 +365,7 @@ export default {
 
 .form-title {
   font-size: var(--font-size-xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-4);
 }
 
@@ -388,7 +388,7 @@ export default {
   border-radius: var(--radius-button);
   background-color: var(--color-white);
   font-size: var(--font-size-md);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -430,7 +430,7 @@ export default {
 
 .info-title {
   font-size: var(--font-size-xl);
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   margin-bottom: var(--space-4);
 }
 
@@ -456,7 +456,7 @@ export default {
 }
 
 .info-item strong {
-  color: var(--color-primary-black);
+  color: var(--color-color-black);
   font-weight: var(--font-weight-medium);
 }
 
