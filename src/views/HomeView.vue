@@ -1,8 +1,10 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { usePluStore } from '@/stores/plu'
+import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 import { useAnalytics } from '@/composables/useAnalytics'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
@@ -13,12 +15,28 @@ import ZoneSelector from '@/components/plu/ZoneSelector.vue'
 // Composables
 const router = useRouter()
 const pluStore = usePluStore()
+const authStore = useAuthStore()
+const uiStore = useUIStore()
 const { trackEvent } = useAnalytics()
 
 // Computed
 const isLoading = computed(() => pluStore.isLoading)
 const errorMessage = computed(() => pluStore.error)
 const canViewSynthesis = computed(() => pluStore.canViewSynthesis)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+// Watch for selection changes to prompt login
+watch(
+  () => pluStore.selectedCityId,
+  (newCityId) => {
+    if (newCityId && !isAuthenticated.value) {
+      uiStore.showInfo(
+        'Veuillez vous connecter pour accéder aux synthèses de PLU.',
+        'La connexion est requise pour accéder aux synthèses de PLU.'
+      )
+    }
+  }
+)
 
 // Methods
 const viewPluSynthesis = () => {
@@ -40,11 +58,6 @@ const viewPluSynthesis = () => {
     name: 'plu-synthesis',
     query: params
   })
-}
-
-const handleSelectionComplete = (selectionData) => {
-  // Auto-navigate or show completion state
-  console.log('Selection complete:', selectionData)
 }
 
 // Typewriter effect logic
@@ -126,7 +139,7 @@ onMounted(async () => {
 
           <!-- Zone Selection -->
           <div class="grid-col-4 form-group">
-            <ZoneSelector @selection-complete="handleSelectionComplete" />
+            <ZoneSelector :show-summary="false" />
           </div>
         </div>
 
@@ -166,7 +179,6 @@ onMounted(async () => {
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  margin-top: 4rem;
   padding: 7rem 0;
   margin-bottom: 3rem;
   overflow: hidden;
@@ -186,8 +198,8 @@ onMounted(async () => {
   background-size: 20px 20px;
   z-index: 1;
   opacity: 0.5;
-  mask: radial-gradient(ellipse 90% 90% at center, black 20%, transparent 80%);
-  -webkit-mask: radial-gradient(ellipse 90% 90% at center, black 30%, transparent 80%);
+  mask: radial-gradient(ellipse 90% 80% at center, black 20%, transparent 80%);
+  -webkit-mask: radial-gradient(ellipse 90% 80% at center, black 30%, transparent 80%);
 }
 
 .hero-section h2 {

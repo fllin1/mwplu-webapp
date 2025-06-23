@@ -6,7 +6,6 @@
         <router-link to="/" class="logo-link">
           <img src="@/assets/icons/logos/mwplu.svg" alt="MWPLU Logo" class="header-logo" />
         </router-link>
-        <span class="brand-subtitle">Répertoire des synthèses de PLU</span>
       </div>
 
       <!-- Desktop Navigation -->
@@ -274,7 +273,7 @@ export default {
 .header-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 24px; /* Adjust padding as needed */
+  padding: 9px 24px; /* Adjust padding as needed */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -297,7 +296,7 @@ export default {
 }
 
 .app-header.scrolled .header-logo {
-  height: 38px; /* Smaller height when scrolled */
+  height: 44px; /* Smaller height when scrolled */
 }
 
 .logo-link:hover .header-logo {
@@ -360,19 +359,19 @@ export default {
   padding: 8px 16px;
   border-radius: var(--radius-button);
   text-decoration: none;
-  font-weight: var(--font-weight-semibold);
   transition: all 0.2s ease;
 }
 
 .auth-button-primary {
-  background-color: var(--color-blue);
-  color: var(--color-white);
-  border: 1px solid var(--color-blue);
+  background-color: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--color-gray-300);
 }
 
 .auth-button-primary:hover {
-  background-color: var(--color-blue-dark);
-  border-color: var(--color-blue-dark);
+  background-color: var(--color-gray-100);
+  color: var(--color-black);
+  border-color: var(--color-gray-400);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
@@ -554,12 +553,13 @@ export default {
   }
 
   .header-nav.nav-open {
+    display: flex;
     transform: translateX(0%);
   }
 
   .nav-list {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 15px;
     width: 100%;
     margin-bottom: 20px;
@@ -573,11 +573,12 @@ export default {
     display: block;
     width: 100%;
     padding: 12px 10px;
-    text-align: left;
+    text-align: center;
   }
 
   .header-actions {
     flex-direction: column;
+    align-items: center;
     width: 100%;
     gap: 15px;
   }
@@ -586,6 +587,8 @@ export default {
     flex-direction: column;
     width: 100%;
     gap: 10px;
+    border: none;
+    padding: 0;
   }
 
   .auth-button {
@@ -611,7 +614,7 @@ export default {
   }
 
   .dropdown-item {
-    padding-left: 30px;
+    text-align: center;
   }
 
   .mobile-menu-toggle {

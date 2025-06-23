@@ -12,12 +12,13 @@
  * - 1.0.0 (2025-06-02): Initial version with Turnstile loading functionality.
  */
 
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
+
+// Global state - shared across all component instances
+const isLoaded = ref(false)
+const error = ref(null)
 
 export const useTurnstile = () => {
-  const isLoaded = ref(false)
-  const error = ref(null)
-
   const loadTurnstile = () => {
     return new Promise((resolve, reject) => {
       // Check if already loaded

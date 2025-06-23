@@ -13,6 +13,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { dbService } from '@/services/supabase'
 import { useAnalytics } from '@/composables/useAnalytics'
+import { capitalizeWords } from '@/utils/helpers'
 
 export const usePluStore = defineStore('plu', () => {
   const { trackEvent } = useAnalytics()
@@ -67,7 +68,7 @@ export const usePluStore = defineStore('plu', () => {
       const result = await dbService.getCities()
 
       if (result.success) {
-        cities.value = result.data
+        cities.value = result.data.map((city) => ({ ...city, name: capitalizeWords(city.name) }))
       } else {
         setError('Erreur lors du chargement des communes')
       }

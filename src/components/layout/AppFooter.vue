@@ -121,7 +121,7 @@ export default {
   background-color: var(--color-gray-50);
   border-top: 1px solid var(--color-gray-200);
   margin-top: auto;
-  padding: var(--space-12) 0 var(--space-6);
+  padding: var(--space-8) 0 var(--space-6);
 }
 
 .container {

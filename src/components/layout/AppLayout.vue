@@ -167,7 +167,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-top: 72px; /* Space for fixed header (48px logo + 24px padding) */
+  padding-top: 36px; /* Space for fixed header (48px logo + 24px padding) */
 }
 
 .main-content.full-height {
@@ -175,8 +175,8 @@ export default {
 }
 
 .main-content.padded {
-  padding: var(--space-6) 0;
-  padding-top: calc(72px + var(--space-6)); /* Header space + content padding */
+  /* padding: var(--space-6) 0; */
+  padding-top: 60px;
 }
 
 .content-container {

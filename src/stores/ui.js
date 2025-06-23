@@ -164,7 +164,7 @@ export const useUIStore = defineStore('ui', {
         message,
         description,
         autoDismiss: true,
-        autoDismissDelay: 6000,
+        autoDismissDelay: 7000,
       })
     },
 
@@ -179,7 +179,7 @@ export const useUIStore = defineStore('ui', {
         message,
         description,
         autoDismiss: true,
-        autoDismissDelay: 5000,
+        autoDismissDelay: 7000,
       })
     },
 

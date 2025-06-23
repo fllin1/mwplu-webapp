@@ -29,7 +29,7 @@
     </div>
 
     <!-- Selection summary when complete -->
-    <div v-if="isSelectionComplete" class="selection-summary">
+    <div v-if="isSelectionComplete && showSummary" class="selection-summary">
       <div class="summary-item">
         <span class="summary-label">Ville :</span>
         <span class="summary-value">{{ selectedCity?.name }}</span>

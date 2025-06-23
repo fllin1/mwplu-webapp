@@ -2,10 +2,14 @@
 
 ## Home Page
 
-- [ ] Add "Métropole " before city, and Capitalize
-- [ ] After selecting city, zonage and zone, remove the recap pop-up that appears.
+- [x] Add "Métropole" before city, and Capitalize
+- [x] After selecting city, zonage and zone, remove the recap pop-up that appears.
+- [x] Reduce the police size ?
 
 ## Authentication system
+
+- [ ] Replace Microsoft auth with Facebook auth
+- [ ] Add Apple, Facebook, Linkedin auth
 
 ### Sign-up
 
@@ -16,6 +20,8 @@
 - [x] Maybe add phone number
 
 ### Login
+
+- [x] Correct the Captcha that doesn't appear, even though the code is there
 
 ## Google analytics
 

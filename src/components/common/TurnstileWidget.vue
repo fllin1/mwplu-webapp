@@ -9,15 +9,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useTurnstile } from '@/composables/useTurnstile'
 
 const props = defineProps({
   siteKey: {
     type: String,
-    required: true,
+    // The default value is sourced from environment variables for standard use,
+    // but can be overridden by a prop for specific cases.
+    default: () => import.meta.env.VITE_TURNSTILE_SITE_KEY,
   },
-  theme: {
+  theme: {  
     type: String,
     default: 'auto', // 'light', 'dark', 'auto'
   },
@@ -42,45 +44,48 @@ const widgetId = ref(null)
 const token = ref(null)
 const error = ref(null)
 
-const { isLoaded, loadTurnstile } = useTurnstile()
+const { isLoaded } = useTurnstile()
 
-const initializeTurnstile = async () => {
+const renderTurnstile = async () => {
+  // Check prerequisites
+  if (!isLoaded.value || !turnstileRef.value || widgetId.value) {
+    return
+  }
+
+  // Ensure DOM is ready
+  await nextTick()
+
   try {
-    const turnstile = await loadTurnstile()
+    if (!window.turnstile) {
+      throw new Error('Turnstile not available')
+    }
 
-    if (!turnstileRef.value) return
-
-    widgetId.value = turnstile.render(turnstileRef.value, {
+    widgetId.value = window.turnstile.render(turnstileRef.value, {
       sitekey: props.siteKey,
       theme: props.theme,
       size: props.size,
       action: props.action,
       cData: props.cData,
-      callback: (token) => {
-        console.log('Turnstile verified:', token)
-        token.value = token
+      callback: (verifiedToken) => {
+        token.value = verifiedToken
         error.value = null
-        emit('verified', token)
+        emit('verified', verifiedToken)
       },
-      'error-callback': (error) => {
-        console.error('Turnstile error:', error)
+      'error-callback': (err) => {
         error.value = 'CAPTCHA verification failed'
-        emit('error', error)
+        emit('error', err)
       },
       'expired-callback': () => {
-        console.warn('Turnstile expired')
         token.value = null
         error.value = 'CAPTCHA expired, please try again'
         emit('expired')
       },
       'timeout-callback': () => {
-        console.warn('Turnstile timeout')
         error.value = 'CAPTCHA timeout, please try again'
         emit('timeout')
       },
     })
   } catch (err) {
-    console.error('Failed to initialize Turnstile:', err)
     error.value = 'Failed to load CAPTCHA'
     emit('error', err)
   }
@@ -94,33 +99,39 @@ const reset = () => {
   }
 }
 
-const getToken = () => {
-  return token.value
-}
+const getToken = () => token.value
+const isVerified = () => !!token.value
 
-const isVerified = () => {
-  return !!token.value
-}
-
-// Watch for theme changes
-watch(
-  () => props.theme,
-  () => {
-    reset()
-  },
-)
-
+// Render when component mounts if script is ready
 onMounted(() => {
-  initializeTurnstile()
+  if (isLoaded.value) {
+    renderTurnstile()
+  }
 })
 
+// Render when script becomes available
+watch(isLoaded, (newValue) => {
+  if (newValue) {
+    renderTurnstile()
+  }
+})
+
+// Re-render on theme change
+watch(() => props.theme, () => {
+  if (widgetId.value !== null && window.turnstile) {
+    window.turnstile.remove(widgetId.value)
+    widgetId.value = null
+    renderTurnstile()
+  }
+})
+
+// Cleanup on unmount
 onUnmounted(() => {
   if (window.turnstile && widgetId.value !== null) {
     window.turnstile.remove(widgetId.value)
   }
 })
 
-// Expose methods to parent component
 defineExpose({
   reset,
   getToken,

@@ -27,14 +27,24 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useTurnstile } from '@/composables/useTurnstile'
 import GlobalNotification from '@/components/common/GlobalNotification.vue'
 import CookieBanner from '@/components/common/CookieBanner.vue'
 
 const authStore = useAuthStore()
+const { loadTurnstile } = useTurnstile()
 
 onMounted(async () => {
   // Initialize auth state
   await authStore.initializeAuth()
+
+  // Initialize Turnstile script
+  try {
+    await loadTurnstile()
+    console.log('Turnstile script loaded successfully.')
+  } catch (error) {
+    console.error('Failed to load Turnstile script:', error)
+  }
 
   // Setup auth listener for real-time updates
   authStore.setupAuthListener()

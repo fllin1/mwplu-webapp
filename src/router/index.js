@@ -26,8 +26,8 @@ import ProfileView from '@/views/ProfileView.vue'
 // Auth views
 import LoginView from '@/views/auth/LoginView.vue'
 import SignupView from '@/views/auth/SignupView.vue'
-import ConfirmationView from '@/views/auth/ConfirmationView.vue'
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
+import ConfirmationView from '@/views/auth/ConfirmationView.vue'
 
 // Docs views
 import DocumentationView from '@/views/docs/DocumentationView.vue'
@@ -69,8 +69,7 @@ const routes = [
     name: 'signup',
     component: SignupView,
     meta: {
-      title: 'Inscription - MWPLU',
-      requiresAuth: false,
+      title: 'Créer un compte - MWPLU',
       requiresGuest: true,
     },
   },
