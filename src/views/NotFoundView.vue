@@ -34,9 +34,6 @@
           <router-link to="/contact" class="btn btn-secondary btn-small">
             Contactez-nous
           </router-link>
-          <router-link to="/docs/sitemap" class="btn btn-secondary btn-small">
-            Plan du site
-          </router-link>
         </div>
       </div>
     </div>

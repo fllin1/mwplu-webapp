@@ -3,6 +3,13 @@
     <!-- Application Header -->
     <AppHeader />
 
+    <!-- Breadcrumbs Area (Optional) -->
+    <div v-if="$slots.breadcrumbs" class="breadcrumbs-area">
+      <div class="breadcrumbs-container">
+        <slot name="breadcrumbs" />
+      </div>
+    </div>
+
     <!-- Main Content Area -->
     <main class="main-content" :class="contentClasses">
       <div v-if="showContainer" class="content-container">
@@ -47,6 +54,8 @@
  * - showContainer: Whether to wrap content in a max-width container
  * - contentClass: Additional CSS classes for content area
  * - fullHeight: Whether content should take full viewport height
+ * - padded: Whether to add padding to the content area
+ * - hasBreadcrumbs: Whether the page has breadcrumbs (affects spacing)
  *
  * Design Principles:
  * - Semantic HTML structure for accessibility
@@ -102,6 +111,14 @@ export default {
     padded: {
       type: Boolean,
       default: true
+    },
+
+    /**
+     * Whether the page has breadcrumbs (affects spacing)
+     */
+    hasBreadcrumbs: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -127,6 +144,10 @@ export default {
 
       if (props.padded) {
         classes.push('padded')
+      }
+
+      if (props.hasBreadcrumbs) {
+        classes.push('has-breadcrumbs')
       }
 
       if (props.contentClass) {
@@ -167,16 +188,29 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-top: 36px; /* Space for fixed header (48px logo + 24px padding) */
+  padding-top: 60px;
+}
+
+/* Breadcrumbs Area */
+.breadcrumbs-area {
+  padding: var(--space-3) var(--space-4);
+  margin-top: 56px; /* Same as main-content padding-top */
+  margin-bottom: -36px;
+}
+
+/* Adjust main content spacing when breadcrumbs are present */
+.main-content.has-breadcrumbs {
+  padding-top: 0; /* Remove top padding since breadcrumbs handle the header spacing */
+}
+
+.breadcrumbs-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
 }
 
 .main-content.full-height {
   min-height: calc(100vh - 136px - 200px); /* Viewport minus header (72px + 64px) and footer approximate heights */
-}
-
-.main-content.padded {
-  /* padding: var(--space-6) 0; */
-  padding-top: 60px;
 }
 
 .content-container {
@@ -218,6 +252,18 @@ export default {
     padding-top: 64px; /* Smaller mobile header */
   }
 
+  .main-content.has-breadcrumbs {
+    padding-top: 0; /* Remove top padding for mobile too */
+  }
+
+  .breadcrumbs-area {
+    margin-top: 64px; /* Match mobile header spacing */
+  }
+
+  .breadcrumbs-container {
+    padding: 0 var(--space-3);
+  }
+
   .main-content.padded {
     padding: var(--space-4) 0;
     padding-top: calc(64px + var(--space-4)); /* Header space + content padding */
@@ -238,6 +284,10 @@ export default {
   }
 
   .content-container {
+    padding: 0 var(--space-2);
+  }
+
+  .breadcrumbs-container {
     padding: 0 var(--space-2);
   }
 }

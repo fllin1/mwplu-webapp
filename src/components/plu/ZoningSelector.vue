@@ -94,7 +94,6 @@ const handleZoningChange = async (event) => {
   margin-bottom: 0.5rem;
   font-weight: 500;
   color: var(--color-black);
-  font-size: 0.9rem;
 }
 
 .select-wrapper {
@@ -108,7 +107,6 @@ const handleZoningChange = async (event) => {
   border-radius: 2px;
   background-color: var(--color-white);
   color: var(--color-black);
-  font-size: 1rem;
   transition: all 0.2s ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");

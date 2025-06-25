@@ -119,7 +119,7 @@
 
           <!-- Vertical Divider -->
           <div class="vertical-divider-container"></div>
-          
+
           <!-- Right side: Social logins and links -->
           <div class="social-login-container">
             <div class="social-buttons-stack">
@@ -438,7 +438,7 @@ export default {
   min-height: 80vh;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-4);
+  padding: var(--space-8) var(--space-4);
 }
 
 .auth-container {

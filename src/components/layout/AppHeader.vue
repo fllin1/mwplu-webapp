@@ -253,7 +253,7 @@ export default {
 */
 .app-header {
   background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   position: fixed; /* Changed from sticky to fixed for consistent scroll behavior */
@@ -265,7 +265,7 @@ export default {
 }
 
 .app-header.scrolled {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.87);
   border-bottom-color: var(--border-gray, #eaeaea);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -291,12 +291,12 @@ export default {
 }
 
 .header-logo {
-  height: 48px; /* Default height */
+  height: 39px; /* Default height */
   transition: all 0.3s ease;
 }
 
 .app-header.scrolled .header-logo {
-  height: 44px; /* Smaller height when scrolled */
+  height: 38px; /* Smaller height when scrolled */
 }
 
 .logo-link:hover .header-logo {

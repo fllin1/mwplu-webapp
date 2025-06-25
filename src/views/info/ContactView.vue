@@ -1,8 +1,10 @@
 <template>
-  <AppLayout>
-    <div class="main-content">
+  <AppLayout :has-breadcrumbs="true">
+    <template #breadcrumbs>
       <BreadcrumbNav :items="breadcrumbItems" />
+    </template>
 
+    <div class="main-content">
       <section class="page-header-section">
         <h1 class="page-title">Contactez-nous</h1>
         <p class="page-subtitle">
@@ -200,11 +202,11 @@ export default {
 <style scoped>
 .main-content {
   max-width: 1200px;
-  margin: var(--space-8) auto;
+  margin: var(--space-4) auto;
   padding: 0 var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
+  gap: var(--space-6);
 }
 
 .page-header-section {

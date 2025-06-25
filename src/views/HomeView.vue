@@ -139,7 +139,7 @@ onMounted(async () => {
 
           <!-- Zone Selection -->
           <div class="grid-col-4 form-group">
-            <ZoneSelector :show-summary="false" />
+            <ZoneSelector />
           </div>
         </div>
 
@@ -180,7 +180,7 @@ onMounted(async () => {
   margin-left: -50vw;
   margin-right: -50vw;
   padding: 7rem 0;
-  margin-bottom: 3rem;
+  margin-bottom: 1.75rem;
   overflow: hidden;
   text-align: center;
   background: var(--color-white);
@@ -218,7 +218,7 @@ onMounted(async () => {
 
 .form-home {
   background: var(--color-white);
-  border-radius: 4px;
+  border-radius: 3px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 3rem;

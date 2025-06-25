@@ -222,9 +222,9 @@
                 <img src="@/assets/icons/socials/apple.svg" alt="Apple" class="social-icon" />
                 <span>Continuer avec Apple</span>
               </button>
-              <button type="button" class="social-button microsoft-button" disabled>
-                <img src="@/assets/icons/socials/microsoft.svg" alt="Microsoft" class="social-icon" />
-                <span>Continuer avec Microsoft</span>
+              <button type="button" class="social-button facebook-button" disabled>
+                <img src="@/assets/icons/socials/facebook.svg" alt="Facebook" class="social-icon" />
+                <span>Continuer avec Facebook</span>
               </button>
               <button type="button" class="social-button linkedin-button" disabled>
                 <img src="@/assets/icons/socials/linkedin.svg" alt="LinkedIn" class="social-icon" />
@@ -583,7 +583,7 @@ export default {
             form.confirmPassword = ''
             form.name = ''
             captchaToken.value = ''
-            
+
             // Navigate to confirmation page
             await router.push({
               name: 'confirmation',
@@ -632,7 +632,7 @@ export default {
     const showPolicy = async (policy) => {
       isModalVisible.value = true
       modalIsLoading.value = true
-      
+
       const policyMap = {
         terms: {
           url: '/policies/terms',
@@ -656,7 +656,7 @@ export default {
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, 'text/html')
         const contentNode = doc.querySelector('.policy-container')
-        
+
         if (contentNode) {
           modalContent.value = contentNode.innerHTML
         } else {
@@ -731,7 +731,7 @@ export default {
   align-items: center;
   justify-content: center;
   /* background-color: var(--color-gray-50); */
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-8) var(--space-4);
 }
 
 .auth-container {
