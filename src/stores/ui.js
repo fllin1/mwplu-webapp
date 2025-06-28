@@ -103,6 +103,12 @@ export const useUIStore = defineStore('ui', {
       autoDismiss = true,
       autoDismissDelay = 5000,
     }) {
+      // Validate message is not empty
+      if (!message || typeof message !== 'string' || message.trim() === '') {
+        console.warn('Attempted to show notification with empty message:', message)
+        return
+      }
+
       // Hide any existing notification first
       this.hideNotification()
 
@@ -110,7 +116,7 @@ export const useUIStore = defineStore('ui', {
       this.notification = {
         show: true,
         type,
-        message,
+        message: message.trim(),
         description,
         autoDismiss,
         autoDismissDelay,

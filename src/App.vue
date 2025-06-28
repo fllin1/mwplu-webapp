@@ -1,8 +1,5 @@
 <template>
   <div id="app">
-    <!-- Global notification component -->
-    <GlobalNotification />
-
     <!-- Loading overlay -->
     <div
       v-if="authStore.isLoading && !authStore.isInitialized"
@@ -28,7 +25,6 @@
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTurnstile } from '@/composables/useTurnstile'
-import GlobalNotification from '@/components/common/GlobalNotification.vue'
 import CookieBanner from '@/components/common/CookieBanner.vue'
 
 const authStore = useAuthStore()

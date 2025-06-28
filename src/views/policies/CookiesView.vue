@@ -59,7 +59,7 @@
             <ul>
               <li>Événements d'authentification : `login` (connexion réussie), `signup` (inscription), `logout` (déconnexion).</li>
               <li>Événements d'interaction avec le PLU : `plu_view` (consultation d'une synthèse de PLU), `plu_download` (téléchargement d'un document), `plu_comment` (ajout d'un commentaire), `plu_rate` (notation d'un document).</li>
-              <li>Événements de parcours utilisateur : `city_selected` (sélection d'une ville), `zone_selected` (sélection complète d'une zone), `search_performed` (si une recherche est effectuée).</li>
+              <li>Événements de parcours utilisateur : `city_selected` (sélection d'une ville ou métropole), `zone_selected` (sélection complète d'une zone), `search_performed` (si une recherche est effectuée).</li>
               <li>Événements de conversion : `contact_form_submitted` (soumission d'un formulaire de contact), ainsi que `payment_initiated` et `subscription_completed` pour nos futures fonctionnalités de paiement et d'abonnement.</li>
             </ul>
             <p>Confidentialité et conformité avec Google Analytics : Afin de respecter votre vie privée et d'assurer la conformité au RGPD, nous avons implémenté les mesures suivantes pour Google Analytics :</p>

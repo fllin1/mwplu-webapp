@@ -115,7 +115,16 @@ const routes = [
     },
   },
   {
-    path: '/plu-synthesis',
+    path: '/plu-repository/',
+    name: 'plu-search',
+    component: () => import('@/views/PluSearchView.vue'),
+    meta: {
+      title: 'Répertoire de Synthèses PLU - MWPLU',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/plu-repository/:city/:zoning/:zone',
     name: 'plu-synthesis',
     component: PluSynthesisView,
     meta: {

@@ -1,6 +1,6 @@
 <template>
   <div class="city-selector">
-    <label for="city-select" class="form-label">Ville</label>
+    <label for="city-select" class="form-label">Métropole</label>
     <div class="select-wrapper">
       <select
         id="city-select"
@@ -9,13 +9,13 @@
         :disabled="isLoading || isDisabled"
         @change="handleCityChange"
       >
-        <option value="">Sélectionnez une ville</option>
+        <option value="">Sélectionnez une métropole</option>
         <option
           v-for="city in filteredCities"
           :key="city.id"
           :value="city.id"
         >
-          {{ city.name }}
+          {{ formatCityName(city.name) }}
         </option>
       </select>
       <div v-if="isLoading" class="select-spinner">
@@ -28,7 +28,7 @@
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Rechercher une ville..."
+        placeholder="Rechercher une métropole..."
         class="search-input"
         @input="filterCities"
       />
@@ -40,6 +40,7 @@
 import { ref, computed, watch } from 'vue'
 import { usePluStore } from '@/stores/plu'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
+import { formatCityName } from '@/utils/helpers'
 
 // Props
 const props = defineProps({

@@ -32,7 +32,7 @@ export const APP_CONSTANTS = {
     LOGIN: '/login',
     SIGNUP: '/signup',
     PROFILE: '/profile',
-    PLU_SYNTHESIS: '/plu-synthesis',
+    PLU_REPOSITORY: '/plu-repository',
     CONTACT: '/contact',
     RESET_PASSWORD: '/reset-password',
   },

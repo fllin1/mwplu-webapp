@@ -228,11 +228,12 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { usePluStore } from '@/stores/plu'
 import { dbService } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
-import { capitalizeWords } from '@/utils/helpers'
+import { formatCityName } from '@/utils/helpers'
 
 export default {
   name: 'PluSynthesisView',
@@ -247,6 +248,7 @@ export default {
     const route = useRoute()
     const authStore = useAuthStore()
     const uiStore = useUIStore()
+    const pluStore = usePluStore()
 
     const isLoading = ref(true)
     const errorMessage = ref('')
@@ -271,16 +273,40 @@ export default {
       { id: 'downloads', label: 'Téléchargements' },
     ]
 
-    // Computed properties for breadcrumbs
+            // Computed properties for breadcrumbs
     const breadcrumbItems = computed(() => {
-      const items = []
-      if (pluData.value) {
-        items.push(
-          { label: capitalizeWords(pluData.value.city_name), to: { name: 'home', query: { city: pluData.value.city_id } } },
-          { label: pluData.value.zoning_name, to: { name: 'home', query: { city: pluData.value.city_id, zoning: pluData.value.zoning_id } } },
-          { label: 'Zone ' + pluData.value.zone_name, to: { name: 'plu-synthesis', query: { city: pluData.value.city_id, zoning: pluData.value.zoning_id, zone: pluData.value.zone_id } } },
-        )
+      const items = [
+        {
+          label: 'Répertoire de Synthèses',
+          path: '/plu-repository/',
+          current: false
+        },
+      ]
+
+      if (pluStore.selectedCity) {
+        items.push({
+          label: formatCityName(pluStore.selectedCity.name),
+          path: `/plu-repository/?preselect=city&city=${pluStore.selectedCity.id}`,
+          current: false
+        })
       }
+
+      if (pluStore.selectedZoning) {
+        items.push({
+          label: pluStore.selectedZoning.name,
+          path: `/plu-repository/?preselect=zoning&city=${pluStore.selectedCity.id}&zoning=${pluStore.selectedZoning.id}`,
+          current: false
+        })
+      }
+
+      if (pluStore.selectedZone) {
+        items.push({
+          label: `Zone ${pluStore.selectedZone.name}`,
+          path: undefined, // Current page, no link
+          current: true
+        })
+      }
+
       return items
     })
 
@@ -293,18 +319,25 @@ export default {
       pluData.value = null
       comments.value = []
 
-      const cityId = route.query.city
-      const zoningId = route.query.zoning
-      const zoneId = route.query.zone
+      // Extract slugs from route parameters
+      const { city: citySlug, zoning: zoningSlug, zone: zoneSlug } = route.params
 
-      if (!cityId || !zoningId || !zoneId) {
-        errorMessage.value = 'Paramètres de PLU manquants.'
+      if (!citySlug || !zoningSlug || !zoneSlug) {
+        errorMessage.value = 'Paramètres de sélection manquants'
         isLoading.value = false
         return
       }
 
       try {
-        const result = await dbService.getDocument(zoningId, zoneId)
+        // Initialize PLU store from slugs to get actual IDs
+        const success = await pluStore.initializeFromSlugs(citySlug, zoningSlug, zoneSlug)
+        if (!success) {
+          errorMessage.value = pluStore.error || 'Sélection invalide'
+          isLoading.value = false
+          return
+        }
+
+        const result = await dbService.getDocument(pluStore.selectedZoningId, pluStore.selectedZoneId)
 
         if (result.success) {
           pluData.value = result.data
@@ -480,10 +513,10 @@ export default {
     })
 
     watch(
-      () => route.query,
-      (newQuery, oldQuery) => {
-        // Only reload if relevant query params change
-        if (newQuery.city !== oldQuery.city || newQuery.zoning !== oldQuery.zoning || newQuery.zone !== oldQuery.zone) {
+      () => route.params,
+      (newParams, oldParams) => {
+        // Only reload if relevant route params change
+        if (newParams.city !== oldParams.city || newParams.zoning !== oldParams.zoning || newParams.zone !== oldParams.zone) {
           loadPluData()
         }
       },

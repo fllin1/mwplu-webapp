@@ -62,7 +62,7 @@ const isDisabled = computed(() =>
 
 const placeholderText = computed(() => {
   if (!selectedCityId.value) {
-    return "Sélectionnez d'abord une ville"
+    return "Sélectionnez d'abord une métropole"
   }
   if (isLoading.value) {
     return "Chargement des zonages..."

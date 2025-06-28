@@ -13,7 +13,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { dbService } from '@/services/supabase'
 import { useAnalytics } from '@/composables/useAnalytics'
-import { capitalizeWords } from '@/utils/helpers'
+import { createSlug, findBySlug } from '@/utils/helpers'
 
 export const usePluStore = defineStore('plu', () => {
   const { trackEvent } = useAnalytics()
@@ -68,7 +68,10 @@ export const usePluStore = defineStore('plu', () => {
       const result = await dbService.getCities()
 
       if (result.success) {
-        cities.value = result.data.map((city) => ({ ...city, name: capitalizeWords(city.name) }))
+        cities.value = result.data.map((city) => ({
+          ...city,
+          name: city.name,
+        }))
       } else {
         setError('Erreur lors du chargement des communes')
       }
@@ -187,6 +190,91 @@ export const usePluStore = defineStore('plu', () => {
     }
   }
 
+  // Slug-based navigation methods
+  const getSelectionSlugs = () => {
+    if (!canViewSynthesis.value) return null
+
+    return {
+      city: createSlug(selectedCity.value?.name),
+      zoning: createSlug(selectedZoning.value?.name),
+      zone: createSlug(selectedZone.value?.name),
+    }
+  }
+
+  const initializeFromSlugs = async (citySlug, zoningSlug, zoneSlug) => {
+    try {
+      setLoading(true)
+      clearError()
+
+      // Load cities first
+      await loadCities()
+
+      // Find city by slug
+      const city = findBySlug(cities.value, citySlug)
+      if (!city) {
+        setError('Commune non trouvée')
+        return false
+      }
+
+      await selectCity(city.id)
+
+      // Find zoning by slug
+      const zoning = findBySlug(zonings.value, zoningSlug)
+      if (!zoning) {
+        setError('Zonage non trouvé')
+        return false
+      }
+
+      await selectZoning(zoning.id)
+
+      // Find zone by slug
+      const zone = findBySlug(zones.value, zoneSlug)
+      if (!zone) {
+        setError('Zone non trouvée')
+        return false
+      }
+
+      selectZone(zone.id)
+      return true
+    } catch (error) {
+      console.error('Error initializing from slugs:', error)
+      setError("Erreur lors de l'initialisation")
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getBreadcrumbData = () => {
+    const items = []
+
+    if (selectedCity.value) {
+      items.push({
+        label: selectedCity.value.name,
+        slug: createSlug(selectedCity.value.name),
+        type: 'city',
+      })
+    }
+
+    if (selectedZoning.value) {
+      items.push({
+        label: selectedZoning.value.name,
+        slug: createSlug(selectedZoning.value.name),
+        type: 'zoning',
+      })
+    }
+
+    if (selectedZone.value) {
+      items.push({
+        label: `Zone ${selectedZone.value.name}`,
+        slug: createSlug(selectedZone.value.name),
+        type: 'zone',
+      })
+    }
+
+    return items
+  }
+
   // Initialize from query params or saved state
   const initializeSelection = async (queryParams = {}) => {
     try {
@@ -242,5 +330,10 @@ export const usePluStore = defineStore('plu', () => {
     getSelectionParams,
     initializeSelection,
     clearError,
+
+    // Slug-based methods
+    getSelectionSlugs,
+    initializeFromSlugs,
+    getBreadcrumbData,
   }
 })

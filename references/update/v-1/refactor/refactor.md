@@ -188,8 +188,8 @@ src/
 
 ### 4.2 PLU Synthesis Page
 
-- [ ] Create `PluSynthesisView.vue` main container
-- [ ] Create `PluTabs.vue` for tab navigation:
+- [x] Create `PluSynthesisView.vue` main container
+- [x] Create `PluTabs.vue` for tab navigation:
   - Synthesis content
   - Comments & Ratings
   - Source documents

@@ -1,64 +1,8 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted } from 'vue'
 
-import { usePluStore } from '@/stores/plu'
-import { useAuthStore } from '@/stores/auth'
-import { useUIStore } from '@/stores/ui'
-import { useAnalytics } from '@/composables/useAnalytics'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import BaseSpinner from '@/components/common/BaseSpinner.vue'
-import CitySelector from '@/components/plu/CitySelector.vue'
-import ZoningSelector from '@/components/plu/ZoningSelector.vue'
-import ZoneSelector from '@/components/plu/ZoneSelector.vue'
-
-// Composables
-const router = useRouter()
-const pluStore = usePluStore()
-const authStore = useAuthStore()
-const uiStore = useUIStore()
-const { trackEvent } = useAnalytics()
-
-// Computed
-const isLoading = computed(() => pluStore.isLoading)
-const errorMessage = computed(() => pluStore.error)
-const canViewSynthesis = computed(() => pluStore.canViewSynthesis)
-const isAuthenticated = computed(() => authStore.isAuthenticated)
-
-// Watch for selection changes to prompt login
-watch(
-  () => pluStore.selectedCityId,
-  (newCityId) => {
-    if (newCityId && !isAuthenticated.value) {
-      uiStore.showInfo(
-        'Veuillez vous connecter pour accéder aux synthèses de PLU.',
-        'La connexion est requise pour accéder aux synthèses de PLU.'
-      )
-    }
-  }
-)
-
-// Methods
-const viewPluSynthesis = () => {
-  if (!canViewSynthesis.value) return
-
-  const params = pluStore.getSelectionParams()
-  if (!params) return
-
-  // Track analytics event
-  trackEvent('plu_synthesis_access', {
-    city_name: pluStore.selectedCity?.name,
-    zoning_name: pluStore.selectedZoning?.name,
-    zone_name: pluStore.selectedZone?.name,
-    ...params
-  })
-
-  // Navigate to PLU synthesis page with selection parameters
-  router.push({
-    name: 'plu-synthesis',
-    query: params
-  })
-}
+import PluSelectionForm from '@/components/plu/PluSelectionForm.vue'
 
 // Typewriter effect logic
 function applyTypewriterEffect(element, text, speed) {
@@ -97,10 +41,7 @@ function applyTypewriterEffect(element, text, speed) {
 }
 
 // Initialize
-onMounted(async () => {
-  // Initialize PLU store (loads cities)
-  await pluStore.initializeSelection()
-
+onMounted(() => {
   // Typewriter effect
   const subtitleElement = document.getElementById("typewriter-subtitle");
   const textToType = "MWPLU - 2025";
@@ -121,45 +62,10 @@ onMounted(async () => {
     </section>
 
     <div class="container">
-      <div id="statusMessage" class="status-message alert alert-info" v-if="errorMessage">
-        {{ errorMessage }}
-      </div>
-
-      <form class="margin-bottom-lg form-home">
-        <div class="grid">
-          <!-- City Selection -->
-          <div class="grid-col-4 form-group">
-            <CitySelector />
-          </div>
-
-          <!-- Zoning Selection -->
-          <div class="grid-col-4 form-group">
-            <ZoningSelector />
-          </div>
-
-          <!-- Zone Selection -->
-          <div class="grid-col-4 form-group">
-            <ZoneSelector />
-          </div>
-        </div>
-
-        <!-- Action Button -->
-        <div class="text-center margin-top-lg margin-bottom-sm">
-          <button
-            @click="viewPluSynthesis"
-            :disabled="!canViewSynthesis || isLoading"
-            class="to-plu-btn btn"
-          >
-            <BaseSpinner
-              v-if="isLoading"
-              size="small"
-              color="white"
-              class="button-spinner"
-            />
-            {{ isLoading ? 'Chargement...' : 'Voir la synthèse' }}
-          </button>
-        </div>
-      </form>
+      <PluSelectionForm
+        variant="home"
+        button-text="Voir la synthèse"
+      />
     </div>
   </main>
   </AppLayout>
@@ -249,5 +155,22 @@ onMounted(async () => {
   .grid {
     gap: 1.5rem;
   }
+}
+
+.search-alternative {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin: 0;
+}
+
+.link-alternative {
+  color: var(--color-black);
+  text-decoration: underline;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-fast);
+}
+
+.link-alternative:hover {
+  color: var(--color-gray-700);
 }
 </style>

@@ -30,6 +30,7 @@ MWPLU is a web platform for accessing synthesized French urban planning document
 - Buttons: 2px border radius
 - Forms/Cards: 4px border radius with subtle shadows
 - Consistent spacing based on 4px grid
+- Minimalist elements
 
 ## CSS Architecture
 **Global styles** (imported in main.js):
@@ -45,24 +46,54 @@ MWPLU is a web platform for accessing synthesized French urban planning document
 
 **No global component styles** - buttons, forms, cards etc. should be styled within their respective Vue components (manually or with frameworks).
 
-## User Flow
-1. **Landing** → Authentication (Login/Signup with CAPTCHA)
-2. **Dashboard** → Select City → Zoning → Zone
-3. **PLU Page** → View synthesis, comments, sources, downloads
+## User Flow & Navigation Structure
+1. **Landing** (`/`) → HomeView with hero section and basic selectors (or **PLU Repository** (`/plu-repository/`) → PluSearchView with dedicated search interface)
+2. **PLU Document** (`/plu-repository/:city/:zoning/:zone`) → PluSynthesisView with specific document
+3. **Authentication** → Login/Signup with CAPTCHA protection
 4. Protected routes require authentication
+
+### URL Structure
+- Clean, SEO-friendly URLs with slugs (e.g., `/plu-repository/lille/zones-urbaines/ua`)
+- Breadcrumb navigation with smart preselection
+- Hierarchical structure: Repository → City → Zoning → Zone
 
 ## Component Structure
 Components are organized by feature:
-- `common/` - Reusable base components
-- `auth/` - Authentication related
-- `layout/` - Header, footer, navigation
-- `plu/` - PLU document features
+- `common/` - Reusable base components (BaseSpinner, BaseNotification, ComingSoonView)
+- `auth/` - Authentication related components
+- `layout/` - Header, footer, navigation, breadcrumbs
+- `plu/` - PLU document features (CitySelector, ZoningSelector, ZoneSelector)
+
+### Key Components
+- **AppLayout**: Main layout wrapper with notification system
+- **BreadcrumbNav**: Hierarchical navigation with clickable links
+- **PluSearchView**: Dedicated search interface at `/plu-repository/`
+- **PluSynthesisView**: Document viewer with tabs (synthesis, comments, sources, downloads)
+- **BaseNotification**: Toast notification system connected to UI store
+
+## State Management (Pinia)
+- **auth.js**: User authentication state and methods
+- **plu.js**: PLU selection state with slug-based navigation support
+- **ui.js**: Global UI state (notifications, loading, modals)
+
+### PLU Store Features
+- City/Zoning/Zone selection with dependency management
+- Slug generation for clean URLs (`createSlug`, `findBySlug`)
+- Breadcrumb data generation
+- Analytics event tracking
+
+## Services & API Integration
+- **supabase.js**: Database operations and authentication
+- **errorHandler.js**: Global error handling with notifications
+- **turnstile.js**: CAPTCHA integration
+- **donationService.js**: Payment processing support
 
 ## Code Patterns
-- **Composables** for reusable logic
+- **Composables** for reusable logic (useAuth, useAnalytics, useTurnstile)
 - **Services** for API calls to Supabase
 - **Stores** (Pinia) for global state
 - **Props/Events** for component communication
+- **Slug-based routing** for SEO-friendly URLs
 
 ## Key Principles
 - Displayed text in French
@@ -70,10 +101,29 @@ Components are organized by feature:
 - User-friendly error messages
 - Secure by default (RLS policies, input validation)
 - Performance optimized (lazy loading, caching)
+- Accessibility support (ARIA attributes, semantic HTML)
 
 ## Development Guidelines
-- Use Vue 3 Composition API
+- Use Vue 3 Composition API with `<script setup>`
 - Follow Vue style guide conventions
-- Keep components small and focused
-- Handle loading and error states
+- Keep components small and focused (< 500-800 lines)
+- Handle loading and error states consistently
 - Write descriptive commit messages
+- Use TypeScript-style JSDoc for documentation
+
+## Current Features Status
+✅ **Authentication System**: Complete with Turnstile CAPTCHA
+✅ **Navigation Structure**: Clean URLs with breadcrumb support
+✅ **Search Interface**: Dedicated PLU repository page
+✅ **Document Viewer**: Tabbed interface for synthesis, comments, ratings
+✅ **Rating System**: Independent from commenting
+✅ **Notification System**: Global toast notifications with validation
+✅ **Responsive Design**: Mobile-friendly interface
+
+## Future Development Areas
+- Database integration and data flow optimization
+- Comment and rating system backend implementation
+- File download functionality
+- Advanced search and filtering
+- User profile management
+- Analytics dashboard
