@@ -114,8 +114,8 @@
               <router-link to="/docs/faq" class="btn btn-secondary btn-full-width">
                 Consulter la FAQ
               </router-link>
-              <router-link to="/docs/guide" class="btn btn-secondary btn-full-width">
-                Guide d'utilisation
+              <router-link to="/docs/documentation" class="btn btn-secondary btn-full-width">
+                Lire la documentation
               </router-link>
             </div>
           </div>

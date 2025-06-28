@@ -88,26 +88,105 @@ export const dbService = {
   },
 
   // Document operations
-  async getDocument(params) {
+  /**
+   * Get a document by zoning and zone IDs
+   * @param {string} zoningId - The ID of the zoning
+   * @param {string} zoneId - The ID of the zone
+   * @returns {Promise<{success: boolean, data: Object | null, error: string | null}>}
+   */
+  async getDocument(zoningId, zoneId) {
     try {
       const { data, error } = await supabase
         .from('documents')
         .select(
           `
             *,
-            city:cities(name),
-            zoning:zonings(name),
-            zone:zones(name)
+            zoning:zonings(
+              id,
+              name,
+              city:cities(id, name)
+            ),
+            zone:zones(id, name)
           `,
         )
-        .match(params)
+        .match({ zoning_id: zoningId, zone_id: zoneId })
         .single()
 
       if (error) throw error
-      return { success: true, data }
+
+      // Transform the data to match expected structure
+      const transformedData = {
+        ...data,
+        city_id: data.zoning?.city?.id,
+        city_name: data.zoning?.city?.name || 'Unknown City',
+        zoning_id: data.zoning?.id,
+        zoning_name: data.zoning?.name || 'Unknown Zoning',
+        zone_id: data.zone?.id,
+        zone_name: data.zone?.name || 'Unknown Zone',
+        synthesis_content:
+          data.html_content ||
+          (data.content_json?.response
+            ? this.formatJsonContent(data.content_json.response)
+            : 'Contenu non disponible'),
+        // Add computed fields for stats (these would come from aggregated queries in real implementation)
+        rating_average: null, // TODO: Calculate from ratings table
+        comments_count: 0, // TODO: Calculate from comments table
+        downloads_count: 0, // TODO: Calculate from downloads table
+        sources: [], // TODO: Extract from content or separate sources table
+      }
+
+      return { success: true, data: transformedData }
     } catch (error) {
       console.error('Error fetching document:', error)
       return { success: false, error: error.message }
+    }
+  },
+
+  // Helper method to format JSON content for display
+  formatJsonContent(jsonResponse) {
+    if (!jsonResponse) return 'Contenu non disponible'
+
+    try {
+      let htmlContent = '<div class="plu-content">'
+
+      // Iterate through chapters
+      Object.keys(jsonResponse).forEach((chapterKey) => {
+        const chapter = jsonResponse[chapterKey]
+        htmlContent += `<section class="chapter"><h2>Chapitre ${chapterKey.replace('chapitre_', '')}</h2>`
+
+        // Iterate through sections
+        Object.keys(chapter).forEach((sectionKey) => {
+          const section = chapter[sectionKey]
+          if (Array.isArray(section) && section.length > 0) {
+            section.forEach((item) => {
+              if (item.titre) {
+                htmlContent += `<div class="section"><h3>${item.titre}</h3>`
+
+                if (item.regles && Array.isArray(item.regles)) {
+                  htmlContent += '<div class="rules">'
+                  item.regles.forEach((rule) => {
+                    htmlContent += `<div class="rule"><p>${rule.contenu}</p>`
+                    if (rule.page_source) {
+                      htmlContent += `<span class="source">(${rule.page_source})</span>`
+                    }
+                    htmlContent += '</div>'
+                  })
+                  htmlContent += '</div>'
+                }
+                htmlContent += '</div>'
+              }
+            })
+          }
+        })
+
+        htmlContent += '</section>'
+      })
+
+      htmlContent += '</div>'
+      return htmlContent
+    } catch (error) {
+      console.error('Error formatting JSON content:', error)
+      return 'Erreur lors du formatage du contenu'
     }
   },
 
@@ -218,6 +297,59 @@ export const dbService = {
   },
 
   // Ratings operations
+  async getUserRating(documentId, userId) {
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select('rating')
+        .eq('document_id', documentId)
+        .eq('user_id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error getting user rating:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
+  async submitRating(documentId, userId, rating) {
+    try {
+      // Check if rating already exists
+      const { data: existingRating } = await supabase
+        .from('ratings')
+        .select('id')
+        .eq('document_id', documentId)
+        .eq('user_id', userId)
+        .single()
+
+      if (existingRating) {
+        // Update existing rating
+        const { error } = await supabase
+          .from('ratings')
+          .update({ rating, updated_at: new Date().toISOString() })
+          .eq('id', existingRating.id)
+
+        if (error) throw error
+      } else {
+        // Insert new rating
+        const { error } = await supabase.from('ratings').insert({
+          document_id: documentId,
+          user_id: userId,
+          rating,
+        })
+
+        if (error) throw error
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error submitting rating:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
   async toggleRating(documentId) {
     try {
       const {

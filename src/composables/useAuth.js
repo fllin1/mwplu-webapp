@@ -15,12 +15,10 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { useErrorHandler } from '@/services/errorHandler'
 
 export const useAuth = () => {
   const authStore = useAuthStore()
   const router = useRouter()
-  const { showError, showSuccess } = useErrorHandler()
 
   const user = computed(() => authStore.user)
   const isAuthenticated = computed(() => authStore.isAuthenticated)

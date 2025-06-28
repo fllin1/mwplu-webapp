@@ -296,6 +296,7 @@ import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TurnstileWidget from '@/components/common/TurnstileWidget.vue'
 import PolicyModal from '@/components/common/PolicyModal.vue'
+import { policyService } from '@/services/policyService'
 
 export default {
   name: 'SignupView',
@@ -633,38 +634,22 @@ export default {
       isModalVisible.value = true
       modalIsLoading.value = true
 
-      const policyMap = {
-        terms: {
-          url: '/policies/terms',
-          title: "Conditions Générales d'Utilisation",
-        },
-        privacy: {
-          url: '/policies/privacy',
-          title: 'Politique de confidentialité',
-        },
-      }
-
-      const selectedPolicy = policyMap[policy]
-      if (!selectedPolicy) return
-
-      modalTitle.value = selectedPolicy.title
-      modalContent.value = '<p>Chargement...</p>'
-
       try {
-        const response = await fetch(selectedPolicy.url)
-        const html = await response.text()
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(html, 'text/html')
-        const contentNode = doc.querySelector('.policy-container')
+        // Use centralized policy service to get modal content
+        const content = policyService.getPolicyHTML(policy)
+        const metadata = policyService.getPolicyMetadata(policy)
 
-        if (contentNode) {
-          modalContent.value = contentNode.innerHTML
+        if (content && metadata) {
+          modalTitle.value = metadata.title
+          modalContent.value = content
         } else {
-          modalContent.value = '<p>Le contenu n\'a pas pu être chargé.</p>'
+          modalTitle.value = 'Erreur'
+          modalContent.value = '<p>Le contenu n\'a pas pu être chargé. Veuillez réessayer plus tard.</p>'
         }
       } catch (error) {
-        console.error('Error fetching policy:', error)
-        modalContent.value = '<p>Une erreur est survenue lors du chargement du contenu.</p>'
+        console.error('Policy loading error:', error)
+        modalTitle.value = 'Erreur'
+        modalContent.value = '<p>Une erreur s\'est produite lors du chargement du contenu.</p>'
       } finally {
         modalIsLoading.value = false
       }

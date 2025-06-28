@@ -27,22 +27,6 @@
     <div v-if="selectedZone?.description" class="zone-description">
       <p>{{ selectedZone.description }}</p>
     </div>
-
-    <!-- Selection summary when complete -->
-    <div v-if="isSelectionComplete && showSummary" class="selection-summary">
-      <div class="summary-item">
-        <span class="summary-label">Ville :</span>
-        <span class="summary-value">{{ selectedCity?.name }}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Zonage :</span>
-        <span class="summary-value">{{ selectedZoning?.name }}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Zone :</span>
-        <span class="summary-value">{{ selectedZone?.name }}</span>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -56,10 +40,6 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
-  },
-  showSummary: {
-    type: Boolean,
-    default: true
   }
 })
 
@@ -185,14 +165,6 @@ const handleZoneChange = (event) => {
   line-height: 1.4;
 }
 
-.selection-summary {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-  border: 1px solid var(--accent-gray);
-}
-
 .summary-item {
   display: flex;
   justify-content: space-between;
@@ -231,10 +203,6 @@ const handleZoneChange = (event) => {
 
   .zone-description p {
     font-size: 0.8rem;
-  }
-
-  .selection-summary {
-    padding: 0.75rem;
   }
 
   .summary-item {

@@ -31,11 +31,16 @@ import ConfirmationView from '@/views/auth/ConfirmationView.vue'
 
 // Docs views
 import DocumentationView from '@/views/docs/DocumentationView.vue'
+import FAQView from '@/views/docs/FAQView.vue'
 
 // Info views
 import AboutView from '@/views/info/AboutView.vue'
 import ContactView from '@/views/info/ContactView.vue'
 import DonationView from '@/views/info/DonationView.vue'
+
+// Donation result views (moved to info folder)
+import DonationSuccessView from '@/views/info/DonationSuccessView.vue'
+import DonationCancelView from '@/views/info/DonationCancelView.vue'
 
 // Policies views
 import CookiesView from '@/views/policies/CookiesView.vue'
@@ -146,11 +151,38 @@ const routes = [
     },
   },
   {
+    path: '/donation/success',
+    name: 'donation-success',
+    component: DonationSuccessView,
+    meta: {
+      title: 'Don réalisé avec succès - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/donation/cancel',
+    name: 'donation-cancel',
+    component: DonationCancelView,
+    meta: {
+      title: 'Don annulé - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
     path: '/docs/documentation',
     name: 'documentation',
     component: DocumentationView,
     meta: {
       title: 'Documentation - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/docs/faq',
+    name: 'faq',
+    component: FAQView,
+    meta: {
+      title: 'Foire aux questions - MWPLU',
       requiresAuth: false,
     },
   },

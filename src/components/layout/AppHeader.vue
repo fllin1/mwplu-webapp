@@ -410,10 +410,10 @@ export default {
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background-color: var(--color-blue);
+  background-color: var(--color-gray-800);
   color: var(--color-white);
   display: flex;
   align-items: center;

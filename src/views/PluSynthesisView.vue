@@ -64,7 +64,6 @@
               @click="activeTab = tab.id"
               :class="['tab-button', { 'tab-button--active': activeTab === tab.id }]"
             >
-              <span class="tab-button-icon">{{ tab.icon }}</span>
               {{ tab.label }}
             </button>
           </div>
@@ -80,31 +79,52 @@
               </div>
             </div>
 
-            <div class="content-section">
-              <h3 class="section-subheading">Règles principales</h3>
-              <div class="rules-grid">
-                <div v-for="rule in pluData.main_rules" :key="rule.id" class="rule-card card">
-                  <h4 class="rule-title">{{ rule.title }}</h4>
-                  <p class="rule-description">{{ rule.description }}</p>
-                </div>
-              </div>
-            </div>
 
-            <div class="content-section">
-              <h3 class="section-subheading">Contraintes et servitudes</h3>
-              <div class="constraints-list">
-                <div v-for="constraint in pluData.constraints" :key="constraint.id" class="constraint-item card">
-                  <span class="constraint-type">{{ constraint.type }}</span>
-                  <span class="constraint-description">{{ constraint.description }}</span>
-                </div>
-              </div>
-            </div>
           </section>
 
           <!-- Comments Tab -->
           <section v-if="activeTab === 'comments'" class="tab-panel-content">
             <div class="comments-section">
-              <!-- Add Comment Form -->
+              <!-- Rating Section (Independent) -->
+              <div v-if="authStore.isAuthenticated" class="rating-section card">
+                <h3 class="section-subheading">Noter ce document</h3>
+                <p class="rating-description">Attribuez une note à ce document PLU selon sa qualité et son utilité.</p>
+                <div class="rating-form">
+                  <div class="current-rating" v-if="userRating">
+                    <span class="rating-label">Votre note actuelle :</span>
+                    <div class="rating-display">
+                      <span v-for="star in 5" :key="star" :class="['star-display', { 'star-display--filled': star <= userRating }]">
+                        ★
+                      </span>
+                      <span class="rating-value">({{ userRating }}/5)</span>
+                    </div>
+                  </div>
+
+                  <div class="rating-input">
+                    <span class="rating-label">{{ userRating ? 'Modifier votre note :' : 'Attribuer une note :' }}</span>
+                    <div class="rating-stars">
+                      <button
+                        v-for="star in 5"
+                        :key="star"
+                        type="button"
+                        @click="submitRating(star)"
+                        :class="['star-button', { 'star-button--active': star <= (hoveredRating || userRating || 0) }]"
+                        @mouseenter="hoveredRating = star"
+                        @mouseleave="hoveredRating = 0"
+                        :disabled="isSubmittingRating"
+                      >
+                        ★
+                      </button>
+                    </div>
+                    <div v-if="isSubmittingRating" class="rating-loading">
+                      <BaseSpinner size="small" />
+                      <span>Enregistrement...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Comment Form Section (Independent) -->
               <div v-if="authStore.isAuthenticated" class="add-comment-section card">
                 <h3 class="section-subheading">Ajouter un commentaire</h3>
                 <form @submit.prevent="submitComment" class="comment-form">
@@ -120,21 +140,6 @@
                     ></textarea>
                   </div>
 
-                  <div class="form-group">
-                    <label for="rating" class="form-label">Note (optionnelle)</label>
-                    <div class="rating-input">
-                      <button
-                        v-for="star in 5"
-                        :key="star"
-                        type="button"
-                        @click="newComment.rating = star"
-                        :class="['star-button', { 'star-button--active': star <= newComment.rating }]"
-                      >
-                        ★
-                      </button>
-                    </div>
-                  </div>
-
                   <div class="form-actions">
                     <button type="submit" :disabled="isSubmittingComment" class="btn btn-primary">
                       <BaseSpinner v-if="isSubmittingComment" size="small" color="white" />
@@ -145,7 +150,7 @@
               </div>
 
               <div v-else class="auth-prompt-card card">
-                <p class="auth-prompt-text">Vous devez être connecté pour ajouter un commentaire.</p>
+                <p class="auth-prompt-text">Vous devez être connecté pour noter et commenter ce document.</p>
                 <router-link to="/login" class="btn btn-primary">Se connecter</router-link>
               </div>
 
@@ -161,11 +166,6 @@
                   <div class="comment-header">
                     <span class="comment-author">{{ comment.user_email }}</span>
                     <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
-                    <div v-if="comment.rating" class="comment-rating">
-                      <span v-for="star in 5" :key="star" :class="['star-display', { 'star-display--filled': star <= comment.rating }]">
-                        ★
-                      </span>
-                    </div>
                   </div>
                   <div class="comment-content-text">
                     <p>{{ comment.text }}</p>
@@ -207,47 +207,13 @@
           <!-- Downloads Tab -->
           <section v-if="activeTab === 'downloads'" class="tab-panel-content">
             <div class="downloads-section">
-              <h2 class="section-heading">Téléchargements</h2>
-              <p class="section-description">
-                Téléchargez la synthèse et les documents dans différents formats.
-              </p>
-
-              <div class="download-options">
-                <h3 class="section-subheading">Synthèse PLU</h3>
-                <div class="download-grid">
-                  <div class="download-item card">
-                    <div class="download-info">
-                      <h4 class="download-title">Synthèse PDF</h4>
-                      <p class="download-description">Document synthétique au format PDF</p>
-                    </div>
-                    <button @click="downloadFile('synthesis', 'pdf')" class="btn btn-primary">
-                      Télécharger PDF
-                    </button>
-                  </div>
-
-                  <div class="download-item card">
-                    <div class="download-info">
-                      <h4 class="download-title">Synthèse DOCX</h4>
-                      <p class="download-description">Document synthétique au format Word</p>
-                    </div>
-                    <button @click="downloadFile('synthesis', 'docx')" class="btn btn-primary">
-                      Télécharger DOCX
-                    </button>
-                  </div>
+              <div class="download-item card">
+                <div class="download-info">
+                  <h4 class="download-title">Document de Synthèse</h4>
                 </div>
-
-                <h3 class="section-subheading">Documents sources</h3>
-                <div class="download-grid">
-                  <div v-for="source in pluData.sources" :key="source.id" class="download-item card">
-                    <div class="download-info">
-                      <h4 class="download-title">{{ source.title }} ({{ source.type }})</h4>
-                      <p class="download-description">{{ source.description }}</p>
-                    </div>
-                    <button @click="downloadFile('source', source.id)" class="btn btn-primary">
-                      Télécharger
-                    </button>
-                  </div>
-                </div>
+                <button @click="downloadFile('synthesis', 'pdf')" class="btn btn-primary">
+                  Télécharger PDF
+                </button>
               </div>
             </div>
           </section>
@@ -266,6 +232,7 @@ import { dbService } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
+import { capitalizeWords } from '@/utils/helpers'
 
 export default {
   name: 'PluSynthesisView',
@@ -288,28 +255,30 @@ export default {
     const activeTab = ref('synthesis') // Default active tab
     const isSubmittingComment = ref(false)
 
+    // Rating functionality (independent)
+    const userRating = ref(null)
+    const hoveredRating = ref(0)
+    const isSubmittingRating = ref(false)
+
     const newComment = reactive({
       text: '',
-      rating: null,
     })
 
     const tabs = [
-      { id: 'synthesis', label: 'Synthèse', icon: '📄' },
-      { id: 'comments', label: 'Commentaires', icon: '💬' },
-      { id: 'sources', label: 'Sources', icon: '📚' },
-      { id: 'downloads', label: 'Téléchargements', icon: '⬇️' },
+      { id: 'synthesis', label: 'Synthèse' },
+      { id: 'comments', label: 'Commentaires' },
+      { id: 'sources', label: 'Sources' },
+      { id: 'downloads', label: 'Téléchargements' },
     ]
 
     // Computed properties for breadcrumbs
     const breadcrumbItems = computed(() => {
-      const items = [
-        { label: 'Accueil', to: '/' },
-      ]
+      const items = []
       if (pluData.value) {
         items.push(
-          { label: pluData.value.city_name, to: { name: 'home', query: { city: pluData.value.city_id } } },
+          { label: capitalizeWords(pluData.value.city_name), to: { name: 'home', query: { city: pluData.value.city_id } } },
           { label: pluData.value.zoning_name, to: { name: 'home', query: { city: pluData.value.city_id, zoning: pluData.value.zoning_id } } },
-          { label: pluData.value.zone_name, to: { name: 'plu-synthesis', query: { city: pluData.value.city_id, zoning: pluData.value.zoning_id, zone: pluData.value.zone_id } } },
+          { label: 'Zone ' + pluData.value.zone_name, to: { name: 'plu-synthesis', query: { city: pluData.value.city_id, zoning: pluData.value.zoning_id, zone: pluData.value.zone_id } } },
         )
       }
       return items
@@ -335,13 +304,14 @@ export default {
       }
 
       try {
-        const result = await dbService.getPluSynthesis(cityId, zoningId, zoneId)
+        const result = await dbService.getDocument(zoningId, zoneId)
 
         if (result.success) {
           pluData.value = result.data
-          // If there's an existing session, try to load comments
+          // If there's an existing session, try to load comments and user rating
           if (authStore.isAuthenticated) {
             await loadComments()
+            await loadUserRating()
           }
         } else {
           errorMessage.value = `Erreur: ${result.error || 'Document non trouvé'}`
@@ -374,6 +344,48 @@ export default {
     }
 
     /**
+     * Loads the user's current rating for the document.
+     */
+    const loadUserRating = async () => {
+      if (!pluData.value || !authStore.isAuthenticated) return
+      try {
+        const result = await dbService.getUserRating(pluData.value.id, authStore.user.id)
+        if (result.success && result.data) {
+          userRating.value = result.data.rating
+        }
+      } catch (error) {
+        console.error('Error loading user rating:', error)
+      }
+    }
+
+    /**
+     * Submits or updates a rating for the document.
+     */
+    const submitRating = async (rating) => {
+      if (isSubmittingRating.value || !authStore.isAuthenticated) return
+
+      isSubmittingRating.value = true
+      try {
+        const result = await dbService.submitRating(pluData.value.id, authStore.user.id, rating)
+        if (result.success) {
+          userRating.value = rating
+          uiStore.showNotification('Note enregistrée avec succès !', 'success')
+          // Update document stats if available
+          if (pluData.value) {
+            await loadPluData() // Reload to get updated average rating
+          }
+        } else {
+          throw new Error(result.error || 'Erreur lors de l\'enregistrement de la note')
+        }
+      } catch (error) {
+        console.error('Error submitting rating:', error)
+        uiStore.showNotification(`Erreur lors de l'enregistrement de la note : ${error.message || 'Une erreur inattendue est survenue.'}`, 'error')
+      } finally {
+        isSubmittingRating.value = false
+      }
+    }
+
+    /**
      * Submits a new comment.
      */
     const submitComment = async () => {
@@ -381,22 +393,17 @@ export default {
 
       isSubmittingComment.value = true
       try {
-        const { error } = await dbService.addCommentToPlu(
-          pluData.value.id,
-          authStore.user.id,
-          newComment.text.trim(),
-          newComment.rating
-        )
-        if (error) {
-          throw error
+        const result = await dbService.addComment(pluData.value.id, newComment.text.trim())
+        if (result.success) {
+          uiStore.showNotification('Commentaire publié avec succès !', 'success')
+          newComment.text = ''
+          await loadComments() // Reload comments after successful submission
+        } else {
+          throw new Error(result.error || 'Erreur lors de la publication du commentaire')
         }
-        uiStore.showNotification('Commentaire publié avec succès !', 'success')
-        newComment.text = ''
-        newComment.rating = null
-        await loadComments() // Reload comments after successful submission
       } catch (error) {
         console.error('Error submitting comment:', error)
-        uiStore.showNotification(`Erreur lors de la publication du commentaire : ${error.message || error.description || 'Une erreur inattendue est survenue.'}`, 'error')
+        uiStore.showNotification(`Erreur lors de la publication du commentaire : ${error.message || 'Une erreur inattendue est survenue.'}`, 'error')
       } finally {
         isSubmittingComment.value = false
       }
@@ -483,14 +490,16 @@ export default {
       { deep: true }
     )
 
-    // Watch auth state to reload comments if user logs in/out
+    // Watch auth state to reload comments and rating if user logs in/out
     watch(
       () => authStore.isAuthenticated,
       (newVal) => {
         if (newVal && pluData.value) {
           loadComments()
+          loadUserRating()
         } else if (!newVal) {
           comments.value = [] // Clear comments if user logs out
+          userRating.value = null // Clear user rating if user logs out
         }
       }
     )
@@ -506,7 +515,14 @@ export default {
       tabs,
       breadcrumbItems,
       authStore,
+      // Rating functionality
+      userRating,
+      hoveredRating,
+      isSubmittingRating,
+      // Methods
       loadPluData,
+      loadUserRating,
+      submitRating,
       submitComment,
       downloadFile,
       formatDate,
@@ -679,15 +695,29 @@ export default {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+  position: relative;
 }
 
+/* Add vertical separator after each button except the last one */
+.tab-button:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: calc(var(--space-2) / -2);
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background-color: var(--color-gray-200);
+}
+
+/* Hide separator when button or next button is active */
+.tab-button--active::after,
 .tab-button:hover:not(.tab-button--active) {
   background-color: var(--color-gray-100);
   color: var(--color-color-black);
 }
 
 .tab-button--active {
-  background-color: var(--color-blue);
+  background-color: var(--color-black);
   color: var(--color-white);
   box-shadow: var(--shadow-sm);
 }
@@ -1036,6 +1066,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+  align-items: center;
 }
 
 .download-options {
@@ -1058,8 +1089,10 @@ export default {
   border: 1px solid var(--color-gray-200);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-4);
+  width: 100%;
+  max-width: 350px;
 }
 
 .download-info {
@@ -1079,6 +1112,101 @@ export default {
   line-height: 1.5;
 }
 
+/* Rating Section Styles */
+.rating-section {
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.rating-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin-bottom: var(--space-4);
+}
+
+.rating-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.current-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-form);
+}
+
+.rating-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-black);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.rating-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.rating-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin-left: var(--space-2);
+}
+
+.rating-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rating-stars {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.star-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-gray-300);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  padding: var(--space-1);
+}
+
+.star-button:hover,
+.star-button--active {
+  color: #FFD700; /* Gold color for stars */
+}
+
+.star-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.star-display {
+  font-size: 1rem;
+  color: var(--color-gray-300);
+}
+
+.star-display--filled {
+  color: #FFD700;
+}
+
+.rating-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
 /* General Buttons (used in different sections) */
 .btn {
   padding: var(--space-3) var(--space-6);
@@ -1095,14 +1223,13 @@ export default {
 }
 
 .btn-primary {
-  background-color: var(--color-blue);
+  background-color: var(--color-black);
   color: var(--color-white);
-  border: 1px solid var(--color-blue);
+  width: 100%;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-blue-dark);
-  border-color: var(--color-blue-dark);
+  background-color: var(--color-gray-700);
 }
 
 .btn-secondary {

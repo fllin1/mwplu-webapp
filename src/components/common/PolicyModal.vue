@@ -6,7 +6,7 @@
         <h2 class="modal-title">{{ title }}</h2>
         <button class="close-button" @click="close">&times;</button>
       </div>
-      <div class="modal-content" v-html="content"></div>
+      <div class="modal-content policy-container" v-html="content"></div>
       <div class="modal-footer">
         <button class="button-primary" @click="close">Fermer</button>
       </div>
@@ -38,6 +38,7 @@ const close = () => {
 </script>
 
 <style scoped>
+@import '@/styles/pages/policy-styles.css';
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -124,4 +125,4 @@ const close = () => {
   border-radius: var(--radius-button);
   cursor: pointer;
 }
-</style> 
+</style>
