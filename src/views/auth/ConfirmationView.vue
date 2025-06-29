@@ -4,21 +4,18 @@
       <div class="auth-container card">
         <div class="auth-header">
           <h2 class="auth-title">Confirmation de votre email</h2>
-          <p class="auth-subtitle">
-            Vérifiez votre boîte de réception pour activer votre compte
-          </p>
         </div>
 
         <div class="confirmation-card">
           <div class="confirmation-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M8 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <img
+              src="@/assets/icons/elements/confirmation.svg"
+              alt="Confirmation icon"
+              class="confirmation-icon"
+            />
           </div>
 
           <div class="confirmation-content">
-            <h3 class="confirmation-content-title">Email de confirmation envoyé</h3>
             <p class="confirmation-content-text">
               Nous avons envoyé un lien de confirmation à votre adresse email.
               Cliquez sur le lien dans l'email pour activer votre compte.
@@ -29,7 +26,7 @@
               <ul class="confirmation-info-list">
                 <li>Vérifiez votre dossier de courriers indésirables</li>
                 <li>Assurez-vous que l'adresse email est correcte</li>
-                <li>L'email peut prendre quelques minutes à arriver</li>
+                <li>Vous disposez d'un délai de 15 minutes pour activer votre compte</li>
               </ul>
             </div>
 
@@ -174,14 +171,13 @@ onUnmounted(() => {
 /* Header */
 .auth-header {
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-2);
 }
 
 .auth-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-color-black);
-  margin-bottom: var(--space-2);
 }
 
 .auth-subtitle {
@@ -199,8 +195,9 @@ onUnmounted(() => {
 }
 
 .confirmation-icon {
-  color: var(--color-green-500);
-  margin-bottom: var(--space-4);
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-4);
 }
 
 .confirmation-content-title {
@@ -258,7 +255,7 @@ onUnmounted(() => {
 .confirmation-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-2);
   margin-top: var(--space-6);
 }
 
@@ -300,30 +297,29 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
   cursor: pointer;
   width: 100%; /* Full width buttons */
 }
 
 .btn-primary {
-  background-color: var(--color-blue);
+  background-color: var(--color-black);
   color: var(--color-white);
-  border: 1px solid var(--color-blue);
+  border: 1px solid var(--color-black);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-blue-dark);
-  border-color: var(--color-blue-dark);
+  background-color: var(--color-gray-500);
+  border-color: var(--color-gray-500);
 }
 
 .btn-secondary {
   background-color: transparent;
-  color: var(--color-color-black);
+  color: var(--color-black);
   border: 1px solid var(--color-gray-300);
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-gray-100);
+  background-color: var(--color-gray-50);
   border-color: var(--color-gray-400);
 }
 

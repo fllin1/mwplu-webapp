@@ -15,6 +15,12 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
+import {
+  isExpiredConfirmationLink,
+  getExpiredConfirmationMessage,
+  cleanUrlHash,
+} from '@/utils/helpers'
 
 // Import your views
 import DashboardView from '@/views/DashboardView.vue'
@@ -267,6 +273,25 @@ const router = createRouter({
 // Navigation Guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+
+  // Handle expired email confirmation links
+  if (isExpiredConfirmationLink(window.location.hash)) {
+    // Clean the URL by removing hash parameters
+    cleanUrlHash()
+
+    // Show error notification using the popup system
+    const uiStore = useUIStore()
+    uiStore.showNotification({
+      type: 'error',
+      message: getExpiredConfirmationMessage(),
+      autoDismiss: true,
+      autoDismissDelay: 12000,
+    })
+
+    // Redirect to signup page without query parameters
+    next({ name: 'signup' })
+    return
+  }
 
   // Set page title
   if (to.meta.title) {

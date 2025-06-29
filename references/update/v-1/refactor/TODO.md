@@ -1,5 +1,7 @@
 # TODO Refactor
 
+## REFACTOR
+
 ### Home Page
 
 - [x] Add "Métropole" before city, and Capitalize
@@ -17,6 +19,7 @@
 - [x] Correct the "error messages" color issue (the text seems to be in the same color as the box background = red on red)
 - [x] Remove the need for a special character for the pass word
 - [x] Maybe add phone number
+- [x] When the link expire, it currently simply redirects to the homepage without message. Should redirect to the signup page with an error message telling that the link expire.
 
 ### Login
 
@@ -26,7 +29,7 @@
 
 - [x] Add breadcrumbs on pages
 
-## IMPORTANT: To Review Before Lauch
+## LAUNCH
 
 **FIRST STEP**:
 

@@ -109,9 +109,8 @@
                 type="submit"
                 class="submit-button"
                 :disabled="!canSubmit"
-                :class="{ 'loading': isLoading }"
               >
-                <span v-if="isLoading" class="button-spinner"></span>
+                <BaseSpinner v-if="isLoading" size="small" color="white" />
                 <span v-else>Se connecter</span>
               </button>
             </form>
@@ -185,19 +184,20 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TurnstileWidget from '@/components/common/TurnstileWidget.vue'
+import BaseSpinner from '@/components/common/BaseSpinner.vue'
 
 export default {
   name: 'LoginView',
 
   components: {
     AppLayout,
-    TurnstileWidget
+    TurnstileWidget,
+    BaseSpinner
   },
 
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
-
 
     // Form data - reactive for two-way binding
     const form = reactive({
@@ -353,13 +353,17 @@ export default {
           // Handle login failure
           globalError.value = result.error || 'Échec de la connexion'
 
-          // Reset CAPTCHA on failure for security
-          captchaToken.value = ''
+          // Don't clear captcha token for login failures - user can retry immediately
+          // Don't clear password field - let user see what they typed and correct it
+          // Only clear on successful login or major errors
         }
 
       } catch (error) {
         console.error('Login submission error:', error)
         globalError.value = 'Une erreur inattendue s\'est produite'
+        // Clear captcha and password only for unexpected errors
+        captchaToken.value = ''
+        form.password = ''
       } finally {
         isLoading.value = false
       }
@@ -714,7 +718,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 48px;
+  gap: var(--space-2);
 }
 
 .submit-button:hover:not(:disabled) {
@@ -726,13 +731,9 @@ export default {
   cursor: not-allowed;
 }
 
+/* Remove old button spinner styles */
 .button-spinner {
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: var(--color-white);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  display: none;
 }
 
 /* Messages */
@@ -766,12 +767,7 @@ export default {
   text-decoration: underline;
 }
 
-/* Animations */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Animations removed - no longer needed */
 
 /* Responsive Styles */
 @media (max-width: 768px) {
@@ -789,19 +785,28 @@ export default {
 
   .login-content-wrapper {
     flex-direction: column;
+    align-items: center;
     gap: var(--space-6);
   }
 
+  .main-form-container {
+    width: 100%;
+    max-width: none;
+  }
+
   .social-login-container {
+    width: 100%;
+    max-width: none;
     flex-basis: auto;
     order: 1; /* Move social logins below form on mobile */
   }
 
   .vertical-divider-container {
     order: 0; /* Divider between form and social */
-    width: auto;
+    width: 100%;
     height: 1px;
-    margin: var(--space-4) 0;
+    margin: 0;
+    background-color: var(--color-gray-200);
   }
 }
 </style>

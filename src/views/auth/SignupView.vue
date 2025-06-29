@@ -195,9 +195,8 @@
                 type="submit"
                 class="submit-button"
                 :disabled="!canSubmit"
-                :class="{ 'loading': isLoading }"
               >
-                <span v-if="isLoading" class="button-spinner"></span>
+                <BaseSpinner v-if="isLoading" size="small" color="white" />
                 <span v-else>Créer mon compte</span>
               </button>
             </form>
@@ -293,10 +292,12 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TurnstileWidget from '@/components/common/TurnstileWidget.vue'
 import PolicyModal from '@/components/common/PolicyModal.vue'
 import { policyService } from '@/services/policyService'
+import BaseSpinner from '@/components/common/BaseSpinner.vue'
 
 export default {
   name: 'SignupView',
@@ -305,6 +306,7 @@ export default {
     AppLayout,
     TurnstileWidget,
     PolicyModal,
+    BaseSpinner,
   },
 
   emits: ['success'],
@@ -312,6 +314,7 @@ export default {
   setup(props, { emit }) {
     const router = useRouter()
     const authStore = useAuthStore()
+    const uiStore = useUIStore()
 
     // Form data
     const form = reactive({
@@ -504,6 +507,7 @@ export default {
     const clearFieldError = (field) => {
       delete errors[field]
       if (globalError.value) {
+        // Clear any global error, including expired confirmation errors
         globalError.value = ''
       }
     }
@@ -574,15 +578,16 @@ export default {
         const result = await authStore.signup(
           form.email,
           form.password,
-          form.name
+          form.name,
+          captchaToken.value
         )
 
         if (result.success) {
           if (result.needsConfirmation) {
             successMessage.value = result.message
+            // Clear sensitive form data
             form.password = ''
             form.confirmPassword = ''
-            form.name = ''
             captchaToken.value = ''
 
             // Navigate to confirmation page
@@ -594,13 +599,64 @@ export default {
             await router.push('/dashboard')
           }
         } else {
+          // Check if this is an existing email using new identities array detection
+          if (result.error === 'EMAIL_ALREADY_EXISTS' && result.isExistingUser) {
+            console.log('Existing user detected via identities array - showing popup notification')
+
+            // Show popup notification for existing email
+            uiStore.showNotification({
+              type: 'error',
+              message: result.message,
+              autoDismiss: true,
+              autoDismissDelay: 8000
+            })
+
+            // Clear only password fields, keep other form data and captcha
+            form.password = ''
+            form.confirmPassword = ''
+            // Keep captchaToken so user can try again with different email
+            // Do NOT redirect to confirmation page - stay on signup
+            return
+          }
+
+          // Fallback: Check for legacy error message patterns (for backwards compatibility)
+          if (result.error && (
+            result.error.includes('already exists') ||
+            result.error.includes('User already registered') ||
+            result.error.includes('An account with this email already exists')
+          )) {
+            console.log('Existing user detected via legacy error message - showing popup notification')
+
+            // Show popup notification for existing email
+            uiStore.showNotification({
+              type: 'error',
+              message: 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.',
+              autoDismiss: true,
+              autoDismissDelay: 12000
+            })
+
+            // Clear only password fields, keep other form data and captcha
+            form.password = ''
+            form.confirmPassword = ''
+            // Keep captchaToken so user can try again with different email
+            return
+          }
+
+          // Handle other signup failures
           globalError.value = result.error || 'Échec de la création du compte'
           captchaToken.value = ''
+
+          // Clear password fields on error for security
+          form.password = ''
+          form.confirmPassword = ''
         }
 
       } catch (error) {
         console.error('Signup submission error:', error)
         globalError.value = 'Une erreur inattendue s\'est produite'
+        captchaToken.value = ''
+        form.password = ''
+        form.confirmPassword = ''
       } finally {
         isLoading.value = false
       }
@@ -1060,10 +1116,11 @@ export default {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+  min-height: 48px;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: var(--color-blue-hover);
+  background-color: var(--color-gray-800);
 }
 
 .submit-button:disabled {
@@ -1076,22 +1133,9 @@ export default {
   outline-offset: 2px;
 }
 
-.submit-button.loading {
-  opacity: 0.8;
-}
-
+/* Remove old button spinner styles */
 .button-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid var(--color-white);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  display: none;
 }
 
 .auth-navigation-links {
@@ -1149,7 +1193,7 @@ export default {
 }
 
 /* Mobile responsiveness */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .auth-page-wrapper {
     padding: var(--space-4);
   }
@@ -1172,27 +1216,33 @@ export default {
     font-size: var(--font-size-sm);
   }
 
-  .auth-navigation-links {
-    margin-top: 0;
-    padding-top: var(--space-3);
-  }
-
   .signup-content-wrapper {
     flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .main-form-container {
+    width: 100%;
+    max-width: none;
   }
 
   .social-login-container {
+    width: 100%;
+    max-width: none;
     flex-basis: auto;
-    margin-top: var(--space-6);
   }
 
   .vertical-divider-container {
-    flex-direction: row;
-  }
-  .vertical-divider-container::before,
-  .vertical-divider-container::after {
+    width: 100%;
     height: 1px;
-    width: auto;
+    margin: 0;
+    background-color: var(--color-gray-200);
+  }
+
+  .auth-navigation-links {
+    margin-top: 0;
+    padding-top: var(--space-3);
   }
 }
 

@@ -56,3 +56,57 @@ export function findBySlug(items, slug) {
   if (!items || !slug) return null
   return items.find((item) => createSlug(item.name) === slug) || null
 }
+
+/**
+ * Parse URL hash parameters
+ * Handles URL fragments like #error=access_denied&error_code=otp_expired
+ * @param {string} hash - The hash string from window.location.hash
+ * @returns {Object} - Parsed parameters as key-value pairs
+ */
+export function parseHashParams(hash) {
+  const params = {}
+
+  // Remove the # symbol and split by &
+  const cleanHash = hash.replace('#', '')
+  if (!cleanHash) return params
+
+  const pairs = cleanHash.split('&')
+
+  pairs.forEach((pair) => {
+    const [key, value] = pair.split('=')
+    if (key && value) {
+      // Decode URL-encoded values
+      params[key] = decodeURIComponent(value.replace(/\+/g, ' '))
+    }
+  })
+
+  return params
+}
+
+/**
+ * Check if URL contains expired confirmation link parameters
+ * @param {string} hash - The hash string from window.location.hash
+ * @returns {boolean} - True if the link is expired
+ */
+export function isExpiredConfirmationLink(hash) {
+  const params = parseHashParams(hash)
+  return params.error_code === 'otp_expired' && params.error === 'access_denied'
+}
+
+/**
+ * Get user-friendly error message for expired confirmation
+ * @returns {string} - Localized error message
+ */
+export function getExpiredConfirmationMessage() {
+  return 'Votre lien de confirmation a expiré. Veuillez créer à nouveau un compte afin de recevoir un nouveau lien.'
+}
+
+/**
+ * Clean URL hash parameters
+ * Removes hash fragments from the current URL
+ */
+export function cleanUrlHash() {
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.pathname + window.location.search)
+  }
+}

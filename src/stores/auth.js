@@ -112,8 +112,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Signup function - Pure Supabase
-  const signup = async (email, password, name) => {
+  // Signup function - with identities array checking for already existing user
+  const signup = async (email, password, name, captchaToken) => {
     try {
       setLoading(true)
       clearError()
@@ -126,14 +126,55 @@ export const useAuthStore = defineStore('auth', () => {
             name: name,
             full_name: name,
           },
+          captchaToken: captchaToken,
         },
       })
 
+      // First check for any signup errors
       if (error) {
+        console.error('Supabase signup error:', error)
         throw error
       }
 
-      // Check if email confirmation is required
+      // Log the complete response structure for debugging
+      console.log('Supabase signup response:', {
+        user: data.user,
+        session: data.session,
+        identities: data.user?.identities,
+        identitiesLength: data.user?.identities?.length,
+        userEmail: data.user?.email,
+        confirmationSentAt: data.user?.confirmation_sent_at,
+      })
+
+      // Check if user exists by examining identities array
+      if (data.user && data.user.identities !== undefined) {
+        if (data.user.identities.length === 0) {
+          console.log('Existing user detected - identities array is empty')
+          console.log('User details:', {
+            email: data.user.email,
+            created_at: data.user.created_at,
+            confirmation_sent_at: data.user.confirmation_sent_at,
+            identities: data.user.identities,
+          })
+
+          return {
+            success: false,
+            error: 'EMAIL_ALREADY_EXISTS',
+            isExistingUser: true,
+            message:
+              'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.',
+          }
+        } else {
+          console.log(
+            'New user signup detected - identities array populated:',
+            data.user.identities.length,
+          )
+        }
+      } else {
+        console.warn('Identities array is undefined - this may indicate an API change or error')
+      }
+
+      // Check if email confirmation is required (normal flow for new users)
       if (data.user && !data.session) {
         return {
           success: true,
