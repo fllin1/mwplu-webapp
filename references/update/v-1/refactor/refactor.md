@@ -194,26 +194,26 @@ src/
   - Comments & Ratings
   - Source documents
   - Download options
-- [ ] Create `PluContent.vue` for synthesis display
-- [ ] Create `PluMetadata.vue` for document info
-- [ ] Fetch PLU data from Supabase based on route params
+- [x] Create `PluContent.vue` for synthesis display
+- [x] Create `PluMetadata.vue` for document info
+- [x] Fetch PLU data from Supabase based on route params
 
 ### 4.3 Comments and Ratings System
 
-- [ ] Create Supabase tables: comments, ratings
-- [ ] Create `CommentSection.vue` container
-- [ ] Create `CommentItem.vue` for single comment
-- [ ] Create `CommentForm.vue` with validation
-- [ ] Create `RatingWidget.vue` (1-5 stars)
-- [ ] Setup Supabase real-time subscriptions for updates
+- [x] Create Supabase tables: comments, ratings
+- [x] Create `CommentSection.vue` container
+- [x] Create `CommentItem.vue` for single comment
+- [x] Create `CommentForm.vue` with validation
+- [x] Create `RatingWidget.vue` (1-5 stars)
+- [x] Setup Supabase real-time subscriptions for updates
 
 ### 4.4 Download Feature
 
-- [ ] Create `DownloadSection.vue` with options
-- [ ] Implement secure file URLs with Supabase Storage
-- [ ] Track downloads in Supabase database
-- [ ] Show download count and last updated date
-- [ ] Track download events in GA4 with document details
+- [x] Create `DownloadSection.vue`
+- [x] Implement secure file URLs with Supabase Storage
+- [x] Track downloads in Supabase database
+- [x] Show download count and last updated date
+- [x] Track download events in GA4 with document details
 
 ## Phase 5: Additional Features (Week 6-8)
 

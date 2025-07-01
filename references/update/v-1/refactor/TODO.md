@@ -29,6 +29,10 @@
 
 - [x] Add breadcrumbs on pages
 
+### PLU Synthesis
+
+- [ ] Remove the "CHAPTERS" in table of content and in the synthesis itself
+
 ## LAUNCH
 
 **FIRST STEP**:

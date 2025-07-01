@@ -9,11 +9,7 @@
           <span class="rating-label">Note moyenne:</span>
           <div class="rating-display">
             <div class="stars">
-              <span
-                v-for="star in 5"
-                :key="star"
-                :class="['star', { 'filled': star <= Math.round(documentRating) }]"
-              >
+              <span v-for="star in 5" :key="star" :class="['star', { 'filled': star <= Math.round(documentRating) }]">
                 ★
               </span>
             </div>
@@ -25,19 +21,11 @@
         <div class="user-rating" v-if="isAuthenticated">
           <span class="rating-label">Votre évaluation:</span>
           <div class="rating-input">
-            <button
-              v-for="star in 5"
-              :key="star"
-              @click="submitUserRating(star)"
-              @mouseover="hoverRating = star"
-              @mouseleave="hoverRating = 0"
-              :class="['star-button', {
+            <button v-for="star in 5" :key="star" @click="submitUserRating(star)" @mouseover="hoverRating = star"
+              @mouseleave="hoverRating = 0" :class="['star-button', {
                 'filled': star <= (hoverRating || userRating),
                 'hover': hoverRating > 0 && star <= hoverRating
-              }]"
-              :disabled="isSubmittingRating"
-              type="button"
-            >
+              }]" :disabled="isSubmittingRating" type="button">
               ★
             </button>
             <span v-if="userRating" class="user-rating-text">
@@ -73,32 +61,16 @@
             <label for="comment-text" class="form-label">
               Ajouter un commentaire
             </label>
-            <textarea
-              id="comment-text"
-              v-model="newComment"
-              class="comment-textarea"
-              placeholder="Partagez votre avis sur cette synthèse..."
-              rows="4"
-              maxlength="1000"
-              required
-            ></textarea>
+            <textarea id="comment-text" v-model="newComment" class="comment-textarea"
+              placeholder="Partagez votre avis sur cette synthèse..." rows="4" maxlength="1000" required></textarea>
             <div class="character-count">
               {{ newComment.length }} / 1000 caractères
             </div>
           </div>
 
           <div class="form-actions">
-            <button
-              type="submit"
-              :disabled="!newComment.trim() || isSubmittingComment"
-              class="submit-btn btn"
-            >
-              <BaseSpinner
-                v-if="isSubmittingComment"
-                size="small"
-                color="white"
-                class="button-spinner"
-              />
+            <button type="submit" :disabled="!newComment.trim() || isSubmittingComment" class="submit-btn btn">
+              <BaseSpinner v-if="isSubmittingComment" size="small" color="white" class="button-spinner" />
               {{ isSubmittingComment ? 'Publication...' : 'Publier le commentaire' }}
             </button>
           </div>
@@ -122,11 +94,7 @@
         </div>
 
         <div v-else-if="comments?.length" class="comments">
-          <div
-            v-for="comment in comments"
-            :key="comment.id"
-            class="comment-item"
-          >
+          <div v-for="comment in comments" :key="comment.id" class="comment-item">
             <div class="comment-header">
               <div class="comment-author">
                 <strong>{{ comment.user_email || 'Utilisateur anonyme' }}</strong>
@@ -590,6 +558,7 @@ onMounted(() => {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+
   .current-rating,
   .user-rating {
     flex-direction: column;

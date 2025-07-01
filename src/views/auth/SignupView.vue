@@ -10,153 +10,152 @@
           </p>
         </div>
 
-        <!-- Main signup content with two-column layout -->
-        <div class="signup-content-wrapper">
-          <!-- Left side: Main form -->
-          <div class="main-form-container">
-            <form @submit.prevent="handleSubmit" class="signup-form-inner">
-              <!-- Name Field -->
-              <div class="form-group">
-                <label for="name" class="form-label">
-                  Nom complet
-                  <span class="required">*</span>
-                </label>
+        <!-- Single column form -->
+        <div class="signup-form-container">
+          <form @submit.prevent="handleSubmit" class="signup-form-inner">
+            <!-- Name Field -->
+            <div class="form-group">
+              <label for="name" class="form-label">
+                Nom complet
+                <span class="required">*</span>
+              </label>
+              <input
+                id="name"
+                v-model="form.name"
+                type="text"
+                class="form-input"
+                :class="{ 'error': errors.name }"
+                placeholder="Prénom Nom"
+                required
+                autocomplete="name"
+                @blur="validateName"
+                @input="clearFieldError('name')"
+              />
+              <span v-if="errors.name" class="error-message">
+                {{ errors.name }}
+              </span>
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+              <label for="email" class="form-label">
+                Adresse e-mail
+                <span class="required">*</span>
+              </label>
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                class="form-input"
+                :class="{ 'error': errors.email }"
+                placeholder="votre@email.com"
+                required
+                autocomplete="email"
+                @blur="validateEmail"
+                @input="clearFieldError('email')"
+              />
+              <span v-if="errors.email" class="error-message">
+                {{ errors.email }}
+              </span>
+            </div>
+
+            <!-- Phone Number Field (Optional) -->
+            <div class="form-group">
+              <label for="phone" class="form-label">
+                Numéro de téléphone
+                <span class="optional">(optionnel)</span>
+              </label>
+              <input
+                id="phone"
+                v-model="form.phone"
+                type="tel"
+                class="form-input"
+                :class="{ 'error': errors.phone }"
+                placeholder="+33 1 23 45 67 89"
+                autocomplete="tel"
+                @blur="validatePhone"
+                @input="clearFieldError('phone')"
+              />
+              <span v-if="errors.phone" class="error-message">
+                {{ errors.phone }}
+              </span>
+              <span class="form-hint">Format recommandé : +33 1 23 45 67 89</span>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group">
+              <label for="password" class="form-label">
+                Mot de passe
+                <span class="required">*</span>
+              </label>
+              <div class="password-input-container">
                 <input
-                  id="name"
-                  v-model="form.name"
-                  type="text"
-                  class="form-input"
-                  :class="{ 'error': errors.name }"
-                  placeholder="Prénom Nom"
-                  required
-                  autocomplete="name"
-                  @blur="validateName"
-                  @input="clearFieldError('name')"
-                />
-                <span v-if="errors.name" class="error-message">
-                  {{ errors.name }}
-                </span>
-              </div>
-
-              <!-- Email Field -->
-              <div class="form-group">
-                <label for="email" class="form-label">
-                  Adresse e-mail
-                  <span class="required">*</span>
-                </label>
-                <input
-                  id="email"
-                  v-model="form.email"
-                  type="email"
-                  class="form-input"
-                  :class="{ 'error': errors.email }"
-                  placeholder="votre@email.com"
-                  required
-                  autocomplete="email"
-                  @blur="validateEmail"
-                  @input="clearFieldError('email')"
-                />
-                <span v-if="errors.email" class="error-message">
-                  {{ errors.email }}
-                </span>
-              </div>
-
-              <!-- Phone Number Field (Optional) -->
-              <div class="form-group">
-                <label for="phone" class="form-label">
-                  Numéro de téléphone
-                  <span class="optional">(optionnel)</span>
-                </label>
-                <input
-                  id="phone"
-                  v-model="form.phone"
-                  type="tel"
-                  class="form-input"
-                  :class="{ 'error': errors.phone }"
-                  placeholder="+33 1 23 45 67 89"
-                  autocomplete="tel"
-                  @blur="validatePhone"
-                  @input="clearFieldError('phone')"
-                />
-                <span v-if="errors.phone" class="error-message">
-                  {{ errors.phone }}
-                </span>
-                <span class="form-hint">Format recommandé : +33 1 23 45 67 89</span>
-              </div>
-
-              <!-- Password Field -->
-              <div class="form-group">
-                <label for="password" class="form-label">
-                  Mot de passe
-                  <span class="required">*</span>
-                </label>
-                <div class="password-input-container">
-                  <input
-                    id="password"
-                    v-model="form.password"
-                    :type="showPassword ? 'text' : 'password'"
-                    class="form-input password-input"
-                    :class="{ 'error': errors.password }"
-                    placeholder="Créez un mot de passe sécurisé"
-                    required
-                    autocomplete="new-password"
-                    @blur="validatePassword"
-                    @input="onPasswordInput"
-                  />
-                  <button
-                    type="button"
-                    @click="togglePasswordVisibility"
-                    class="password-toggle"
-                    :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-                  >
-                    {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-                  </button>
-                </div>
-
-                <!-- Password Requirements -->
-                <div class="password-requirements-condensed">
-                  <ul class="requirements-list">
-                    <li :class="{ 'met': passwordChecks.length }">8+ caractères</li>
-                    <li :class="{ 'met': passwordChecks.uppercase }">1 majuscule</li>
-                    <li :class="{ 'met': passwordChecks.lowercase }">1 minuscule</li>
-                    <li :class="{ 'met': passwordChecks.number }">1 chiffre</li>
-                  </ul>
-                </div>
-                <span v-if="errors.password" class="error-message">
-                  {{ errors.password }}
-                </span>
-              </div>
-
-              <!-- Confirm Password Field -->
-              <div class="form-group">
-                <label for="confirmPassword" class="form-label">
-                  Confirmer le mot de passe
-                  <span class="required">*</span>
-                </label>
-                <input
-                  id="confirmPassword"
-                  v-model="form.confirmPassword"
-                  type="password"
-                  class="form-input"
-                  :class="{ 'error': errors.confirmPassword }"
-                  placeholder="Répétez votre mot de passe"
+                  id="password"
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  class="form-input password-input"
+                  :class="{ 'error': errors.password }"
+                  placeholder="Créez un mot de passe sécurisé"
                   required
                   autocomplete="new-password"
-                  @blur="validateConfirmPassword"
-                  @input="clearFieldError('confirmPassword')"
+                  @blur="validatePassword"
+                  @input="onPasswordInput"
                 />
-                <span v-if="errors.confirmPassword" class="error-message">
-                  {{ errors.confirmPassword }}
-                </span>
+                <button
+                  type="button"
+                  @click="togglePasswordVisibility"
+                  class="password-toggle"
+                  :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                >
+                  {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                </button>
               </div>
 
-              <!-- Terms and Privacy -->
+              <!-- Password Requirements -->
+              <div class="password-requirements-condensed">
+                <ul class="requirements-list">
+                  <li :class="{ 'met': passwordChecks.length }">8+ caractères</li>
+                  <li :class="{ 'met': passwordChecks.uppercase }">1 majuscule</li>
+                  <li :class="{ 'met': passwordChecks.lowercase }">1 minuscule</li>
+                  <li :class="{ 'met': passwordChecks.number }">1 chiffre</li>
+                </ul>
+              </div>
+              <span v-if="errors.password" class="error-message">
+                {{ errors.password }}
+              </span>
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="form-group">
+              <label for="confirmPassword" class="form-label">
+                Confirmer le mot de passe
+                <span class="required">*</span>
+              </label>
+              <input
+                id="confirmPassword"
+                v-model="form.confirmPassword"
+                type="password"
+                class="form-input"
+                :class="{ 'error': errors.confirmPassword }"
+                placeholder="Répétez votre mot de passe"
+                required
+                autocomplete="new-password"
+                @blur="validateConfirmPassword"
+                @input="clearFieldError('confirmPassword')"
+              />
+              <span v-if="errors.confirmPassword" class="error-message">
+                {{ errors.confirmPassword }}
+              </span>
+            </div>
+
+                          <!-- Terms and Privacy -->
               <div class="form-group">
                 <label class="checkbox-container">
                   <input
                     v-model="form.acceptTerms"
                     type="checkbox"
                     class="checkbox"
+                    :disabled="!hasViewedTerms"
                     required
                     @change="clearFieldError('acceptTerms')"
                   />
@@ -171,65 +170,52 @@
                 </span>
               </div>
 
-              <!-- Turnstile CAPTCHA -->
-              <TurnstileWidget
-                v-if="showCaptcha"
-                :site-key="turnstileSiteKey"
-                @verified="onCaptchaVerified"
-                @error="onCaptchaError"
-                @expired="onCaptchaExpired"
-              />
+            <!-- Turnstile CAPTCHA -->
+            <TurnstileWidget
+              v-if="showCaptcha"
+              :site-key="turnstileSiteKey"
+              @verified="onCaptchaVerified"
+              @error="onCaptchaError"
+              @expired="onCaptchaExpired"
+            />
 
-              <!-- Global Error Message -->
-              <div v-if="globalError" class="global-error">
-                {{ globalError }}
-              </div>
-
-              <!-- Success Message -->
-              <div v-if="successMessage" class="success-message">
-                {{ successMessage }}
-              </div>
-
-              <!-- Submit Button -->
-              <button
-                type="submit"
-                class="submit-button"
-                :disabled="!canSubmit"
-              >
-                <BaseSpinner v-if="isLoading" size="small" color="white" />
-                <span v-else>Créer mon compte</span>
-              </button>
-            </form>
-          </div>
-
-          <!-- Vertical Divider -->
-          <div class="vertical-divider-container"></div>
-
-          <!-- Right side: Social logins and links -->
-          <div class="social-login-container">
-            <div class="social-buttons-stack">
-              <button
-                type="button"
-                @click="handleGoogleSignUp"
-                class="social-button google-button"
-                :disabled="isLoading"
-              >
-                <img src="@/assets/icons/socials/google.svg" alt="Google" class="social-icon" />
-                <span>Continuer avec Google</span>
-              </button>
-              <button type="button" class="social-button apple-button" disabled>
-                <img src="@/assets/icons/socials/apple.svg" alt="Apple" class="social-icon" />
-                <span>Continuer avec Apple</span>
-              </button>
-              <button type="button" class="social-button facebook-button" disabled>
-                <img src="@/assets/icons/socials/facebook.svg" alt="Facebook" class="social-icon" />
-                <span>Continuer avec Facebook</span>
-              </button>
-              <button type="button" class="social-button linkedin-button" disabled>
-                <img src="@/assets/icons/socials/linkedin.svg" alt="LinkedIn" class="social-icon" />
-                <span>Continuer avec LinkedIn</span>
-              </button>
+            <!-- Global Error Message -->
+            <div v-if="globalError" class="global-error">
+              {{ globalError }}
             </div>
+
+            <!-- Success Message -->
+            <div v-if="successMessage" class="success-message">
+              {{ successMessage }}
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="submit-button"
+              :disabled="!canSubmit"
+            >
+              <BaseSpinner v-if="isLoading" size="small" color="white" />
+              <span v-else>Créer mon compte</span>
+            </button>
+
+            <!-- Divider -->
+            <div class="divider">
+              <span class="divider-text">ou</span>
+            </div>
+
+            <!-- Google Sign Up Button -->
+            <button
+              type="button"
+              @click="handleGoogleSignUp"
+              class="social-button google-button"
+              :disabled="isLoading"
+            >
+              <img src="@/assets/icons/socials/google.svg" alt="Google" class="social-icon" />
+              <span>Continuer avec Google</span>
+            </button>
+
+            <!-- Navigation Links -->
             <div class="auth-navigation-links">
               <p class="nav-text">
                 Déjà un compte ?
@@ -249,7 +235,7 @@
                 </router-link>
               </p>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -341,6 +327,7 @@ export default {
     const modalTitle = ref('')
     const modalContent = ref('')
     const modalIsLoading = ref(false)
+    const hasViewedTerms = ref(false)
 
     // Environment variables
     const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
@@ -711,7 +698,12 @@ export default {
       }
     }
 
-    const closeModal = () => {
+            const closeModal = () => {
+      // Mark terms as viewed when modal is closed (user has seen the content)
+      if (modalTitle.value.toLowerCase().includes('conditions') && modalTitle.value.toLowerCase().includes('utilisation')) {
+        hasViewedTerms.value = true
+      }
+
       isModalVisible.value = false
       modalTitle.value = ''
       modalContent.value = ''
@@ -758,6 +750,7 @@ export default {
       isModalVisible,
       modalTitle,
       modalContent,
+      hasViewedTerms,
       showPolicy,
       closeModal,
     }
@@ -771,13 +764,12 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* background-color: var(--color-gray-50); */
   padding: var(--space-8) var(--space-4);
 }
 
 .auth-container {
   width: 100%;
-  max-width: 860px;
+  max-width: 364px;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -818,39 +810,10 @@ export default {
   line-height: 1.5;
 }
 
-/* --- New two-column layout styles --- */
-.signup-content-wrapper {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-8);
-}
-
-.main-form-container {
-  flex: 1;
+/* Single column layout */
+.signup-form-container {
   max-width: 400px;
-  min-width: 0; /* Prevents flexbox overflow */
-}
-
-.social-login-container {
-  flex: 1;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-6);
-}
-
-.vertical-divider-container {
-  width: 1px;
-  background-color: var(--color-gray-200);
-  margin: 0 var(--space-4);
-}
-
-.social-buttons-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
+  margin: 0 auto;
 }
 
 .social-button {
@@ -885,7 +848,30 @@ export default {
   width: 18px;
   height: 18px;
 }
-/* --- End new layout styles --- */
+
+/* Divider */
+.divider {
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-gray-200);
+}
+
+.divider-text {
+  background-color: var(--color-white);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+  padding: 0 var(--space-4);
+  position: relative;
+}
 
 /* Form Container - REMOVED, REPLACED BY NEW LAYOUT */
 .auth-form-section {
@@ -1039,10 +1025,15 @@ export default {
   border: 1px solid var(--color-gray-400);
   border-radius: 2px;
   margin-right: var(--space-2);
-  margin-top: 2px;
   position: relative;
   flex-shrink: 0;
   transition: all var(--transition-fast);
+}
+
+.checkbox:disabled + .checkmark {
+  background-color: var(--color-gray-100);
+  border-color: var(--color-gray-300);
+  opacity: 0.6;
 }
 
 .checkbox:checked + .checkmark {
@@ -1216,28 +1207,8 @@ export default {
     font-size: var(--font-size-sm);
   }
 
-  .signup-content-wrapper {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-6);
-  }
-
-  .main-form-container {
-    width: 100%;
+  .signup-form-container {
     max-width: none;
-  }
-
-  .social-login-container {
-    width: 100%;
-    max-width: none;
-    flex-basis: auto;
-  }
-
-  .vertical-divider-container {
-    width: 100%;
-    height: 1px;
-    margin: 0;
-    background-color: var(--color-gray-200);
   }
 
   .auth-navigation-links {

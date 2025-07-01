@@ -8,142 +8,127 @@
           <p class="auth-subtitle">Accédez à votre compte MWPLU</p>
         </div>
 
-        <!-- Main login content with two-column layout -->
-        <div class="login-content-wrapper">
-          <!-- Left side: Main form -->
-          <div class="main-form-container">
-            <form @submit.prevent="handleSubmit" class="login-form-inner">
-              <!-- Email Field -->
-              <div class="form-group">
-                <label for="email" class="form-label">
-                  Adresse e-mail
-                  <span class="required">*</span>
-                </label>
+        <!-- Single column form -->
+        <div class="login-form-container">
+          <form @submit.prevent="handleSubmit" class="login-form-inner">
+            <!-- Email Field -->
+            <div class="form-group">
+              <label for="email" class="form-label">
+                Adresse e-mail
+                <span class="required">*</span>
+              </label>
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                class="form-input"
+                :class="{ 'error': errors.email }"
+                placeholder="votre@email.com"
+                required
+                autocomplete="email"
+                @blur="validateEmail"
+                @input="clearFieldError('email')"
+              />
+              <span v-if="errors.email" class="error-message">
+                {{ errors.email }}
+              </span>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group">
+              <label for="password" class="form-label">
+                Mot de passe
+                <span class="required">*</span>
+              </label>
+              <div class="password-input-container">
                 <input
-                  id="email"
-                  v-model="form.email"
-                  type="email"
-                  class="form-input"
-                  :class="{ 'error': errors.email }"
-                  placeholder="votre@email.com"
+                  id="password"
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  class="form-input password-input"
+                  :class="{ 'error': errors.password }"
+                  placeholder="Votre mot de passe"
                   required
-                  autocomplete="email"
-                  @blur="validateEmail"
-                  @input="clearFieldError('email')"
+                  autocomplete="current-password"
+                  @blur="validatePassword"
+                  @input="clearFieldError('password')"
                 />
-                <span v-if="errors.email" class="error-message">
-                  {{ errors.email }}
-                </span>
-              </div>
-
-              <!-- Password Field -->
-              <div class="form-group">
-                <label for="password" class="form-label">
-                  Mot de passe
-                  <span class="required">*</span>
-                </label>
-                <div class="password-input-container">
-                  <input
-                    id="password"
-                    v-model="form.password"
-                    :type="showPassword ? 'text' : 'password'"
-                    class="form-input password-input"
-                    :class="{ 'error': errors.password }"
-                    placeholder="Votre mot de passe"
-                    required
-                    autocomplete="current-password"
-                    @blur="validatePassword"
-                    @input="clearFieldError('password')"
-                  />
-                  <button
-                    type="button"
-                    @click="togglePasswordVisibility"
-                    class="password-toggle"
-                    :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-                  >
-                    {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-                  </button>
-                </div>
-                <span v-if="errors.password" class="error-message">
-                  {{ errors.password }}
-                </span>
-              </div>
-
-              <!-- Remember Me & Forgot Password -->
-              <div class="form-options">
-                <label class="checkbox-container">
-                  <input
-                    v-model="form.rememberMe"
-                    type="checkbox"
-                    class="checkbox"
-                  />
-                  <span class="checkmark"></span>
-                  <span class="checkbox-label">Se souvenir de moi</span>
-                </label>
-
                 <button
                   type="button"
-                  @click="handleForgotPassword"
-                  class="link-button"
+                  @click="togglePasswordVisibility"
+                  class="password-toggle"
+                  :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
                 >
-                  Mot de passe oublié ?
+                  {{ showPassword ? '👁️' : '👁️‍🗨️' }}
                 </button>
               </div>
+              <span v-if="errors.password" class="error-message">
+                {{ errors.password }}
+              </span>
+            </div>
 
-              <!-- Turnstile CAPTCHA -->
-              <TurnstileWidget
-                v-if="showCaptcha"
-                :site-key="turnstileSiteKey"
-                @verified="onCaptchaVerified"
-                @error="onCaptchaError"
-                @expired="onCaptchaExpired"
-              />
+            <!-- Remember Me & Forgot Password -->
+            <div class="form-options">
+              <label class="checkbox-container">
+                <input
+                  v-model="form.rememberMe"
+                  type="checkbox"
+                  class="checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="checkbox-label">Se souvenir de moi</span>
+              </label>
 
-              <!-- Global Error Message -->
-              <div v-if="globalError" class="global-error">
-                {{ globalError }}
-              </div>
-
-              <!-- Submit Button -->
-              <button
-                type="submit"
-                class="submit-button"
-                :disabled="!canSubmit"
-              >
-                <BaseSpinner v-if="isLoading" size="small" color="white" />
-                <span v-else>Se connecter</span>
-              </button>
-            </form>
-          </div>
-
-          <!-- Vertical Divider -->
-          <div class="vertical-divider-container"></div>
-
-          <!-- Right side: Social logins and links -->
-          <div class="social-login-container">
-            <div class="social-buttons-stack">
               <button
                 type="button"
-                @click="handleGoogleSignIn"
-                class="social-button google-button"
-                :disabled="isLoading"
+                @click="handleForgotPassword"
+                class="link-button"
               >
-                <img src="@/assets/icons/socials/google.svg" alt="Google" class="social-icon" />
-                <span>Continuer avec Google</span>
-              </button>
-              <button type="button" class="social-button apple-button" disabled>
-                <img src="@/assets/icons/socials/apple.svg" alt="Apple" class="social-icon" />
-                <span>Continuer avec Apple</span>
-              </button>
-              <button type="button" class="social-button microsoft-button" disabled>
-                <img src="@/assets/icons/socials/microsoft.svg" alt="Microsoft" class="social-icon" />
-                <span>Continuer avec Microsoft</span>
-              </button>
-              <button type="button" class="social-button linkedin-button" disabled>
-                <img src="@/assets/icons/socials/linkedin.svg" alt="LinkedIn" class="social-icon" />
-                <span>Continuer avec LinkedIn</span>
+                Mot de passe oublié ?
               </button>
             </div>
+
+            <!-- Turnstile CAPTCHA -->
+            <TurnstileWidget
+              v-if="showCaptcha"
+              :site-key="turnstileSiteKey"
+              @verified="onCaptchaVerified"
+              @error="onCaptchaError"
+              @expired="onCaptchaExpired"
+            />
+
+            <!-- Global Error Message -->
+            <div v-if="globalError" class="global-error">
+              {{ globalError }}
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="submit-button"
+              :disabled="!canSubmit"
+            >
+              <BaseSpinner v-if="isLoading" size="small" color="white" />
+              <span v-else>Se connecter</span>
+            </button>
+
+            <!-- Divider -->
+            <div class="divider">
+              <span class="divider-text">ou</span>
+            </div>
+
+            <!-- Google Sign In Button -->
+            <button
+              type="button"
+              @click="handleGoogleSignIn"
+              class="social-button google-button"
+              :disabled="isLoading"
+            >
+              <img src="@/assets/icons/socials/google.svg" alt="Google" class="social-icon" />
+              <span>Continuer avec Google</span>
+            </button>
+
+            <!-- Navigation Links -->
             <div class="auth-navigation-links">
               <p class="nav-text">
                 Pas encore de compte ?
@@ -152,7 +137,7 @@
                 </router-link>
               </p>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -447,7 +432,7 @@ export default {
 
 .auth-container {
   width: 100%;
-  max-width: 860px;
+  max-width: 364px;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -486,39 +471,10 @@ export default {
   line-height: 1.5;
 }
 
-/* --- New two-column layout styles --- */
-.login-content-wrapper {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-8);
-}
-
-.main-form-container {
-  flex: 1;
+/* Single column layout */
+.login-form-container {
   max-width: 400px;
-  min-width: 0;
-}
-
-.social-login-container {
-  flex: 1;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-6);
-}
-
-.vertical-divider-container {
-  width: 1px;
-  background-color: var(--color-gray-200);
-  margin: 0 var(--space-4);
-}
-
-.social-buttons-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
+  margin: 0 auto;
 }
 
 .social-button {
@@ -553,7 +509,31 @@ export default {
   width: 18px;
   height: 18px;
 }
-/* --- End new layout styles --- */
+
+/* Divider */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: var(--space-4) 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-gray-200);
+}
+
+.divider-text {
+  background-color: var(--color-white);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+  padding: 0 var(--space-4);
+  position: relative;
+}
 
 .login-form-inner {
   display: flex;
@@ -783,30 +763,8 @@ export default {
     font-size: var(--font-size-sm);
   }
 
-  .login-content-wrapper {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-6);
-  }
-
-  .main-form-container {
-    width: 100%;
+  .login-form-container {
     max-width: none;
-  }
-
-  .social-login-container {
-    width: 100%;
-    max-width: none;
-    flex-basis: auto;
-    order: 1; /* Move social logins below form on mobile */
-  }
-
-  .vertical-divider-container {
-    order: 0; /* Divider between form and social */
-    width: 100%;
-    height: 1px;
-    margin: 0;
-    background-color: var(--color-gray-200);
   }
 }
 </style>

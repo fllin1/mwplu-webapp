@@ -58,12 +58,8 @@
         <!-- Tab Navigation -->
         <nav class="plu-tab-navigation">
           <div class="tabs-container">
-            <button
-              v-for="tab in tabs"
-              :key="tab.id"
-              @click="activeTab = tab.id"
-              :class="['tab-button', { 'tab-button--active': activeTab === tab.id }]"
-            >
+            <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
+              :class="['tab-button', { 'tab-button--active': activeTab === tab.id }]">
               {{ tab.label }}
             </button>
           </div>
@@ -75,7 +71,8 @@
           <section v-if="activeTab === 'synthesis'" class="tab-panel-content">
             <div class="content-section">
               <h2 class="section-heading">Synthèse du PLU</h2>
-              <div class="synthesis-text-content" v-html="pluData.synthesis_content || 'Contenu de synthèse non disponible.'">
+              <div class="synthesis-text-content"
+                v-html="pluData.synthesis_content || 'Contenu de synthèse non disponible.'">
               </div>
             </div>
 
@@ -88,12 +85,12 @@
               <!-- Rating Section (Independent) -->
               <div v-if="authStore.isAuthenticated" class="rating-section card">
                 <h3 class="section-subheading">Noter ce document</h3>
-                <p class="rating-description">Attribuez une note à ce document PLU selon sa qualité et son utilité.</p>
                 <div class="rating-form">
                   <div class="current-rating" v-if="userRating">
                     <span class="rating-label">Votre note actuelle :</span>
                     <div class="rating-display">
-                      <span v-for="star in 5" :key="star" :class="['star-display', { 'star-display--filled': star <= userRating }]">
+                      <span v-for="star in 5" :key="star"
+                        :class="['star-display', { 'star-display--filled': star <= userRating }]">
                         ★
                       </span>
                       <span class="rating-value">({{ userRating }}/5)</span>
@@ -101,18 +98,13 @@
                   </div>
 
                   <div class="rating-input">
-                    <span class="rating-label">{{ userRating ? 'Modifier votre note :' : 'Attribuer une note :' }}</span>
+                    <span class="rating-label">{{ userRating ? 'Modifier votre note :' : 'Attribuer une note :'
+                      }}</span>
                     <div class="rating-stars">
-                      <button
-                        v-for="star in 5"
-                        :key="star"
-                        type="button"
-                        @click="submitRating(star)"
+                      <button v-for="star in 5" :key="star" type="button" @click="submitRating(star)"
                         :class="['star-button', { 'star-button--active': star <= (hoveredRating || userRating || 0) }]"
-                        @mouseenter="hoveredRating = star"
-                        @mouseleave="hoveredRating = 0"
-                        :disabled="isSubmittingRating"
-                      >
+                        @mouseenter="hoveredRating = star" @mouseleave="hoveredRating = 0"
+                        :disabled="isSubmittingRating">
                         ★
                       </button>
                     </div>
@@ -130,14 +122,8 @@
                 <form @submit.prevent="submitComment" class="comment-form">
                   <div class="form-group">
                     <label for="comment-text" class="form-label">Votre commentaire</label>
-                    <textarea
-                      id="comment-text"
-                      v-model="newComment.text"
-                      class="form-textarea"
-                      rows="4"
-                      placeholder="Partagez votre avis sur ce document PLU..."
-                      required
-                    ></textarea>
+                    <textarea id="comment-text" v-model="newComment.text" class="form-textarea" rows="4"
+                      placeholder="Partagez votre avis sur ce document PLU..." required></textarea>
                   </div>
 
                   <div class="form-actions">
@@ -219,17 +205,24 @@
           </section>
         </main>
       </div>
+
+      <!-- Back to Top Button -->
+      <button v-if="showBackToTop" @click="scrollToTop" class="back-to-top-btn" title="Retour en haut"
+        aria-label="Retour en haut de la page">
+        <img src="@/assets/icons/elements/arrow-up.svg" alt="Retour en haut" class="back-to-top-icon" color="white"
+          width="20" height="20" />
+      </button>
     </div>
   </AppLayout>
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { usePluStore } from '@/stores/plu'
-import { dbService } from '@/services/supabase'
+import { dbService, supabase } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
@@ -262,6 +255,9 @@ export default {
     const hoveredRating = ref(0)
     const isSubmittingRating = ref(false)
 
+    // Back to top functionality
+    const showBackToTop = ref(false)
+
     const newComment = reactive({
       text: '',
     })
@@ -273,7 +269,7 @@ export default {
       { id: 'downloads', label: 'Téléchargements' },
     ]
 
-            // Computed properties for breadcrumbs
+    // Computed properties for breadcrumbs
     const breadcrumbItems = computed(() => {
       const items = [
         {
@@ -443,46 +439,76 @@ export default {
     }
 
     /**
-     * Handles file download.
-     * @param {string} type - 'synthesis' or 'source'
-     * @param {string} id - For synthesis, it's the format (pdf/docx). For source, it's the source ID.
+     * Handles PDF file download from Supabase storage.
+     * @param {string} type - Only 'synthesis' is supported now
+     * @param {string} format - Only 'pdf' is supported
      */
-    const downloadFile = async (type, id) => {
+    const downloadFile = async (type, format) => {
       try {
-        let fileUrl = '';
-        // let fileName = '';
-
-        if (type === 'synthesis') {
-          // In a real app, this would generate a signed URL from Supabase Storage
-          // For now, simulate based on format
-          if (id === 'pdf') {
-            fileUrl = '/path/to/plu-synthesis.pdf'; // Placeholder
-          } else if (id === 'docx') {
-            fileUrl = '/path/to/plu-synthesis.docx'; // Placeholder
-          }
-        } else if (type === 'source') {
-          const source = pluData.value.sources.find(s => s.id === id);
-          if (source) {
-            fileUrl = source.file_url;
-          } else {
-            throw new Error('Source document not found.');
-          }
+        // Only support PDF synthesis downloads
+        if (type !== 'synthesis' || format !== 'pdf') {
+          throw new Error('Type de téléchargement non supporté');
         }
 
-        if (!fileUrl) {
-          throw new Error('URL de téléchargement non disponible.');
+        if (!pluData.value || !pluData.value.pdf_storage_path) {
+          throw new Error('Document PDF non disponible');
         }
 
-        // Simulate download by opening in a new tab
-        window.open(fileUrl, '_blank');
+        // Clean the storage path (remove leading slash if present)
+        const cleanPath = pluData.value.pdf_storage_path.replace(/^\//, '');
 
-        // Optionally, track the download
-        // await dbService.recordDownload(pluData.value.id, authStore.user?.id || null, type);
-        uiStore.showNotification('Téléchargement lancé !', 'success');
+        // Create signed download URL from Supabase storage
+        const { data: urlData, error: urlError } = await supabase.storage
+          .from('pdfs')
+          .createSignedUrl(cleanPath, 60, { download: true });
+
+        if (urlError) {
+          console.error('Storage URL error:', urlError);
+          throw urlError;
+        }
+
+        if (!urlData || !urlData.signedUrl) {
+          throw new Error('URL de téléchargement non générée');
+        }
+
+        // Track the download in database
+        if (authStore.isAuthenticated) {
+          await dbService.trackDownload(pluData.value.id, 'pdf');
+        }
+
+        // Create proper filename based on document data
+        const cityName = pluData.value.city_name || 'Document';
+        const zoneName = pluData.value.zone_name || 'Zone';
+        const fileName = `PLU_${cityName}_${zoneName}.pdf`;
+
+        // Force download using a temporary link element
+        const link = document.createElement('a');
+        link.href = urlData.signedUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        uiStore.showNotification('Téléchargement lancé avec succès !', 'success');
 
       } catch (error) {
         console.error('Download error:', error);
-        uiStore.showNotification(`Erreur lors du téléchargement : ${error.message || 'Une erreur inattendue est survenue.'}`, 'error');
+
+        // Provide user-friendly error messages
+        let errorMessage = 'Une erreur inattendue est survenue lors du téléchargement.';
+
+        if (error.message?.includes('Object not found') || error.message?.includes('not found')) {
+          errorMessage = 'Le fichier PDF n\'a pas été trouvé. Veuillez contacter l\'administrateur.';
+        } else if (error.message?.includes('not available') || error.message?.includes('non disponible')) {
+          errorMessage = 'Le document PDF n\'est pas encore disponible pour ce PLU.';
+        } else if (error.message?.includes('non supporté') || error.message?.includes('not supported')) {
+          errorMessage = 'Seuls les téléchargements PDF sont actuellement supportés.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        uiStore.showNotification(`Erreur de téléchargement : ${errorMessage}`, 'error');
       }
     };
 
@@ -507,9 +533,34 @@ export default {
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
     }
 
+    /**
+     * Scrolls smoothly to the top of the page.
+     */
+    const scrollToTop = () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+
+    /**
+     * Handles scroll events to show/hide the back to top button.
+     */
+    const handleScroll = () => {
+      // Show button when user has scrolled down 300px or more
+      showBackToTop.value = window.scrollY > 300
+    }
+
     // Load data on component mount and when route changes
     onMounted(() => {
       loadPluData()
+      // Add scroll event listener for back to top button
+      window.addEventListener('scroll', handleScroll)
+    })
+
+    // Cleanup scroll event listener
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleScroll)
     })
 
     watch(
@@ -552,12 +603,15 @@ export default {
       userRating,
       hoveredRating,
       isSubmittingRating,
+      // Back to top functionality
+      showBackToTop,
       // Methods
       loadPluData,
       loadUserRating,
       submitRating,
       submitComment,
       downloadFile,
+      scrollToTop,
       formatDate,
       formatFileSize,
     }
@@ -820,9 +874,11 @@ export default {
 .synthesis-text-content :deep(h1) {
   font-size: var(--font-size-2xl);
 }
+
 .synthesis-text-content :deep(h2) {
   font-size: var(--font-size-xl);
 }
+
 .synthesis-text-content :deep(h3) {
   font-size: var(--font-size-lg);
 }
@@ -1009,9 +1065,11 @@ export default {
 }
 
 .comment-rating {
-  margin-left: auto; /* Push rating to the right */
+  margin-left: auto;
+  /* Push rating to the right */
   display: flex;
-  gap: 1px; /* Tighter star spacing */
+  gap: 1px;
+  /* Tighter star spacing */
 }
 
 .star-display {
@@ -1215,7 +1273,8 @@ export default {
 
 .star-button:hover,
 .star-button--active {
-  color: #FFD700; /* Gold color for stars */
+  color: #FFD700;
+  /* Gold color for stars */
 }
 
 .star-button:disabled {
@@ -1334,7 +1393,8 @@ export default {
   }
 
   .tab-button {
-    flex-basis: 48%; /* Two buttons per row */
+    flex-basis: 48%;
+    /* Two buttons per row */
     font-size: var(--font-size-sm);
     padding: var(--space-2) var(--space-3);
   }
@@ -1403,6 +1463,51 @@ export default {
 
   .download-item {
     align-items: flex-start;
+  }
+}
+
+/* Back to Top Button */
+.back-to-top-btn {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  border: none;
+  border-radius: 50%;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-fast);
+  z-index: 1000;
+  line-height: 1;
+}
+
+.back-to-top-btn:hover {
+  background-color: var(--color-gray-700);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.back-to-top-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-md);
+}
+
+/* Responsive adjustment for mobile */
+@media (max-width: 768px) {
+  .back-to-top-btn {
+    bottom: var(--space-4);
+    right: var(--space-4);
+    width: 44px;
+    height: 44px;
+    font-size: var(--font-size-md);
   }
 }
 </style>
