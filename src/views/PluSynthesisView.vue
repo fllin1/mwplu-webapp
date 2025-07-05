@@ -3,7 +3,7 @@
     <div class="main-content">
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-container">
-        <BaseSpinner size="large" color="blue" />
+        <BaseSpinner size="large" />
         <p class="loading-text">Chargement du document PLU...</p>
       </div>
 
@@ -41,15 +41,15 @@
 
           <div class="plu-stats-grid">
             <div class="stat-item">
-              <span class="stat-number">{{ pluData.rating_average || 'N/A' }}</span>
+              <span class="stat-number">{{ documentStats?.ratings_average || 'N/A' }}</span>
               <span class="stat-label">Note moyenne</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number">{{ pluData.comments_count || 0 }}</span>
+              <span class="stat-number">{{ documentStats?.comments_count || 0 }}</span>
               <span class="stat-label">Commentaires</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number">{{ pluData.downloads_count || 0 }}</span>
+              <span class="stat-number">{{ documentStats?.downloads_count || 0 }}</span>
               <span class="stat-label">Téléchargements</span>
             </div>
           </div>
@@ -75,90 +75,13 @@
                 v-html="pluData.synthesis_content || 'Contenu de synthèse non disponible.'">
               </div>
             </div>
-
-
           </section>
 
           <!-- Comments Tab -->
           <section v-if="activeTab === 'comments'" class="tab-panel-content">
-            <div class="comments-section">
-              <!-- Rating Section (Independent) -->
-              <div v-if="authStore.isAuthenticated" class="rating-section card">
-                <h3 class="section-subheading">Noter ce document</h3>
-                <div class="rating-form">
-                  <div class="current-rating" v-if="userRating">
-                    <span class="rating-label">Votre note actuelle :</span>
-                    <div class="rating-display">
-                      <span v-for="star in 5" :key="star"
-                        :class="['star-display', { 'star-display--filled': star <= userRating }]">
-                        ★
-                      </span>
-                      <span class="rating-value">({{ userRating }}/5)</span>
-                    </div>
-                  </div>
-
-                  <div class="rating-input">
-                    <span class="rating-label">{{ userRating ? 'Modifier votre note :' : 'Attribuer une note :'
-                      }}</span>
-                    <div class="rating-stars">
-                      <button v-for="star in 5" :key="star" type="button" @click="submitRating(star)"
-                        :class="['star-button', { 'star-button--active': star <= (hoveredRating || userRating || 0) }]"
-                        @mouseenter="hoveredRating = star" @mouseleave="hoveredRating = 0"
-                        :disabled="isSubmittingRating">
-                        ★
-                      </button>
-                    </div>
-                    <div v-if="isSubmittingRating" class="rating-loading">
-                      <BaseSpinner size="small" />
-                      <span>Enregistrement...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Comment Form Section (Independent) -->
-              <div v-if="authStore.isAuthenticated" class="add-comment-section card">
-                <h3 class="section-subheading">Ajouter un commentaire</h3>
-                <form @submit.prevent="submitComment" class="comment-form">
-                  <div class="form-group">
-                    <label for="comment-text" class="form-label">Votre commentaire</label>
-                    <textarea id="comment-text" v-model="newComment.text" class="form-textarea" rows="4"
-                      placeholder="Partagez votre avis sur ce document PLU..." required></textarea>
-                  </div>
-
-                  <div class="form-actions">
-                    <button type="submit" :disabled="isSubmittingComment" class="btn btn-primary">
-                      <BaseSpinner v-if="isSubmittingComment" size="small" color="white" />
-                      {{ isSubmittingComment ? 'Publication...' : 'Publier le commentaire' }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              <div v-else class="auth-prompt-card card">
-                <p class="auth-prompt-text">Vous devez être connecté pour noter et commenter ce document.</p>
-                <router-link to="/login" class="btn btn-primary">Se connecter</router-link>
-              </div>
-
-              <!-- Comments List -->
-              <div class="comments-list-section card">
-                <h3 class="section-subheading">Commentaires ({{ comments.length }})</h3>
-
-                <div v-if="comments.length === 0" class="empty-state-message">
-                  <p>Aucun commentaire pour le moment. Soyez le premier à partager votre avis !</p>
-                </div>
-
-                <div v-for="comment in comments" :key="comment.id" class="comment-item card">
-                  <div class="comment-header">
-                    <span class="comment-author">{{ comment.user_email }}</span>
-                    <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
-                  </div>
-                  <div class="comment-content-text">
-                    <p>{{ comment.text }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PluCommentsTab v-if="pluData" :document-id="pluData.id" :document-rating="documentStats?.ratings_average"
+              :rating-count="documentStats?.ratings_count || 0" @rating-updated="handleRatingUpdated"
+              @comment-added="handleCommentAdded" />
           </section>
 
           <!-- Sources Tab -->
@@ -217,7 +140,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
@@ -226,6 +149,7 @@ import { dbService, supabase } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
+import PluCommentsTab from '@/components/plu/synthesis/PluCommentsTab.vue'
 import { formatCityName } from '@/utils/helpers'
 
 export default {
@@ -235,6 +159,7 @@ export default {
     AppLayout,
     BreadcrumbNav,
     BaseSpinner,
+    PluCommentsTab,
   },
 
   setup() {
@@ -246,21 +171,11 @@ export default {
     const isLoading = ref(true)
     const errorMessage = ref('')
     const pluData = ref(null)
-    const comments = ref([])
     const activeTab = ref('synthesis') // Default active tab
-    const isSubmittingComment = ref(false)
-
-    // Rating functionality (independent)
-    const userRating = ref(null)
-    const hoveredRating = ref(0)
-    const isSubmittingRating = ref(false)
+    const documentStats = ref(null)
 
     // Back to top functionality
     const showBackToTop = ref(false)
-
-    const newComment = reactive({
-      text: '',
-    })
 
     const tabs = [
       { id: 'synthesis', label: 'Synthèse' },
@@ -307,13 +222,55 @@ export default {
     })
 
     /**
+     * Loads document statistics (ratings, comments, downloads)
+     */
+    const loadDocumentStats = async () => {
+      if (!pluData.value) return
+
+      try {
+        // Get ratings statistics
+        const ratingsResult = await dbService.getRatings(pluData.value.id)
+
+        // Get comments count
+        const commentsResult = await dbService.getComments(pluData.value.id)
+
+        // Get downloads count
+        const downloadsResult = await dbService.getDownloadStats(pluData.value.id)
+
+        if (ratingsResult.success) {
+          documentStats.value = {
+            ratings_average: ratingsResult.data.average,
+            ratings_count: ratingsResult.data.count,
+            comments_count: commentsResult.success ? commentsResult.data.length : 0,
+            downloads_count: downloadsResult.success ? downloadsResult.data.count : 0
+          }
+        }
+      } catch (error) {
+        console.error('Error loading document stats:', error)
+      }
+    }
+
+    /**
+     * Handles rating update events from the comments tab
+     */
+    const handleRatingUpdated = async () => {
+      await loadDocumentStats()
+    }
+
+    /**
+     * Handles comment added events from the comments tab
+     */
+    const handleCommentAdded = async () => {
+      await loadDocumentStats()
+    }
+
+    /**
      * Fetches PLU data from Supabase based on route parameters.
      */
     const loadPluData = async () => {
       isLoading.value = true
       errorMessage.value = ''
       pluData.value = null
-      comments.value = []
 
       // Extract slugs from route parameters
       const { city: citySlug, zoning: zoningSlug, zone: zoneSlug } = route.params
@@ -337,11 +294,8 @@ export default {
 
         if (result.success) {
           pluData.value = result.data
-          // If there's an existing session, try to load comments and user rating
-          if (authStore.isAuthenticated) {
-            await loadComments()
-            await loadUserRating()
-          }
+          // Load document statistics
+          await loadDocumentStats()
         } else {
           errorMessage.value = `Erreur: ${result.error || 'Document non trouvé'}`
         }
@@ -350,91 +304,6 @@ export default {
         errorMessage.value = 'Une erreur inattendue est survenue lors du chargement du PLU.'
       } finally {
         isLoading.value = false
-      }
-    }
-
-    /**
-     * Fetches comments for the current PLU.
-     */
-    const loadComments = async () => {
-      if (!pluData.value) return
-      try {
-        const result = await dbService.getCommentsForPlu(pluData.value.id)
-        if (result.success) {
-          comments.value = result.data
-        } else {
-          console.error('Error loading comments:', result.error)
-          uiStore.showNotification('Erreur lors du chargement des commentaires.', 'error')
-        }
-      } catch (error) {
-        console.error('Error loading comments:', error)
-        uiStore.showNotification('Une erreur inattendue est survenue lors du chargement des commentaires.', 'error')
-      }
-    }
-
-    /**
-     * Loads the user's current rating for the document.
-     */
-    const loadUserRating = async () => {
-      if (!pluData.value || !authStore.isAuthenticated) return
-      try {
-        const result = await dbService.getUserRating(pluData.value.id, authStore.user.id)
-        if (result.success && result.data) {
-          userRating.value = result.data.rating
-        }
-      } catch (error) {
-        console.error('Error loading user rating:', error)
-      }
-    }
-
-    /**
-     * Submits or updates a rating for the document.
-     */
-    const submitRating = async (rating) => {
-      if (isSubmittingRating.value || !authStore.isAuthenticated) return
-
-      isSubmittingRating.value = true
-      try {
-        const result = await dbService.submitRating(pluData.value.id, authStore.user.id, rating)
-        if (result.success) {
-          userRating.value = rating
-          uiStore.showNotification('Note enregistrée avec succès !', 'success')
-          // Update document stats if available
-          if (pluData.value) {
-            await loadPluData() // Reload to get updated average rating
-          }
-        } else {
-          throw new Error(result.error || 'Erreur lors de l\'enregistrement de la note')
-        }
-      } catch (error) {
-        console.error('Error submitting rating:', error)
-        uiStore.showNotification(`Erreur lors de l'enregistrement de la note : ${error.message || 'Une erreur inattendue est survenue.'}`, 'error')
-      } finally {
-        isSubmittingRating.value = false
-      }
-    }
-
-    /**
-     * Submits a new comment.
-     */
-    const submitComment = async () => {
-      if (isSubmittingComment.value || !newComment.text.trim()) return
-
-      isSubmittingComment.value = true
-      try {
-        const result = await dbService.addComment(pluData.value.id, newComment.text.trim())
-        if (result.success) {
-          uiStore.showNotification('Commentaire publié avec succès !', 'success')
-          newComment.text = ''
-          await loadComments() // Reload comments after successful submission
-        } else {
-          throw new Error(result.error || 'Erreur lors de la publication du commentaire')
-        }
-      } catch (error) {
-        console.error('Error submitting comment:', error)
-        uiStore.showNotification(`Erreur lors de la publication du commentaire : ${error.message || 'Une erreur inattendue est survenue.'}`, 'error')
-      } finally {
-        isSubmittingComment.value = false
       }
     }
 
@@ -474,6 +343,8 @@ export default {
         // Track the download in database
         if (authStore.isAuthenticated) {
           await dbService.trackDownload(pluData.value.id, 'pdf');
+          // Refresh stats to update download count
+          await loadDocumentStats();
         }
 
         // Create proper filename based on document data
@@ -574,42 +445,22 @@ export default {
       { deep: true }
     )
 
-    // Watch auth state to reload comments and rating if user logs in/out
-    watch(
-      () => authStore.isAuthenticated,
-      (newVal) => {
-        if (newVal && pluData.value) {
-          loadComments()
-          loadUserRating()
-        } else if (!newVal) {
-          comments.value = [] // Clear comments if user logs out
-          userRating.value = null // Clear user rating if user logs out
-        }
-      }
-    )
-
     return {
       isLoading,
       errorMessage,
       pluData,
-      comments,
       activeTab,
-      isSubmittingComment,
-      newComment,
       tabs,
       breadcrumbItems,
       authStore,
-      // Rating functionality
-      userRating,
-      hoveredRating,
-      isSubmittingRating,
+      documentStats,
       // Back to top functionality
       showBackToTop,
       // Methods
       loadPluData,
-      loadUserRating,
-      submitRating,
-      submitComment,
+      loadDocumentStats,
+      handleRatingUpdated,
+      handleCommentAdded,
       downloadFile,
       scrollToTop,
       formatDate,

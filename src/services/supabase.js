@@ -3,21 +3,20 @@
  * Supabase Service Module
  * @module supabase
  * @description This module handles the Supabase client and database service functions.
- * It includes methods to fetch cities, zonings, zones, typologies, documents, comments, and ratings.
- * It also provides real-time subscriptions for comments and ratings.
- * It integrates with Supabase for user authentication and profile management.
- * @version 1.0.0
+ * It includes methods to fetch cities, zonings, zones, typologies, and documents.
+ * @version 2.0.0
  * @author GreyPanda
  *
  * @changelog
+ * - 2.0.0 (2025-01-05): Removed comments, ratings, and download tracking functionality
  * - 1.0.0 (2025-06-02): Initial version with database service functions.
  */
 
 import { createClient } from '@supabase/supabase-js'
 
 // TODO: Change to production URL and key
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL_DEV
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY_DEV
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL or Anon Key is missing. Check your .env file.')
@@ -128,10 +127,6 @@ export const dbService = {
           (data.content_json?.response
             ? this.formatJsonContent(data.content_json.response)
             : 'Contenu non disponible'),
-        // Add computed fields for stats (these would come from aggregated queries in real implementation)
-        rating_average: null, // TODO: Calculate from ratings table
-        comments_count: 0, // TODO: Calculate from comments table
-        downloads_count: 0, // TODO: Calculate from downloads table
         sources: [], // TODO: Extract from content or separate sources table
       }
 
@@ -228,16 +223,12 @@ export const dbService = {
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select(
-          `
-            *,
-            user:auth.users(email, raw_user_meta_data)
-          `,
-        )
+        .select('*')
         .eq('document_id', documentId)
         .order('created_at', { ascending: false })
 
       if (error) throw error
+
       return { success: true, data }
     } catch (error) {
       console.error('Error fetching comments:', error)
@@ -250,21 +241,16 @@ export const dbService = {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) throw new Error('User not authenticated')
+      if (!user) throw new Error('User must be authenticated')
 
       const { data, error } = await supabase
         .from('comments')
         .insert({
           document_id: documentId,
-          content,
           user_id: user.id,
+          content: content.trim(),
         })
-        .select(
-          `
-            *,
-            user:auth.users(email, raw_user_meta_data)
-          `,
-        )
+        .select()
         .single()
 
       if (error) throw error
@@ -277,16 +263,8 @@ export const dbService = {
 
   async deleteComment(commentId) {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('User not authenticated')
-
-      const { error } = await supabase
-        .from('comments')
-        .delete()
-        .eq('id', commentId)
-        .eq('user_id', user.id) // Users can only delete their own comments
+      // Use the soft_delete_comment function which handles RLS properly
+      const { error } = await supabase.rpc('soft_delete_comment', { comment_id: commentId })
 
       if (error) throw error
       return { success: true }
@@ -297,142 +275,152 @@ export const dbService = {
   },
 
   // Ratings operations
-  async getUserRating(documentId, userId) {
+  async getRatings(documentId) {
     try {
       const { data, error } = await supabase
         .from('ratings')
-        .select('rating')
+        .select('*')
         .eq('document_id', documentId)
-        .eq('user_id', userId)
-        .single()
 
-      if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
-      return { success: true, data }
+      if (error) throw error
+
+      // Calculate average rating
+      const totalRatings = data.length
+      const sumRatings = data.reduce((sum, r) => sum + r.rating, 0)
+      const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : null
+
+      return {
+        success: true,
+        data: {
+          ratings: data,
+          average: averageRating,
+          count: totalRatings,
+        },
+      }
     } catch (error) {
-      console.error('Error getting user rating:', error)
+      console.error('Error fetching ratings:', error)
       return { success: false, error: error.message }
     }
   },
 
-  async submitRating(documentId, userId, rating) {
+  async getUserRating(documentId) {
     try {
-      // Check if rating already exists
-      const { data: existingRating } = await supabase
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return { success: true, data: null }
+
+      const { data, error } = await supabase
         .from('ratings')
-        .select('id')
+        .select('*')
         .eq('document_id', documentId)
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (error) throw error
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error fetching user rating:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
+  async submitRating(documentId, rating) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error('User must be authenticated')
+
+      const { data, error } = await supabase
+        .from('ratings')
+        .upsert(
+          {
+            document_id: documentId,
+            user_id: user.id,
+            rating: rating,
+          },
+          {
+            onConflict: 'document_id,user_id',
+          },
+        )
+        .select()
         .single()
 
-      if (existingRating) {
-        // Update existing rating
-        const { error } = await supabase
-          .from('ratings')
-          .update({ rating, updated_at: new Date().toISOString() })
-          .eq('id', existingRating.id)
-
-        if (error) throw error
-      } else {
-        // Insert new rating
-        const { error } = await supabase.from('ratings').insert({
-          document_id: documentId,
-          user_id: userId,
-          rating,
-        })
-
-        if (error) throw error
-      }
-
-      return { success: true }
+      if (error) throw error
+      return { success: true, data }
     } catch (error) {
       console.error('Error submitting rating:', error)
       return { success: false, error: error.message }
     }
   },
 
-  async toggleRating(documentId) {
+  async deleteRating(documentId) {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) throw new Error('User not authenticated')
+      if (!user) throw new Error('User must be authenticated')
 
-      // Check if rating exists
-      const { data: existingRating } = await supabase
+      const { error } = await supabase
         .from('ratings')
-        .select('id')
+        .delete()
         .eq('document_id', documentId)
         .eq('user_id', user.id)
-        .single()
 
-      if (existingRating) {
-        // Remove rating
-        const { error } = await supabase.from('ratings').delete().eq('id', existingRating.id)
-
-        if (error) throw error
-        return { success: true, rated: false }
-      } else {
-        // Add rating
-        const { error } = await supabase.from('ratings').insert({
-          document_id: documentId,
-          user_id: user.id,
-        })
-
-        if (error) throw error
-        return { success: true, rated: true }
-      }
+      if (error) throw error
+      return { success: true }
     } catch (error) {
-      console.error('Error toggling rating:', error)
+      console.error('Error deleting rating:', error)
       return { success: false, error: error.message }
     }
   },
 
-  async getRatingStatus(documentId) {
+  // Download tracking
+  async trackDownload(documentId, downloadType = 'pdf') {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+      if (!user) {
+        console.warn('Download tracking skipped: User not authenticated')
+        return { success: true }
+      }
 
-      // Get total count
-      const { count: totalRatings, error: countError } = await supabase
-        .from('ratings')
+      const { data, error } = await supabase
+        .from('downloads')
+        .insert({
+          document_id: documentId,
+          user_id: user.id,
+          type: downloadType,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error tracking download:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
+  async getDownloadStats(documentId) {
+    try {
+      const { count, error } = await supabase
+        .from('downloads')
         .select('*', { count: 'exact', head: true })
         .eq('document_id', documentId)
 
-      if (countError) throw countError
-
-      let isRated = false
-      if (user) {
-        // Check if current user rated
-        const { data: userRating, error: ratingError } = await supabase
-          .from('ratings')
-          .select('id')
-          .eq('document_id', documentId)
-          .eq('user_id', user.id)
-          .single()
-
-        if (ratingError && ratingError.code !== 'PGRST116') {
-          // PGRST116 = no rows returned
-          throw ratingError
-        }
-
-        isRated = !!userRating
-      }
-
-      return {
-        success: true,
-        data: {
-          count: totalRatings || 0,
-          isRated,
-        },
-      }
+      if (error) throw error
+      return { success: true, data: { count: count || 0 } }
     } catch (error) {
-      console.error('Error getting rating status:', error)
+      console.error('Error fetching download stats:', error)
       return { success: false, error: error.message }
     }
   },
 
-  // Contact form (store in Supabase instead of Firebase function)
+  // Contact form
   async submitContact(name, email, message) {
     try {
       const { error } = await supabase
@@ -453,69 +441,15 @@ export const dbService = {
     }
   },
 
-  // Download tracking
-  async trackDownload(documentId, downloadType) {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      const { error } = await supabase.from('downloads').insert({
-        document_id: documentId,
-        user_id: user?.id || null,
-        download_type: downloadType,
-        downloaded_at: new Date().toISOString(),
-      })
-
-      if (error) throw error
-      return { success: true }
-    } catch (error) {
-      console.error('Error tracking download:', error)
-      return { success: false, error: error.message }
-    }
-  },
-
-  // Real-time subscriptions
-  subscribeToComments(documentId, callback) {
-    return supabase
-      .channel(`comments:${documentId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'comments',
-          filter: `document_id=eq.${documentId}`,
-        },
-        callback,
-      )
-      .subscribe()
-  },
-
-  subscribeToRatings(documentId, callback) {
-    return supabase
-      .channel(`ratings:${documentId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'ratings',
-          filter: `document_id=eq.${documentId}`,
-        },
-        callback,
-      )
-      .subscribe()
-  },
-
   // User profile operations
   async getUserProfile(userId) {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single()
+      // Validate input
+      if (!userId) {
+        throw new Error('User ID is required')
+      }
+
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
 
       if (error && error.code !== 'PGRST116') throw error
       return { success: true, data }
@@ -527,10 +461,15 @@ export const dbService = {
 
   async updateUserProfile(userId, profileData) {
     try {
+      // Validate inputs
+      if (!userId || !profileData) {
+        throw new Error('User ID and profile data are required')
+      }
+
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .upsert({
-          user_id: userId,
+          id: userId,
           ...profileData,
           updated_at: new Date().toISOString(),
         })
@@ -541,6 +480,48 @@ export const dbService = {
       return { success: true, data }
     } catch (error) {
       console.error('Error updating user profile:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
+  // Profile management - Ensures user profile exists
+  async ensureUserProfile(user) {
+    try {
+      if (!user || !user.id) {
+        throw new Error('User object is required')
+      }
+
+      // Check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      // If profile doesn't exist (PGRST116 = no rows returned), create it
+      if (fetchError && fetchError.code === 'PGRST116') {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single()
+
+        if (insertError) throw insertError
+        return { success: true, data: newProfile, created: true }
+      }
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError
+
+      return { success: true, data: existingProfile, created: false }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error)
       return { success: false, error: error.message }
     }
   },

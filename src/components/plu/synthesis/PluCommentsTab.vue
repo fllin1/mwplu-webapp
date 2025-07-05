@@ -1,90 +1,62 @@
 <template>
   <div class="comments-tab">
     <!-- Rating Section -->
-    <section class="rating-section">
-      <h3 class="section-title">Évaluation du document</h3>
+    <section class="rating-section card">
+      <h3 class="section-title">Noter ce document</h3>
 
-      <div class="rating-container">
-        <div class="current-rating" v-if="documentRating">
-          <span class="rating-label">Note moyenne:</span>
-          <div class="rating-display">
-            <div class="stars">
-              <span v-for="star in 5" :key="star" :class="['star', { 'filled': star <= Math.round(documentRating) }]">
-                ★
-              </span>
+      <div v-if="!authStore.isAuthenticated" class="auth-prompt">
+        <p>Connectez-vous pour noter ce document</p>
+        <router-link to="/login" class="btn btn-primary">Se connecter</router-link>
+      </div>
+
+      <div v-else class="rating-container">
+        <div class="document-rating-info">
+          <div class="average-rating">
+            <span class="rating-value">{{ documentRating || 'N/A' }}</span>
+            <div class="rating-stars">
+              <span v-for="star in 5" :key="star" class="star-display"
+                :class="{ 'star-filled': star <= Math.round(documentRating || 0) }">★</span>
             </div>
-            <span class="rating-value">{{ formatRating(documentRating) }} / 5</span>
-            <span class="rating-count" v-if="ratingCount">({{ ratingCount }} évaluations)</span>
+            <span class="rating-count">({{ ratingCount || 0 }} avis)</span>
           </div>
         </div>
 
-        <div class="user-rating" v-if="isAuthenticated">
-          <span class="rating-label">Votre évaluation:</span>
+        <div class="user-rating">
+          <p class="rating-label">Votre note :</p>
           <div class="rating-input">
-            <button v-for="star in 5" :key="star" @click="submitUserRating(star)" @mouseover="hoverRating = star"
-              @mouseleave="hoverRating = 0" :class="['star-button', {
-                'filled': star <= (hoverRating || userRating),
-                'hover': hoverRating > 0 && star <= hoverRating
-              }]" :disabled="isSubmittingRating" type="button">
+            <button v-for="star in 5" :key="star" @click="handleRating(star)" class="star-button"
+              :class="{ 'star-active': star <= (userRating || 0) }" :disabled="isSubmittingRating">
               ★
             </button>
-            <span v-if="userRating" class="user-rating-text">
-              Vous avez noté: {{ userRating }} / 5
-            </span>
           </div>
-        </div>
-
-        <div v-else class="login-prompt">
-          <p>
-            <router-link to="/login" class="login-link">
-              Connectez-vous
-            </router-link>
-            pour évaluer ce document.
-          </p>
+          <button v-if="userRating" @click="handleRemoveRating" class="btn btn-secondary btn-small"
+            :disabled="isSubmittingRating">
+            Supprimer ma note
+          </button>
         </div>
       </div>
     </section>
 
     <!-- Comments Section -->
-    <section class="comments-section">
-      <div class="comments-header">
-        <h3 class="section-title">Commentaires</h3>
-        <span class="comment-count" v-if="comments?.length">
-          {{ comments.length }} commentaire{{ comments.length > 1 ? 's' : '' }}
-        </span>
+    <section class="comments-section card">
+      <h3 class="section-title">Commentaires</h3>
+
+      <!-- Add Comment Form -->
+      <div v-if="!authStore.isAuthenticated" class="auth-prompt">
+        <p>Connectez-vous pour ajouter un commentaire</p>
+        <router-link to="/login" class="btn btn-primary">Se connecter</router-link>
       </div>
 
-      <!-- Comment Form -->
-      <div v-if="isAuthenticated" class="comment-form-container">
-        <form @submit.prevent="submitComment" class="comment-form">
-          <div class="form-group">
-            <label for="comment-text" class="form-label">
-              Ajouter un commentaire
-            </label>
-            <textarea id="comment-text" v-model="newComment" class="comment-textarea"
-              placeholder="Partagez votre avis sur cette synthèse..." rows="4" maxlength="1000" required></textarea>
-            <div class="character-count">
-              {{ newComment.length }} / 1000 caractères
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" :disabled="!newComment.trim() || isSubmittingComment" class="submit-btn btn">
-              <BaseSpinner v-if="isSubmittingComment" size="small" color="white" class="button-spinner" />
-              {{ isSubmittingComment ? 'Publication...' : 'Publier le commentaire' }}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div v-else class="login-prompt">
-        <p>
-          <router-link to="/login" class="login-link">
-            Connectez-vous
-          </router-link>
-          pour laisser un commentaire.
-        </p>
-      </div>
+      <form v-else @submit.prevent="handleAddComment" class="comment-form">
+        <div class="form-group">
+          <label for="comment-input" class="form-label">Ajouter un commentaire</label>
+          <textarea id="comment-input" v-model="newComment" class="form-textarea" rows="4"
+            placeholder="Partagez votre avis sur ce document..." required :disabled="isSubmittingComment"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" :disabled="isSubmittingComment || !newComment.trim()">
+          {{ isSubmittingComment ? 'Envoi...' : 'Publier' }}
+        </button>
+      </form>
 
       <!-- Comments List -->
       <div class="comments-list">
@@ -93,24 +65,24 @@
           <p>Chargement des commentaires...</p>
         </div>
 
-        <div v-else-if="comments?.length" class="comments">
-          <div v-for="comment in comments" :key="comment.id" class="comment-item">
-            <div class="comment-header">
-              <div class="comment-author">
-                <strong>{{ comment.user_email || 'Utilisateur anonyme' }}</strong>
-              </div>
-              <div class="comment-date">
-                {{ formatDate(comment.created_at) }}
-              </div>
-            </div>
-            <div class="comment-content">
-              {{ comment.content }}
-            </div>
-          </div>
+        <div v-else-if="comments.length === 0" class="empty-state">
+          <p>Aucun commentaire pour le moment. Soyez le premier à commenter !</p>
         </div>
 
-        <div v-else class="empty-comments">
-          <p>Aucun commentaire pour le moment. Soyez le premier à commenter !</p>
+        <div v-else class="comments-container">
+          <div v-for="comment in comments" :key="comment.id" class="comment-item">
+            <div class="comment-header">
+              <span class="comment-author">{{ getCommentAuthor(comment) }}</span>
+              <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
+            </div>
+            <p class="comment-content">{{ comment.content }}</p>
+            <div v-if="canDeleteComment(comment)" class="comment-actions">
+              <button @click="handleDeleteComment(comment.id)" class="btn-delete"
+                :disabled="isDeletingComment === comment.id">
+                {{ isDeletingComment === comment.id ? 'Suppression...' : 'Supprimer' }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -118,9 +90,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { dbService, supabase } from '@/services/supabase'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
 
 // Props
@@ -130,7 +103,7 @@ const props = defineProps({
     required: true
   },
   documentRating: {
-    type: Number,
+    type: [Number, String],
     default: null
   },
   ratingCount: {
@@ -142,297 +115,347 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['rating-updated', 'comment-added'])
 
-// Composables
+// Stores
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 
-// Reactive data
+// State
 const comments = ref([])
+const isLoadingComments = ref(true)
 const newComment = ref('')
-const userRating = ref(0)
-const hoverRating = ref(0)
-const isLoadingComments = ref(false)
 const isSubmittingComment = ref(false)
+const isDeletingComment = ref(null)
+const userRating = ref(null)
 const isSubmittingRating = ref(false)
 
+// Real-time subscriptions
+let commentsSubscription = null
+let ratingsSubscription = null
+
 // Computed
-const isAuthenticated = computed(() => authStore.isAuthenticated)
+const canDeleteComment = computed(() => (comment) => {
+  return authStore.user && comment.user_id === authStore.user.id
+})
 
 // Methods
-const formatRating = (rating) => {
-  if (!rating) return '0.0'
-  return Number(rating).toFixed(1)
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const submitUserRating = async (rating) => {
-  if (!isAuthenticated.value || isSubmittingRating.value) return
-
-  try {
-    isSubmittingRating.value = true
-
-    // Here you would call your rating service
-    // await ratingService.submitRating(props.documentId, rating)
-
-    userRating.value = rating
-    emit('rating-updated', rating)
-
-    uiStore.showSuccess('Votre évaluation a été enregistrée.')
-  } catch (error) {
-    console.error('Error submitting rating:', error)
-    uiStore.showError('Erreur lors de l\'enregistrement de votre évaluation.')
-  } finally {
-    isSubmittingRating.value = false
-  }
-}
-
-const submitComment = async () => {
-  if (!newComment.value.trim() || isSubmittingComment.value) return
-
-  try {
-    isSubmittingComment.value = true
-
-    // Here you would call your comment service
-    // const comment = await commentService.submitComment(props.documentId, newComment.value)
-
-    // Mock comment for now
-    const comment = {
-      id: Date.now(),
-      content: newComment.value,
-      user_email: authStore.user?.email,
-      created_at: new Date().toISOString()
-    }
-
-    comments.value.unshift(comment)
-    newComment.value = ''
-    emit('comment-added', comment)
-
-    uiStore.showSuccess('Votre commentaire a été publié.')
-  } catch (error) {
-    console.error('Error submitting comment:', error)
-    uiStore.showError('Erreur lors de la publication de votre commentaire.')
-  } finally {
-    isSubmittingComment.value = false
-  }
-}
-
 const loadComments = async () => {
-  if (!props.documentId) return
-
   try {
-    isLoadingComments.value = true
-
-    // Here you would call your comment service
-    // comments.value = await commentService.getComments(props.documentId)
-
-    // Mock comments for now
-    comments.value = []
+    const result = await dbService.getComments(props.documentId)
+    if (result.success) {
+      comments.value = result.data
+    } else {
+      throw new Error(result.error)
+    }
   } catch (error) {
     console.error('Error loading comments:', error)
-    uiStore.showError('Erreur lors du chargement des commentaires.')
+    uiStore.showNotification('Erreur lors du chargement des commentaires', 'error')
   } finally {
     isLoadingComments.value = false
   }
 }
 
 const loadUserRating = async () => {
-  if (!isAuthenticated.value || !props.documentId) return
+  if (!authStore.isAuthenticated) return
 
   try {
-    // Here you would call your rating service
-    // userRating.value = await ratingService.getUserRating(props.documentId)
-
-    // Mock for now
-    userRating.value = 0
+    const result = await dbService.getUserRating(props.documentId)
+    if (result.success && result.data) {
+      userRating.value = result.data.rating
+    }
   } catch (error) {
     console.error('Error loading user rating:', error)
   }
 }
 
-// Watchers
-watch(() => props.documentId, () => {
-  if (props.documentId) {
-    loadComments()
-    loadUserRating()
-  }
-}, { immediate: true })
+const handleAddComment = async () => {
+  if (!newComment.value.trim()) return
 
-watch(() => authStore.isAuthenticated, (isAuth) => {
-  if (isAuth) {
-    loadUserRating()
-  } else {
-    userRating.value = 0
+  isSubmittingComment.value = true
+  try {
+    const result = await dbService.addComment(props.documentId, newComment.value)
+    if (result.success) {
+      newComment.value = ''
+      await loadComments()
+      emit('comment-added')
+      uiStore.showNotification('Commentaire ajouté avec succès', 'success')
+    } else {
+      throw new Error(result.error)
+    }
+  } catch (error) {
+    console.error('Error adding comment:', error)
+    uiStore.showNotification('Erreur lors de l\'ajout du commentaire', 'error')
+  } finally {
+    isSubmittingComment.value = false
   }
+}
+
+const handleDeleteComment = async (commentId) => {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) return
+
+  isDeletingComment.value = commentId
+  try {
+    const result = await dbService.deleteComment(commentId)
+    if (result.success) {
+      await loadComments()
+      uiStore.showNotification('Commentaire supprimé', 'success')
+    } else {
+      throw new Error(result.error || 'Erreur inconnue')
+    }
+  } catch (error) {
+    console.error('Error deleting comment:', error)
+    const errorMessage = error.message || 'Erreur lors de la suppression du commentaire'
+    uiStore.showNotification(errorMessage, 'error')
+  } finally {
+    isDeletingComment.value = null
+  }
+}
+
+const handleRating = async (rating) => {
+  if (isSubmittingRating.value) return
+
+  isSubmittingRating.value = true
+  try {
+    const result = await dbService.submitRating(props.documentId, rating)
+    if (result.success) {
+      userRating.value = rating
+      emit('rating-updated')
+      uiStore.showNotification('Note enregistrée', 'success')
+    } else {
+      throw new Error(result.error)
+    }
+  } catch (error) {
+    console.error('Error submitting rating:', error)
+    uiStore.showNotification('Erreur lors de l\'enregistrement de la note', 'error')
+  } finally {
+    isSubmittingRating.value = false
+  }
+}
+
+const handleRemoveRating = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer votre note ?')) return
+
+  isSubmittingRating.value = true
+  try {
+    const result = await dbService.deleteRating(props.documentId)
+    if (result.success) {
+      userRating.value = null
+      emit('rating-updated')
+      uiStore.showNotification('Note supprimée', 'success')
+    } else {
+      throw new Error(result.error)
+    }
+  } catch (error) {
+    console.error('Error removing rating:', error)
+    uiStore.showNotification('Erreur lors de la suppression de la note', 'error')
+  } finally {
+    isSubmittingRating.value = false
+  }
+}
+
+const getCommentAuthor = (comment) => {
+  // For now, we'll use the user_id as a placeholder
+  // In a real app, you'd fetch user info or store it with the comment
+  return `Utilisateur ${comment.user_id.substring(0, 8)}`
+}
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now - date)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) {
+    return "Aujourd'hui"
+  } else if (diffDays === 1) {
+    return 'Hier'
+  } else if (diffDays < 7) {
+    return `Il y a ${diffDays} jours`
+  } else {
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+}
+
+// Setup real-time subscriptions
+const setupSubscriptions = () => {
+  // Subscribe to comments changes
+  commentsSubscription = supabase
+    .channel(`comments:${props.documentId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'comments',
+        filter: `document_id=eq.${props.documentId}`
+      },
+      () => {
+        loadComments()
+      }
+    )
+    .subscribe()
+
+  // Subscribe to ratings changes
+  ratingsSubscription = supabase
+    .channel(`ratings:${props.documentId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'ratings',
+        filter: `document_id=eq.${props.documentId}`
+      },
+      () => {
+        emit('rating-updated')
+      }
+    )
+    .subscribe()
+}
+
+// Lifecycle
+onMounted(() => {
+  loadComments()
+  loadUserRating()
+  setupSubscriptions()
 })
 
-// Initialize
-onMounted(() => {
-  if (props.documentId) {
-    loadComments()
-    loadUserRating()
+onUnmounted(() => {
+  // Cleanup subscriptions
+  if (commentsSubscription) {
+    supabase.removeChannel(commentsSubscription)
+  }
+  if (ratingsSubscription) {
+    supabase.removeChannel(ratingsSubscription)
   }
 })
 </script>
 
 <style scoped>
 .comments-tab {
-  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }
 
-.rating-section,
-.comments-section {
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-6);
-  border-bottom: 1px solid var(--color-gray-200);
-}
-
-.comments-section {
-  border-bottom: none;
-  margin-bottom: 0;
+/* Rating Section */
+.rating-section {
+  padding: var(--space-6);
 }
 
 .section-title {
   font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-black);
   margin-bottom: var(--space-4);
+}
+
+.auth-prompt {
+  text-align: center;
+  padding: var(--space-6);
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-card);
+}
+
+.auth-prompt p {
+  margin-bottom: var(--space-4);
+  color: var(--color-gray-700);
 }
 
 .rating-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
-.current-rating,
-.user-rating {
+.document-rating-info {
+  padding: var(--space-4);
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-card);
+}
+
+.average-rating {
   display: flex;
   align-items: center;
   gap: var(--space-3);
 }
 
-.rating-label {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-gray-700);
-  min-width: 120px;
+.rating-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-black);
 }
 
-.rating-display {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.stars {
+.rating-stars {
   display: flex;
   gap: 2px;
 }
 
-.star {
+.star-display {
+  font-size: var(--font-size-lg);
   color: var(--color-gray-300);
-  font-size: 1.25rem;
 }
 
-.star.filled {
-  color: #fbbf24;
-}
-
-.rating-value {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-black);
+.star-filled {
+  color: #FFD700;
 }
 
 .rating-count {
-  color: var(--color-gray-600);
   font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
+.user-rating {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rating-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-black);
 }
 
 .rating-input {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .star-button {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 2rem;
   color: var(--color-gray-300);
   cursor: pointer;
   transition: color var(--transition-fast);
-  padding: 2px;
+  padding: var(--space-1);
 }
 
-.star-button:hover,
-.star-button.hover {
-  color: #fbbf24;
+.star-button:hover {
+  color: #FFD700;
 }
 
-.star-button.filled {
-  color: #fbbf24;
+.star-button.star-active {
+  color: #FFD700;
 }
 
 .star-button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-.user-rating-text {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
-  margin-left: var(--space-2);
-}
-
-.login-prompt {
-  padding: var(--space-4);
-  background: var(--color-gray-50);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-gray-200);
-  text-align: center;
-}
-
-.login-link {
-  color: var(--color-black);
-  text-decoration: underline;
-  font-weight: var(--font-weight-medium);
-}
-
-.login-link:hover {
-  color: var(--color-gray-700);
-}
-
-.comments-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-6);
-}
-
-.comment-count {
-  color: var(--color-gray-600);
-  font-size: var(--font-size-sm);
-}
-
-.comment-form-container {
-  margin-bottom: var(--space-8);
+/* Comments Section */
+.comments-section {
+  padding: var(--space-6);
 }
 
 .comment-form {
-  background: var(--color-white);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-card);
-  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
 .form-group {
@@ -446,84 +469,60 @@ onMounted(() => {
   margin-bottom: var(--space-2);
 }
 
-.comment-textarea {
+.form-textarea {
   width: 100%;
   padding: var(--space-3);
   border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-form);
-  font-family: inherit;
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-relaxed);
-  resize: vertical;
-  min-height: 100px;
-}
-
-.comment-textarea:focus {
-  outline: 2px solid var(--color-blue);
-  outline-offset: -2px;
-  border-color: var(--color-blue);
-}
-
-.character-count {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
-  text-align: right;
-  margin-top: var(--space-1);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.submit-btn {
-  background: var(--color-black);
-  color: var(--color-white);
-  border: 2px solid var(--color-black);
-  padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-button);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
 }
 
-.submit-btn:hover:not(:disabled) {
-  background: var(--color-gray-800);
-  border-color: var(--color-gray-800);
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: var(--shadow-focus);
 }
 
-.submit-btn:disabled {
-  opacity: 0.6;
+.form-textarea:disabled {
+  background-color: var(--color-gray-100);
   cursor: not-allowed;
+}
+
+/* Comments List */
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-gray-600);
 }
 
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-8);
-  text-align: center;
+  gap: var(--space-3);
 }
 
-.loading-state p {
-  margin-top: var(--space-2);
-  color: var(--color-gray-600);
-}
-
-.comments {
+.comments-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 .comment-item {
-  background: var(--color-white);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-card);
   padding: var(--space-4);
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-gray-200);
 }
 
 .comment-header {
@@ -534,43 +533,99 @@ onMounted(() => {
 }
 
 .comment-author {
+  font-weight: var(--font-weight-semibold);
   color: var(--color-black);
 }
 
 .comment-date {
-  color: var(--color-gray-600);
   font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
 }
 
 .comment-content {
   color: var(--color-gray-800);
-  line-height: var(--line-height-relaxed);
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
-.empty-comments {
-  text-align: center;
-  padding: var(--space-8);
-  color: var(--color-gray-600);
-  background: var(--color-gray-50);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-gray-200);
+.comment-actions {
+  margin-top: var(--space-3);
 }
 
-/* Responsive Design */
+.btn-delete {
+  font-size: var(--font-size-sm);
+  color: var(--color-red-600);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  transition: color var(--transition-fast);
+}
+
+.btn-delete:hover {
+  color: var(--color-red-700);
+  text-decoration: underline;
+}
+
+.btn-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Buttons */
+.btn {
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--color-black);
+  color: var(--color-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-gray-700);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--color-gray-300);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-gray-100);
+  border-color: var(--color-gray-400);
+}
+
+.btn-small {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
 
-  .current-rating,
-  .user-rating {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
+  .rating-section,
+  .comments-section {
+    padding: var(--space-4);
   }
 
-  .rating-label {
-    min-width: auto;
-  }
-
-  .comments-header {
+  .average-rating {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);

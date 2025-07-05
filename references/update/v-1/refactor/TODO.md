@@ -10,7 +10,6 @@
 
 ### Authentication system
 
-- [x] Replace Microsoft auth with Facebook auth
 - [ ] Connect Apple, Facebook, Linkedin auth
 
 ### Sign-up

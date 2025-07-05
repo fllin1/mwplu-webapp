@@ -236,8 +236,8 @@ src/
 
 ### 5.3 Error Handling
 
-- [ ] Create `NotFoundView.vue` (404 page)
-- [ ] Create `ErrorView.vue` (generic errors)
+- [x] Create `NotFoundView.vue` (404 page)
+- [x] Create `ErrorView.vue` (generic errors)
 - [ ] Implement Vue error boundaries
 - [ ] Add Sentry or similar for error tracking
 
@@ -271,7 +271,7 @@ src/
 
 ### 6.3 Payment System Foundation
 
-- [ ] Choose payment provider (Stripe recommended)
+- [x] Choose payment provider (Stripe recommended)
 - [ ] Design subscription schema in Supabase
 - [ ] Create payment component shells
 - [ ] Plan Supabase Edge Functions for payment webhooks
