@@ -34,6 +34,8 @@
 
 ## LAUNCH
 
+- [ ] Repair the analytics
+
 **FIRST STEP**:
 
 - [ ] Move to the main database

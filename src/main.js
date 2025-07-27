@@ -5,6 +5,8 @@ import App from './App.vue'
 import router from './router'
 import { errorHandlerPlugin } from './services/errorHandler'
 import { useAuthStore } from '@/stores/auth'
+import { useAnalytics } from '@/composables/useAnalytics'
+import './services/firebase' // Initialize Firebase Analytics
 
 // Import global styles
 import './styles/variables.css'
@@ -31,12 +33,16 @@ app.use(errorHandlerPlugin)
 // Initialize auth store and setup auth listener
 const initializeApp = async () => {
   const authStore = useAuthStore()
+  const { initialize: initializeAnalytics } = useAnalytics()
 
   // Setup auth state change listener
   authStore.setupAuthListener()
 
   // Initialize auth state (check for existing session)
   await authStore.initializeAuth()
+
+  // Initialize analytics
+  initializeAnalytics()
 
   // Mount app after auth initialization
   app.mount('#app')

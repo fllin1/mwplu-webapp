@@ -31,6 +31,11 @@
 
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import {
+  trackEvent as firebaseTrackEvent,
+  setAnalyticsUserId,
+  setAnalyticsUserProperties,
+} from '@/services/firebase'
 
 // Global analytics state
 const isInitialized = ref(false)
@@ -41,8 +46,8 @@ const debugMode = ref(import.meta.env.DEV)
  * Analytics configuration
  */
 const config = {
-  // Google Analytics 4 measurement ID
-  measurementId: import.meta.env.VITE_GA4_MEASUREMENT_ID || '',
+  // Google Analytics 4 measurement ID - using Firebase Analytics instead
+  measurementId: 'G-FP4E0W6S41', // Firebase Analytics measurement ID
 
   // Cookie settings
   cookieDomain: 'auto',
@@ -122,13 +127,7 @@ export function useAnalytics() {
 
   // Computed properties
   const canTrack = computed(() => {
-    return (
-      isInitialized.value &&
-      !isOptedOut.value &&
-      config.measurementId &&
-      typeof window !== 'undefined' &&
-      window.gtag
-    )
+    return !isOptedOut.value && typeof window !== 'undefined'
   })
 
   const currentUser = computed(() => authStore.user)
@@ -138,7 +137,7 @@ export function useAnalytics() {
    * Call this in main.js after Vue app creation
    */
   const initialize = () => {
-    if (isInitialized.value || !config.measurementId) return
+    if (isInitialized.value) return
 
     try {
       // Check for user opt-out preference
@@ -148,32 +147,6 @@ export function useAnalytics() {
         return
       }
 
-      // Load Google Analytics script
-      const script = document.createElement('script')
-      script.async = true
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${config.measurementId}`
-      document.head.appendChild(script)
-
-      // Initialize gtag
-      window.dataLayer = window.dataLayer || []
-      window.gtag = function () {
-        window.dataLayer.push(arguments)
-      }
-
-      // Configure GA4
-      window.gtag('js', new Date())
-      window.gtag('config', config.measurementId, {
-        anonymize_ip: config.anonymizeIp,
-        allow_ad_personalization_signals: config.allowAdFeatures,
-        allow_google_signals: config.allowGoogleSignals,
-        cookie_domain: config.cookieDomain,
-        cookie_expires: config.cookieExpires,
-        send_page_view: false, // We'll handle page views manually
-
-        // Custom dimensions
-        [config.customDimensions.device_type]: getDeviceType(),
-      })
-
       // Set user properties if authenticated
       if (currentUser.value) {
         setUserProperties(currentUser.value)
@@ -182,7 +155,7 @@ export function useAnalytics() {
       isInitialized.value = true
 
       if (debugMode.value) {
-        console.log('📊 Analytics initialized:', config.measurementId)
+        console.log('📊 Analytics initialized via Firebase')
       }
     } catch (error) {
       console.error('Analytics initialization failed:', error)
@@ -199,23 +172,18 @@ export function useAnalytics() {
     const userId = user ? hashString(user.id) : null
     const userType = getUserType(user)
     const userRole = getUserRole(user)
+    const deviceType = getDeviceType()
 
-    window.gtag('config', config.measurementId, {
-      user_id: userId,
-      [config.customDimensions.user_type]: userType,
-      [config.customDimensions.user_role]: userRole,
-    })
+    setAnalyticsUserId(userId)
 
-    // Set user properties
-    window.gtag('set', {
-      user_properties: {
-        user_type: userType,
-        user_role: userRole,
-      },
+    setAnalyticsUserProperties({
+      user_type: userType,
+      user_role: userRole,
+      device_type: deviceType,
     })
 
     if (debugMode.value) {
-      console.log('📊 User properties set:', { userId, userType, userRole })
+      console.log('📊 Set user properties:', { userType, userRole, deviceType })
     }
   }
 
@@ -256,7 +224,13 @@ export function useAnalytics() {
       ...parameters,
     }
 
-    window.gtag('event', eventName, eventParams)
+    // Use Firebase Analytics
+    firebaseTrackEvent(eventName, eventParams)
+
+    // Fallback to gtag if available
+    if (window.gtag) {
+      window.gtag('event', eventName, eventParams)
+    }
 
     if (debugMode.value) {
       console.log('📊 Event tracked:', eventName, eventParams)

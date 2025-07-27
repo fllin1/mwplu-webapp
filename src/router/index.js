@@ -247,6 +247,15 @@ const routes = [
     },
   },
   {
+    path: '/test/analytics',
+    name: 'analytics-test',
+    component: () => import('@/views/AnalyticsTestView.vue'),
+    meta: {
+      title: 'Analytics Test - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
     path: '/404',
     name: 'not-found',
     component: NotFoundView,
