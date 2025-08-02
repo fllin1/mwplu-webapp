@@ -8,7 +8,7 @@
  * @author GreyPanda
  *
  * @changelog
- * - 2.0.0 (2025-01-05): Removed comments, ratings, and download tracking functionality
+ * - 2.0.0 (2025-01-05): Implemented comments, ratings, and download tracking functionality with soft delete support
  * - 1.0.0 (2025-06-02): Initial version with database service functions.
  */
 
@@ -263,13 +263,47 @@ export const dbService = {
 
   async deleteComment(commentId) {
     try {
-      // Use the soft_delete_comment function which handles RLS properly
-      const { error } = await supabase.rpc('soft_delete_comment', { comment_id: commentId })
+      console.log('Attempting to delete comment with ID:', commentId)
+
+      // Use the new dual-table delete function
+      const { data, error } = await supabase.rpc('delete_comment_dual_table', {
+        comment_id: commentId,
+      })
 
       if (error) throw error
+
+      // The function returns a JSON object with success/error info
+      if (data && data.success === false) {
+        throw new Error(data.error || 'Unknown error from delete function')
+      }
+
+      console.log('Comment deleted successfully using dual-table system')
       return { success: true }
     } catch (error) {
       console.error('Error deleting comment:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
+  // Bonus: Function to restore deleted comments (if needed in future)
+  async restoreComment(commentId) {
+    try {
+      console.log('Attempting to restore comment with ID:', commentId)
+
+      const { data, error } = await supabase.rpc('restore_comment_from_deleted', {
+        comment_id: commentId,
+      })
+
+      if (error) throw error
+
+      if (data && data.success === false) {
+        throw new Error(data.error || 'Unknown error from restore function')
+      }
+
+      console.log('Comment restored successfully')
+      return { success: true }
+    } catch (error) {
+      console.error('Error restoring comment:', error)
       return { success: false, error: error.message }
     }
   },

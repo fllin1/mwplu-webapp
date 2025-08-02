@@ -204,7 +204,7 @@ const handleDeleteComment = async (commentId) => {
   } catch (error) {
     console.error('Error deleting comment:', error)
     const errorMessage = error.message || 'Erreur lors de la suppression du commentaire'
-    uiStore.showNotification(errorMessage, 'error')
+    uiStore.showNotification(`Erreur: ${errorMessage}`, 'error')
   } finally {
     isDeletingComment.value = null
   }
@@ -255,7 +255,9 @@ const handleRemoveRating = async () => {
 const getCommentAuthor = (comment) => {
   // For now, we'll use the user_id as a placeholder
   // In a real app, you'd fetch user info or store it with the comment
-  return `Utilisateur ${comment.user_id.substring(0, 8)}`
+  // Using a more user-friendly format
+  const shortId = comment.user_id.substring(0, 8)
+  return `Utilisateur ${shortId}`
 }
 
 const formatDate = (dateString) => {

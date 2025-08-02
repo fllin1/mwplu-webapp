@@ -86,6 +86,9 @@ const { optIn, optOut } = useAnalytics()
 const showBanner = ref(false)
 const showPreferencesModal = ref(false)
 
+// Debug mode - set to true to force banner to show for testing
+const DEBUG_FORCE_BANNER = ref(false) // Set to true to test in production
+
 const preferences = reactive({
   analytics: false,
   functional: false
@@ -97,13 +100,18 @@ const CONSENT_VERSION = '1.0'
 
 // Methods
 const checkConsentStatus = () => {
-  const consent = localStorage.getItem(CONSENT_KEY)
-  if (!consent) {
-    showBanner.value = true
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     return
   }
 
   try {
+    const consent = localStorage.getItem(CONSENT_KEY)
+    if (!consent) {
+      showBanner.value = true
+      return
+    }
+
     const consentData = JSON.parse(consent)
     if (consentData.version !== CONSENT_VERSION) {
       showBanner.value = true
@@ -116,31 +124,44 @@ const checkConsentStatus = () => {
     } else {
       optOut()
     }
-  } catch {
+    
+    console.log('🍪 Cookie consent loaded:', consentData)
+  } catch (error) {
+    console.warn('Error reading cookie consent:', error)
     showBanner.value = true
+    console.log('🍪 Cookie banner will show due to error or missing consent')
   }
 }
 
 const saveConsent = (analytics = false, functional = false) => {
-  const consentData = {
-    version: CONSENT_VERSION,
-    timestamp: new Date().toISOString(),
-    analytics,
-    functional,
-    essential: true // Always true
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return
   }
 
-  localStorage.setItem(CONSENT_KEY, JSON.stringify(consentData))
+  try {
+    const consentData = {
+      version: CONSENT_VERSION,
+      timestamp: new Date().toISOString(),
+      analytics,
+      functional,
+      essential: true // Always true
+    }
 
-  // Apply analytics settings
-  if (analytics) {
-    optIn()
-  } else {
-    optOut()
+    localStorage.setItem(CONSENT_KEY, JSON.stringify(consentData))
+
+    // Apply analytics settings
+    if (analytics) {
+      optIn()
+    } else {
+      optOut()
+    }
+
+    showBanner.value = false
+    showPreferencesModal.value = false
+  } catch (error) {
+    console.error('Error saving cookie consent:', error)
   }
-
-  showBanner.value = false
-  showPreferencesModal.value = false
 }
 
 const acceptAll = () => {
@@ -165,14 +186,36 @@ const savePreferences = () => {
 
 // Initialize
 onMounted(() => {
-  // Delay to allow page to load
-  setTimeout(() => {
-    checkConsentStatus()
-  }, 1000)
+  // Force banner for debugging (remove this in final version)
+  if (DEBUG_FORCE_BANNER.value) {
+    showBanner.value = true
+    console.log('🍪 Cookie banner forced to show for debugging')
+    return
+  }
+  
+  checkConsentStatus()
 })
 </script>
 
 <style scoped>
+/* Force these classes to be included in production builds */
+.cookie-banner,
+.cookie-banner__container,
+.cookie-banner__content,
+.cookie-banner__text,
+.cookie-banner__actions,
+.cookie-banner__link,
+.modal-backdrop,
+.modal-content,
+.modal-header,
+.modal-body,
+.modal-footer,
+.modal-close,
+.cookie-category,
+.cookie-category__header {
+  /* This comment ensures these selectors are preserved in production builds */
+}
+
 .cookie-banner {
   position: fixed;
   left: 0;
