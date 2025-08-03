@@ -34,23 +34,31 @@ MWPLU is a web platform for accessing synthesized French urban planning document
 
 ## CSS Architecture
 **Global styles** (imported in main.js):
-- CSS variables/design tokens (colors, spacing, typography)
-- CSS reset for browser consistency
-- Base typography (body, headings)
-- Focus states for accessibility
+- CSS variables/design tokens (variables.css)
+- CSS reset for browser consistency (reset.css)
+- Base typography (base.css)
+- Focus states for accessibility (focus.css)
+- Button styles (buttons.css)
+- Form styles (forms.css)
+- Message styles (messages.css)
+- Utility classes (utilities.css)
+- Page-specific styles (pages/)
 
 **Component styles** (scoped in .vue files):
 - All component-specific styling
 - Import global variables as needed
 - Use scoped styles to prevent conflicts
 
-**No global component styles** - buttons, forms, cards etc. should be styled within their respective Vue components (manually or with frameworks).
+**Organized by purpose**: Separate files for different style concerns, with page-specific styles in dedicated folders.
 
 ## User Flow & Navigation Structure
 1. **Landing** (`/`) → HomeView with hero section and basic selectors (or **PLU Repository** (`/plu-repository/`) → PluSearchView with dedicated search interface)
 2. **PLU Document** (`/plu-repository/:city/:zoning/:zone`) → PluSynthesisView with specific document
-3. **Authentication** → Login/Signup with CAPTCHA protection
-4. Protected routes require authentication
+3. **Authentication** → Login/Signup with CAPTCHA protection (LoginView, SignupView, ConfirmationView, ResetPasswordView)
+4. **Information Pages** → About, Contact, Donation pages with integrated features
+5. **Legal Pages** → Privacy, Terms, Cookies, Legal Notice, Sales Policy
+6. **Documentation** → FAQ, Documentation views
+7. Protected routes require authentication (Profile, Dashboard)
 
 ### URL Structure
 - Clean, SEO-friendly URLs with slugs (e.g., `/plu-repository/lille/zones-urbaines/ua`)
@@ -59,10 +67,10 @@ MWPLU is a web platform for accessing synthesized French urban planning document
 
 ## Component Structure
 Components are organized by feature:
-- `common/` - Reusable base components (BaseSpinner, BaseNotification, ComingSoonView)
-- `auth/` - Authentication related components
-- `layout/` - Header, footer, navigation, breadcrumbs
-- `plu/` - PLU document features (CitySelector, ZoningSelector, ZoneSelector)
+- `common/` - Reusable base components (BaseSpinner, BaseNotification, ComingSoonView, CookieBanner, GlobalNotification, PolicyModal, TurnstileWidget)
+- `auth/` - Authentication related components (moved to views/auth/)
+- `layout/` - Header, footer, navigation, breadcrumbs (AppHeader, AppFooter, AppLayout, BreadcrumbNav)
+- `plu/` - PLU document features (CitySelector, ZoningSelector, ZoneSelector, PluSelectionForm, synthesis components)
 
 ### Key Components
 - **AppLayout**: Main layout wrapper with notification system
@@ -70,11 +78,22 @@ Components are organized by feature:
 - **PluSearchView**: Dedicated search interface at `/plu-repository/`
 - **PluSynthesisView**: Document viewer with tabs (synthesis, comments, sources, downloads)
 - **BaseNotification**: Toast notification system connected to UI store
+- **CookieBanner**: GDPR compliant cookie consent management
+- **PolicyModal**: Dynamic modal for displaying legal policies
+- **TurnstileWidget**: Cloudflare Turnstile CAPTCHA integration
+
+### Views Structure
+- **auth/**: Authentication views (LoginView, SignupView, ConfirmationView, ResetPasswordView)
+- **info/**: Information pages (AboutView, ContactView, DonationView, etc.)
+- **docs/**: Documentation (DocumentationView, FAQView)
+- **policies/**: Legal pages (PrivacyView, TermsView, CookiesView, etc.)
+- **Root level**: Main app views (HomeView, ProfileView, PluSynthesisView, etc.)
 
 ## State Management (Pinia)
 - **auth.js**: User authentication state and methods
 - **plu.js**: PLU selection state with slug-based navigation support
 - **ui.js**: Global UI state (notifications, loading, modals)
+- **counter.js**: Counter state (legacy/example store)
 
 ### PLU Store Features
 - City/Zoning/Zone selection with dependency management
@@ -86,14 +105,19 @@ Components are organized by feature:
 - **supabase.js**: Database operations and authentication
 - **errorHandler.js**: Global error handling with notifications
 - **turnstile.js**: CAPTCHA integration
-- **donationService.js**: Payment processing support
+- **donationService.js**: Payment processing support (Stripe integration)
+- **firebase.js**: Firebase hosting and configuration
+- **policyService.js**: Legal policy content management
 
 ## Code Patterns
-- **Composables** for reusable logic (useAuth, useAnalytics, useTurnstile)
-- **Services** for API calls to Supabase
+- **Composables** for reusable logic (useAuth, useAnalytics, useTurnstile, useDonation, usePolicyContent, useAuthGuard)
+- **Services** for API calls to Supabase and external APIs
 - **Stores** (Pinia) for global state
 - **Props/Events** for component communication
 - **Slug-based routing** for SEO-friendly URLs
+- **Content files** for static content (policies, terms)
+- **Utils** for helper functions and constants
+- **Assets organization** with structured folders (fonts, icons, images)
 
 ## Key Principles
 - Displayed text in French
@@ -112,18 +136,29 @@ Components are organized by feature:
 - Use TypeScript-style JSDoc for documentation
 
 ## Current Features Status
-✅ **Authentication System**: Complete with Turnstile CAPTCHA
+✅ **Authentication System**: Complete with Turnstile CAPTCHA, Supabase Auth, email confirmation
 ✅ **Navigation Structure**: Clean URLs with breadcrumb support
 ✅ **Search Interface**: Dedicated PLU repository page
-✅ **Document Viewer**: Tabbed interface for synthesis, comments, ratings
+✅ **Document Viewer**: Tabbed interface for synthesis, comments, ratings, downloads
 ✅ **Rating System**: Independent from commenting
 ✅ **Notification System**: Global toast notifications with validation
 ✅ **Responsive Design**: Mobile-friendly interface
+✅ **Legal Compliance**: GDPR cookie banner, privacy policy, terms of service
+✅ **Donation System**: Stripe integration with success/cancel flows
+✅ **Analytics Integration**: Google Analytics 4 with custom event tracking
+✅ **Contact System**: Contact form with validation
+✅ **Profile Management**: User profile with settings and history
+✅ **Error Handling**: Custom 404 page and error boundaries
 
 ## Future Development Areas
-- Database integration and data flow optimization
-- Comment and rating system backend implementation
-- File download functionality
-- Advanced search and filtering
-- User profile management
-- Analytics dashboard
+- Blog infrastructure and content management
+- City voting/poll system for next PLU requests
+- Advanced search and filtering capabilities
+- User occupation selection and enhanced profiling
+- Phone number verification system
+- Login attempt limitations for security
+- Typology integration for PLU documents
+- Performance optimizations (code splitting, lazy loading)
+- Enhanced analytics dashboard
+- Mobile app development
+- Advanced notification system

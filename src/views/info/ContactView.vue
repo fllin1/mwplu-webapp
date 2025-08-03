@@ -167,22 +167,38 @@ export default {
       isSubmitting.value = true
 
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Import contact service dynamically to avoid import errors
+        const { contactService } = await import('@/services/contactService')
+        
+        const result = await contactService.submitMessage(form)
 
-        uiStore.showNotification('Votre message a été envoyé avec succès. Nous vous répondrons bientôt.', 'success')
+        if (result.success) {
+          const methodText = {
+            discord: 'Discord'
+          }[result.method] || 'notre système'
 
-        // Reset form
-        Object.assign(form, {
-          name: '',
-          email: '',
-          subject: '',
-          message: ''
-        })
+          uiStore.showNotification(
+            `Votre message a été envoyé avec succès via ${methodText}. Nous vous répondrons bientôt.`, 
+            'success'
+          )
+
+          // Reset form
+          Object.assign(form, {
+            name: '',
+            email: '',
+            subject: '',
+            message: ''
+          })
+        } else {
+          throw new Error('Échec de l\'envoi du message')
+        }
 
       } catch (error) {
         console.error('Contact form submission error:', error)
-        uiStore.showNotification('Erreur lors de l\'envoi du message. Veuillez réessayer.', 'error')
+        uiStore.showNotification(
+          error.message || 'Erreur lors de l\'envoi du message. Veuillez réessayer ou nous contacter directement.', 
+          'error'
+        )
       } finally {
         isSubmitting.value = false
       }
