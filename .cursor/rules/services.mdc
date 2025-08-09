@@ -1,0 +1,42 @@
+---
+description: Services and external integrations
+globs:
+  - 'src/services/**'
+alwaysApply: false
+---
+
+# Services & Integrations
+
+## Supabase (`src/services/supabase.js`)
+
+- Client: `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`
+- `dbService` API:
+  - Cities/Zonings/Zones: `getCities()`, `getZonings(cityId)`, `getZones(zoningId)`
+  - Documents: `getDocument(zoningId, zoneId)` returning enriched structure (city/zoning/zone names, `synthesis_content` from HTML or JSON)
+  - Search: `searchDocuments(searchParams)`
+  - Comments: `getComments(documentId)`, `addComment(documentId, content)`, `deleteComment(commentId)` via RPC `soft_delete_comment`
+  - Ratings: `getRatings`, `getUserRating`, `submitRating`, `deleteRating`
+  - Downloads: `trackDownload`, `getDownloadStats`
+  - Contact: `submitContact(name, email, message)`
+  - Profiles: `getUserProfile`, `updateUserProfile`, `ensureUserProfile`
+
+## Error Handling (`src/services/errorHandler.js`)
+
+- Composable + Vue plugin to catch Vue errors, unhandled rejections, window errors
+- `useErrorHandler` exposes `showError/success/warning`
+
+## Turnstile (`src/services/turnstile.js`)
+
+- Placeholder `validateToken(token)` fetches `/api/validate-turnstile` (needs backend)
+- `useTurnstile` composable loads the Turnstile script and exposes `isLoaded`, `error`, `loadTurnstile()`
+
+## Firebase Analytics (`src/services/firebase.js`)
+
+- Initializes Firebase app and Analytics
+- Exposes `trackEvent`, `setAnalyticsUserId`, `setAnalyticsUserProperties`
+
+## Donation (`src/services/donationService.js`)
+
+- Email templates, sends via Supabase Functions `send-donation-email`
+- Persists donations in `donations` table
+- Helpers to process completion and format data

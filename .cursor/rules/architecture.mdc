@@ -1,0 +1,48 @@
+---
+description: Project architecture and stack
+globs:
+  - 'src/**'
+alwaysApply: false
+---
+
+# Architecture
+
+- Frontend: Vue 3 SPA (Vite), Vue Router 4, Pinia
+- Backend: Supabase (Database, Auth, Realtime, Storage, Functions)
+- Hosting: Firebase Hosting
+- Security: Cloudflare Turnstile CAPTCHA (client widget present; server validation endpoint placeholder `/api/validate-turnstile`)
+
+## Entry and Initialization
+
+- `src/main.js`
+  - Creates app, installs Pinia and router
+  - Uses `errorHandlerPlugin` for global error handling
+  - Initializes auth (`useAuthStore.setupAuthListener()` + `initializeAuth()`)
+  - Initializes analytics via `useAnalytics().initialize()`
+  - Mounts app after auth init
+
+## Global Styles
+
+- Imported in `main.js`: `variables.css`, `reset.css`, `base.css`, `focus.css`, `utilities.css`, `forms.css`, `buttons.css`, `messages.css`
+- Component styles are scoped per `.vue` component
+
+## High-level Folders
+
+- `src/components/layout/`: `AppLayout`, `AppHeader`, `AppFooter`, `BreadcrumbNav`
+- `src/components/common/`: `BaseNotification`, `BaseSpinner`, `CookieBanner`, `PolicyModal`, `TurnstileWidget`
+- `src/components/plu/`: `CitySelector`, `ZoningSelector`, `ZoneSelector`, selection form and synthesis tabs
+- `src/services/`: `supabase.js`, `errorHandler.js`, `firebase.js`, `turnstile.js`, `donationService.js`
+- `src/stores/`: `auth.js`, `plu.js`, `ui.js`
+- `src/composables/`: `useAuth`, `useAuthGuard`, `useAnalytics`, `useTurnstile`
+- `src/views/`: `HomeView`, `PluSearchView`, `PluSynthesisView`, auth views, profile, docs, policies, dashboard
+
+## Supabase
+
+- Client from `@supabase/supabase-js` using `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`
+- Data access via `dbService`: cities, zonings, zones, typologies, documents; comments/ratings; downloads; profiles; contact messages
+- RLS expected on tables; comments deletion via RPC `soft_delete_comment`
+
+## Firebase Analytics
+
+- `src/services/firebase.js` initializes Firebase app and exposes helpers: `trackEvent`, `setAnalyticsUserId`, `setAnalyticsUserProperties`
+- `useAnalytics` composable wraps tracking and privacy controls

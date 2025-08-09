@@ -1,129 +1,34 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
-# MWPLU Project Context
 
-## Overview
-MWPLU is a web platform for accessing synthesized French urban planning documents (PLU). Users authenticate to access city zoning documents, comment, rate, and download them.
+# MWPLU Project Context (Index)
 
-## Architecture
-- **Frontend**: Vue 3 SPA with Vite, Vue Router, Pinia
-- **Backend**: Supabase (Database, Auth, Edge Functions, Storage)
-- **Hosting**: Firebase Hosting
-- **Security**: Cloudflare Turnstile CAPTCHA
+This is the top-level context for the MWPLU Vue 3 web application. The context is now split into focused documents:
 
-## Design Philosophy
-**Minimalist and functional** - Clean interface focusing on essential elements only. Every component serves a clear purpose.
+- Architecture and Stack: see Architecture
+- Routing and Navigation: see Routing
+- State Management: see State
+- Services and Integrations: see Services
+- Analytics and Privacy: see Analytics & Privacy
+- UI/Design System: see UI & Design
+- Features Status: see Features Status
+- Roadmap and Focus: see Roadmap & Focus
 
-### Colors
-- **Primary**: Black text on white backgrounds
-- **Accent**: Primary black for interactive elements
-- **Status**: Green for success, Red for errors, Grey for information
+Documents
 
-### Typography
-- Font: Lato (Google Fonts)
-- Clean, readable, consistent sizing
+- Architecture: `.cursor/rules/architecture.mdc`
+- Routing: `.cursor/rules/routing.mdc`
+- State: `.cursor/rules/state.mdc`
+- Services: `.cursor/rules/services.mdc`
+- Analytics & Privacy: `.cursor/rules/analytics_privacy.mdc`
+- UI & Design: `.cursor/rules/ui_design.mdc`
+- Features Status: `.cursor/rules/features_status.mdc`
+- Roadmap & Focus: `.cursor/rules/roadmap_focus.mdc`
 
-### Visual Elements
-- Buttons: 2px border radius
-- Forms/Cards: 4px border radius with subtle shadows
-- Consistent spacing based on 4px grid
-- Minimalist elements
+Notes
 
-## CSS Architecture
-**Global styles** (imported in main.js):
-- CSS variables/design tokens (colors, spacing, typography)
-- CSS reset for browser consistency
-- Base typography (body, headings)
-- Focus states for accessibility
-
-**Component styles** (scoped in .vue files):
-- All component-specific styling
-- Import global variables as needed
-- Use scoped styles to prevent conflicts
-
-**No global component styles** - buttons, forms, cards etc. should be styled within their respective Vue components (manually or with frameworks).
-
-## User Flow & Navigation Structure
-1. **Landing** (`/`) → HomeView with hero section and basic selectors (or **PLU Repository** (`/plu-repository/`) → PluSearchView with dedicated search interface)
-2. **PLU Document** (`/plu-repository/:city/:zoning/:zone`) → PluSynthesisView with specific document
-3. **Authentication** → Login/Signup with CAPTCHA protection
-4. Protected routes require authentication
-
-### URL Structure
-- Clean, SEO-friendly URLs with slugs (e.g., `/plu-repository/lille/zones-urbaines/ua`)
-- Breadcrumb navigation with smart preselection
-- Hierarchical structure: Repository → City → Zoning → Zone
-
-## Component Structure
-Components are organized by feature:
-- `common/` - Reusable base components (BaseSpinner, BaseNotification, ComingSoonView)
-- `auth/` - Authentication related components
-- `layout/` - Header, footer, navigation, breadcrumbs
-- `plu/` - PLU document features (CitySelector, ZoningSelector, ZoneSelector)
-
-### Key Components
-- **AppLayout**: Main layout wrapper with notification system
-- **BreadcrumbNav**: Hierarchical navigation with clickable links
-- **PluSearchView**: Dedicated search interface at `/plu-repository/`
-- **PluSynthesisView**: Document viewer with tabs (synthesis, comments, sources, downloads)
-- **BaseNotification**: Toast notification system connected to UI store
-
-## State Management (Pinia)
-- **auth.js**: User authentication state and methods
-- **plu.js**: PLU selection state with slug-based navigation support
-- **ui.js**: Global UI state (notifications, loading, modals)
-
-### PLU Store Features
-- City/Zoning/Zone selection with dependency management
-- Slug generation for clean URLs (`createSlug`, `findBySlug`)
-- Breadcrumb data generation
-- Analytics event tracking
-
-## Services & API Integration
-- **supabase.js**: Database operations and authentication
-- **errorHandler.js**: Global error handling with notifications
-- **turnstile.js**: CAPTCHA integration
-- **donationService.js**: Payment processing support
-
-## Code Patterns
-- **Composables** for reusable logic (useAuth, useAnalytics, useTurnstile)
-- **Services** for API calls to Supabase
-- **Stores** (Pinia) for global state
-- **Props/Events** for component communication
-- **Slug-based routing** for SEO-friendly URLs
-
-## Key Principles
-- Displayed text in French
-- Mobile responsive design
-- User-friendly error messages
-- Secure by default (RLS policies, input validation)
-- Performance optimized (lazy loading, caching)
-- Accessibility support (ARIA attributes, semantic HTML)
-
-## Development Guidelines
-- Use Vue 3 Composition API with `<script setup>`
-- Follow Vue style guide conventions
-- Keep components small and focused (< 500-800 lines)
-- Handle loading and error states consistently
-- Write descriptive commit messages
-- Use TypeScript-style JSDoc for documentation
-
-## Current Features Status
-✅ **Authentication System**: Complete with Turnstile CAPTCHA
-✅ **Navigation Structure**: Clean URLs with breadcrumb support
-✅ **Search Interface**: Dedicated PLU repository page
-✅ **Document Viewer**: Tabbed interface for synthesis, comments, ratings
-✅ **Rating System**: Independent from commenting
-✅ **Notification System**: Global toast notifications with validation
-✅ **Responsive Design**: Mobile-friendly interface
-
-## Future Development Areas
-- Database integration and data flow optimization
-- Comment and rating system backend implementation
-- File download functionality
-- Advanced search and filtering
-- User profile management
-- Analytics dashboard
+- The app uses Vue 3 Composition API with `<script setup>`, Pinia, Vue Router, Supabase, and Firebase Analytics. Cloudflare Turnstile is integrated client-side; server validation endpoint is a placeholder.
+- PLU document routes are slug-based and protected; selections are handled in `stores/plu.js` and navigated via `PluSelectionForm`.
