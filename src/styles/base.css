@@ -1,5 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&display=swap');
 
+/* Global base styles */
+
+/* CSS Purging Protection - DO NOT REMOVE */
+/* These classes must be preserved for dynamic components */
+/*
+.cookie-banner {}
+.cookie-banner__container {}
+.cookie-banner__content {}
+.cookie-banner__text {}
+.cookie-banner__actions {}
+.cookie-banner__link {}
+.modal-backdrop {}
+.modal-content {}
+.modal-header {}
+.modal-body {}
+.modal-footer {}
+.modal-close {}
+.cookie-category {}
+.cookie-category__header {}
+*/
+/* End CSS Purging Protection */
+
 /* Base document styles */
 body {
   font-family: var(--font-family);

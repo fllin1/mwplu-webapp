@@ -78,7 +78,7 @@
                 <span class="checkmark"></span>
                 <span class="checkbox-label">Se souvenir de moi</span>
               </label>
-
+              
               <button
                 type="button"
                 @click="handleForgotPassword"

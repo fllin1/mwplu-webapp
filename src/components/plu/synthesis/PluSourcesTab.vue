@@ -171,6 +171,7 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { useAnalytics } from '@/composables/useAnalytics'
+import { dbService } from '@/services/supabase'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
 
 // Props
@@ -220,29 +221,45 @@ const downloadDocument = async (format) => {
     isDownloading.value = true
     downloadingType.value = format
 
-    // Track download event
+    // Track download in database
+    const trackResult = await dbService.trackDownload(props.documentId, format)
+    if (!trackResult.success) {
+      console.error('Failed to track download:', trackResult.error)
+    }
+
+    // Track download event for analytics
     trackEvent('plu_download', {
       document_id: props.documentId,
       format: format,
       user_id: authStore.user?.id
     })
 
-    // Here you would call your download service
-    // const downloadUrl = await downloadService.getDownloadUrl(props.documentId, format)
-
-    // Mock download for now
+    // For now, this is a mock download since we don't have actual files
+    // In a real implementation, you would:
+    // 1. Get the download URL from your storage
+    // 2. Create the download link
+    // 3. Trigger the download
+    
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    // Simulate download
+    // Simulate download completion
     const filename = `plu-synthesis-${props.documentId}.${format}`
-    const link = document.createElement('a')
-    link.href = '#' // Would be the actual download URL
-    link.download = filename
-    // document.body.appendChild(link)
-    // link.click()
-    // document.body.removeChild(link)
-
-    uiStore.showSuccess(`Le téléchargement du document ${format.toUpperCase()} a commencé.`)
+    
+    // Note: When you have actual files, replace the above with:
+    const { data: urlData, error: urlError } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(filePath, 60, { download: true })
+    
+    if (urlData?.signedUrl) {
+      const link = document.createElement('a')
+      link.href = urlData.signedUrl
+      link.download = filename
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+    
   } catch (error) {
     console.error('Error downloading document:', error)
     uiStore.showError('Erreur lors du téléchargement du document.')
