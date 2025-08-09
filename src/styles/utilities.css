@@ -55,9 +55,9 @@
 
 /* Grid System */
 .grid {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0 -14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .grid-col-4 {

@@ -4,47 +4,101 @@
       {{ errorMessage }}
     </div>
 
-    <form class="plu-selection-form" :class="formClass">
-      <div class="grid">
-        <!-- City Selection -->
-        <div class="grid-col-4 form-group">
-          <CitySelector />
-        </div>
-
-        <!-- Zoning Selection -->
-        <div class="grid-col-4 form-group">
-          <ZoningSelector />
-        </div>
-
-        <!-- Zone Selection -->
-        <div class="grid-col-4 form-group">
-          <ZoneSelector />
-        </div>
+    <!-- Step boxes -->
+    <div class="steps">
+      <div class="step" :class="{ active: activeStep >= 1 }">
+        <div class="step-title">Étape 1</div>
+        <div class="step-sub">Sélectionner la métropole</div>
       </div>
+      <div class="step" :class="{ active: activeStep >= 2 }">
+        <div class="step-title">Étape 2</div>
+        <div class="step-sub">Indiquer l’adresse ou la zone d’intérêt</div>
+      </div>
+      <div class="step" :class="{ active: activeStep >= 3 }">
+        <div class="step-title">Étape 3</div>
+        <div class="step-sub">Consulter votre document</div>
+      </div>
+    </div>
 
-      <!-- Action Button -->
-      <div class="text-center margin-top-lg margin-bottom-sm">
-        <button
-          @click="handleViewSynthesis"
-          :disabled="!canViewSynthesis || isLoading"
-          class="to-plu-btn btn"
-          type="button"
-        >
-          <BaseSpinner
-            v-if="isLoading"
-            size="small"
-            color="white"
-            class="button-spinner"
-          />
-          {{ isLoading ? 'Chargement...' : buttonText }}
-        </button>
+    <!-- Form -->
+    <form class="plu-selection-form" :class="formClass">
+      <div class="layout-grid">
+        <!-- Left column: selectors and address -->
+        <div class="left-col">
+          <!-- City Selection -->
+          <div class="section">
+            <h3 class="section-title">1. Sélectionner la métropole</h3>
+            <CitySelector />
+          </div>
+
+          <!-- Address to Zone Section (always visible, disabled until city) -->
+          <div class="section">
+            <h3 class="section-title">2. Indiquer l'adresse</h3>
+            <div class="address-lookup-section">
+              <div class="address-row">
+                <label for="address-input" class="form-label">Adresse</label>
+                <div class="address-input-wrap">
+                  <input id="address-input" v-model="address" type="text" class="form-input"
+                    placeholder="Ex: 12 rue de la Paix" :disabled="!selectedCityId || isResolving"
+                    @keydown.enter.prevent="handleFindZone" />
+                  <button type="button" class="btn-secondary find-zone-btn" @click="handleFindZone"
+                    :disabled="!selectedCityId || !address.trim() || isResolving">
+                    <BaseSpinner v-if="isResolving" size="small" />
+                    <span v-else>Trouver ma zone</span>
+                  </button>
+                </div>
+                <small class="hint">
+                  Besoin d'aide ? Consultez
+                  <a href="https://www.geoportail.gouv.fr/" target="_blank">GeoPortail</a>.
+                </small>
+                <p v-if="zoneLabel" class="zone-label">Zone trouvée : <strong>{{ zoneLabel }}</strong></p>
+                <p v-if="cityMismatch" class="city-mismatch">L'adresse indiquée ne semble pas se situer dans la
+                  métropole sélectionnée.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Zoning & Zone Selection -->
+          <div class="section">
+            <h4 class="font-weight-normal">Ou sélectionner directement une zone</h4>
+            <div class="grid">
+              <div class="grid-col form-group">
+                <ZoningSelector />
+              </div>
+              <div class="grid-col form-group">
+                <ZoneSelector />
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div class="action-row">
+            <h3 class="section-title">3. Consulter votre document</h3>
+            <button @click="handleViewSynthesis" :disabled="!canViewSynthesis || isLoading" class="to-plu-btn btn"
+              type="button">
+              <BaseSpinner v-if="isLoading" size="small" color="white" class="button-spinner" />
+              {{ isLoading ? 'Chargement...' : buttonText }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Right column: map preview -->
+        <div class="right-col">
+          <h3 class="section-title">Aperçu cartographique</h3>
+          <div class="map-row">
+            <Suspense>
+              <component :is="MapPreviewAsync" :center="mapCenter" :polygon-geo-j-s-o-n="polygonGeoJSON" :marker="true"
+                height="450px" :zoom="14" />
+            </Suspense>
+          </div>
+        </div>
       </div>
     </form>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { usePluStore } from '@/stores/plu'
@@ -56,6 +110,9 @@ import BaseSpinner from '@/components/common/BaseSpinner.vue'
 import CitySelector from '@/components/plu/CitySelector.vue'
 import ZoningSelector from '@/components/plu/ZoningSelector.vue'
 import ZoneSelector from '@/components/plu/ZoneSelector.vue'
+import { defineAsyncComponent } from 'vue'
+const MapPreviewAsync = defineAsyncComponent(() => import('@/components/plu/MapPreview.vue'))
+import { useAddressToZone } from '@/composables/useAddressToZone'
 
 // Props
 const props = defineProps({
@@ -77,16 +134,83 @@ const pluStore = usePluStore()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const { trackEvent } = useAnalytics()
+const { findZoneForAddress, isLoading: isResolving } = useAddressToZone()
 
 // Computed
 const isLoading = computed(() => pluStore.isLoading)
 const errorMessage = computed(() => pluStore.error)
 const canViewSynthesis = computed(() => pluStore.canViewSynthesis)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const selectedCityId = computed(() => pluStore.selectedCityId)
+const selectedCity = computed(() => pluStore.selectedCity)
 
 const formClass = computed(() => {
   return props.variant === 'home' ? 'form-home' : 'form-search'
 })
+
+// Steps: simple indicator based on current selection progress
+const activeStep = computed(() => {
+  if (pluStore.selectedCityId && pluStore.selectedZoningId && pluStore.selectedZoneId) return 3
+  if (pluStore.selectedCityId) return 2
+  return 1
+})
+
+// Address lookup state
+const address = ref('')
+const zoneLabel = ref('')
+const mapCenter = ref(null)
+const polygonGeoJSON = ref(null)
+const resolvedCity = ref('')
+const cityMismatch = ref(false)
+
+const handleFindZone = async () => {
+  if (!address.value.trim() || !selectedCity.value) return
+  zoneLabel.value = ''
+  polygonGeoJSON.value = null
+  mapCenter.value = null
+
+  const cityName = selectedCity.value.name
+  const cityId = selectedCityId.value
+  const result = await findZoneForAddress(address.value, cityName, cityId)
+
+  if (!result?.success) {
+    const message =
+      result?.reason === 'GEOCODING_FAILED'
+        ? "Échec de la géolocalisation de l’adresse (BAN). Essayez de préciser le numéro et la voie."
+        : result?.reason === 'ZONE_LOOKUP_FAILED'
+          ? 'Zone urbaine introuvable à cette position (IGN). Essayez une adresse proche.'
+          : result?.reason === 'ZONE_NOT_FOUND'
+            ? 'Zone trouvée mais non reconnue pour cette métropole.'
+            : 'Recherche de zone impossible.'
+    uiStore.showError(message)
+    return
+  }
+
+  // no-op: handled via keydown on input to avoid unused function
+
+  // Update map preview
+  mapCenter.value = { lat: result.geo.lat, lon: result.geo.lon }
+  resolvedCity.value = result.geo.cityLabel || ''
+  cityMismatch.value = !!(resolvedCity.value && selectedCity.value && resolvedCity.value.toLowerCase() !== selectedCity.value.name.toLowerCase())
+  if (result.zone?.geometry) {
+    polygonGeoJSON.value = result.zone.geometry
+  }
+
+  // Update selection by IDs
+  try {
+    await pluStore.selectCity(cityId)
+    await pluStore.selectZoning(result.match.zoningId)
+    pluStore.selectZone(result.match.zoneId)
+    zoneLabel.value = result.match.zoneName
+    trackEvent('zone_resolved', {
+      city_id: cityId,
+      zone_name: result.match.zoneName,
+    })
+  } catch (e) {
+    console.error('Failed to apply selection from address:', e)
+    uiStore.showError('Sélection de zone impossible.')
+  }
+}
 
 // Watch for selection changes to prompt login
 watch(
@@ -162,33 +286,138 @@ onMounted(async () => {
   color: var(--color-blue-700);
 }
 
-/* Home page variant styling (default) */
-.form-home {
-  background: var(--color-white);
-  border-radius: 3px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* Step boxes */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.step {
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  text-align: center;
+  padding: 12px 8px;
+  border-radius: 4px;
+  color: var(--color-gray-500);
+}
+
+.step .step-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.step.active {
+  color: var(--color-gray-900);
+  border-color: var(--color-gray-300);
+}
+
+/* Form card */
+.form-home,
+.form-search {
+  background: #fff;
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--color-gray-200);
   margin-bottom: 3rem;
 }
 
-/* Search page variant styling */
-.form-search {
-  background: var(--color-white);
-  border-radius: var(--radius-card);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-md);
+.form-label {
+  margin-bottom: 0;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.left-col,
+.right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.address-lookup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.address-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.address-input-wrap {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+
+
+.find-zone-btn {
+  white-space: nowrap;
+}
+
+.zone-label {
+  margin: 0;
+  color: var(--color-gray-800);
+}
+
+.city-mismatch {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.map-row {
   border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-row .to-plu-btn {
+  width: 100%;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+
   .form-home,
   .form-search {
-    padding: var(--space-6);
+    padding: 16px;
   }
 
-  .grid {
-    gap: 1.5rem;
+  .layout-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

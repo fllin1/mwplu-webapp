@@ -439,6 +439,34 @@ export const dbService = {
     }
   },
 
+  // Research history logging
+  async logResearchHistory(entry) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      const payload = {
+        user_id: user ? user.id : null,
+        city_id: entry.city_id || null,
+        address_input: entry.address_input || null,
+        geo_lon: typeof entry.geo_lon === 'number' ? entry.geo_lon : null,
+        geo_lat: typeof entry.geo_lat === 'number' ? entry.geo_lat : null,
+        zone_label: entry.zone_label || null,
+        success: Boolean(entry.success),
+        reason: entry.reason || null,
+        created_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase.from('research_history').insert(payload)
+      if (error) throw error
+      return { success: true }
+    } catch (error) {
+      console.error('Error logging research history:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
   async getDownloadStats(documentId) {
     try {
       const { count, error } = await supabase

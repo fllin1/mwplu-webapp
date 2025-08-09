@@ -55,19 +55,16 @@ onMounted(() => {
 
 <template>
   <AppLayout>
-  <main class="main-content">
-    <section class="hero-section text-center">
-      <h2 class="animate-title margin-bottom-md">Répertoire des synthèses de PLU</h2>
-      <p class="lead" id="typewriter-subtitle"></p>
-    </section>
+    <main class="main-content">
+      <section class="hero-section text-center">
+        <h2 class="animate-title margin-bottom-md">Répertoire des synthèses de PLU</h2>
+        <p class="lead" id="typewriter-subtitle"></p>
+      </section>
 
-    <div class="container">
-      <PluSelectionForm
-        variant="home"
-        button-text="Voir la synthèse"
-      />
-    </div>
-  </main>
+      <div class="container">
+        <PluSelectionForm variant="home" button-text="Voir la synthèse" />
+      </div>
+    </main>
   </AppLayout>
 </template>
 
@@ -100,7 +97,7 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   background: linear-gradient(90deg, var(--accent-gray) 1px, transparent 1px) 0 0,
-              linear-gradient(var(--accent-gray) 1px, transparent 1px) 0 0;
+    linear-gradient(var(--accent-gray) 1px, transparent 1px) 0 0;
   background-size: 20px 20px;
   z-index: 1;
   opacity: 0.5;
