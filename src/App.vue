@@ -1,10 +1,8 @@
 <template>
   <div id="app">
     <!-- Loading overlay -->
-    <div
-      v-if="authStore.isLoading && !authStore.isInitialized"
-      class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"
-    >
+    <div v-if="authStore.isLoading && !authStore.isInitialized"
+      class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
         <p class="mt-4 text-gray-600">Loading...</p>
@@ -16,8 +14,8 @@
       <router-view />
     </div>
 
-    <!-- Cookie consent banner -->
-    <CookieBanner />
+    <!-- Site preferences prompt (first-party, Brave-friendly) -->
+    <PrivacyPrompt />
   </div>
 </template>
 
@@ -25,7 +23,7 @@
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTurnstile } from '@/composables/useTurnstile'
-import CookieBanner from '@/components/common/CookieBanner.vue'
+import PrivacyPrompt from '@/components/common/PrivacyPrompt.vue'
 
 const authStore = useAuthStore()
 const { loadTurnstile } = useTurnstile()

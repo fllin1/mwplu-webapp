@@ -2,7 +2,7 @@
 description: Analytics, events, privacy & cookies
 globs:
   - 'src/composables/useAnalytics.js'
-  - 'src/components/common/CookieBanner.vue'
+  - 'src/components/common/PrivacyPrompt.vue'
   - 'src/services/firebase.js'
 alwaysApply: false
 ---
@@ -23,7 +23,7 @@ alwaysApply: false
 
 ## Cookie Consent
 
-- `CookieBanner.vue` manages consent, versioned by `CONSENT_VERSION`
+- `PrivacyPrompt.vue` manages consent, versioned by `PREFS_VERSION`
 - Applies `optIn`/`optOut` to analytics based on user choice
 - Link to `/policies/cookies` for details
 

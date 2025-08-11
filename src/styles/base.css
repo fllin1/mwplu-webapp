@@ -5,20 +5,20 @@
 /* CSS Purging Protection - DO NOT REMOVE */
 /* These classes must be preserved for dynamic components */
 /*
-.cookie-banner {}
-.cookie-banner__container {}
-.cookie-banner__content {}
-.cookie-banner__text {}
-.cookie-banner__actions {}
-.cookie-banner__link {}
+.prefs-prompt {}
+.prefs-prompt__container {}
+.prefs-prompt__content {}
+.prefs-prompt__text {}
+.prefs-prompt__actions {}
+.prefs-prompt__link {}
 .modal-backdrop {}
 .modal-content {}
 .modal-header {}
 .modal-body {}
 .modal-footer {}
 .modal-close {}
-.cookie-category {}
-.cookie-category__header {}
+.prefs-category {}
+.prefs-category__header {}
 */
 /* End CSS Purging Protection */
 
