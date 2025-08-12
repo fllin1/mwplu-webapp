@@ -27,6 +27,9 @@ export const usePluStore = defineStore('plu', () => {
   const zonings = ref([])
   const zones = ref([])
 
+  // Smart match info to carry across navigation
+  const lastSmartMatch = ref(null)
+
   // Selection
   const selectedCityId = ref('')
   const selectedZoningId = ref('')
@@ -178,6 +181,15 @@ export const usePluStore = defineStore('plu', () => {
     zonings.value = []
     zones.value = []
     clearError()
+  }
+
+  // Smart match setters
+  const setSmartMatch = (info) => {
+    lastSmartMatch.value = info || null
+  }
+
+  const clearSmartMatch = () => {
+    lastSmartMatch.value = null
   }
 
   const getSelectionParams = () => {
@@ -335,5 +347,10 @@ export const usePluStore = defineStore('plu', () => {
     getSelectionSlugs,
     initializeFromSlugs,
     getBreadcrumbData,
+
+    // Smart match exposure
+    lastSmartMatch,
+    setSmartMatch,
+    clearSmartMatch,
   }
 })

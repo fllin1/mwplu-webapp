@@ -37,6 +37,16 @@
                 Mis à jour le {{ formatDate(pluData.updated_at) }}
               </span>
             </div>
+
+            <!-- Smart-match reminder banner with external (IGN) zone label -->
+            <div v-if="pluStore.lastSmartMatch?.usedSmartMatch && pluStore.lastSmartMatch.externalZoneLabel"
+              class="smart-match-banner">
+              <span class="banner-label">Zone IGN exacte</span>
+              <span class="banner-value">{{ pluStore.lastSmartMatch.externalZoneLabel }}</span>
+              <span class="banner-sep">→</span>
+              <span class="banner-note">associée à</span>
+              <span class="banner-value">{{ pluStore.lastSmartMatch.internalZoneName }}</span>
+            </div>
           </div>
 
           <div class="plu-stats-grid">
@@ -86,31 +96,7 @@
 
           <!-- Sources Tab -->
           <section v-if="activeTab === 'sources'" class="tab-panel-content">
-            <div class="sources-section">
-              <h2 class="section-heading">Documents sources</h2>
-              <p class="section-description">
-                Retrouvez ici les documents officiels utilisés pour cette synthèse.
-              </p>
-
-              <div class="sources-list">
-                <div v-for="source in pluData.sources" :key="source.id" class="source-item card">
-                  <div class="source-info">
-                    <h4 class="source-title">{{ source.title }}</h4>
-                    <p class="source-description">{{ source.description }}</p>
-                    <div class="source-meta">
-                      <span class="source-type">{{ source.type }}</span>
-                      <span class="source-date">{{ formatDate(source.date) }}</span>
-                      <span class="source-size">{{ formatFileSize(source.file_size) }}</span>
-                    </div>
-                  </div>
-                  <div class="source-actions">
-                    <a :href="source.file_url" target="_blank" class="btn btn-secondary btn-small">
-                      Voir le document
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PluSourcesTab :document="pluData" :document-id="String(pluData.id)" />
           </section>
 
           <!-- Downloads Tab -->
@@ -150,6 +136,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
 import PluCommentsTab from '@/components/plu/synthesis/PluCommentsTab.vue'
+import PluSourcesTab from '@/components/plu/synthesis/PluSourcesTab.vue'
 import { formatCityName } from '@/utils/helpers'
 
 export default {
@@ -160,6 +147,7 @@ export default {
     BreadcrumbNav,
     BaseSpinner,
     PluCommentsTab,
+    PluSourcesTab,
   },
 
   setup() {
@@ -425,6 +413,13 @@ export default {
     // Load data on component mount and when route changes
     onMounted(() => {
       loadPluData()
+      // Show smart-match reminder if present
+      if (pluStore.lastSmartMatch?.usedSmartMatch && pluStore.lastSmartMatch.externalZoneLabel) {
+        uiStore.showNotification(
+          `Note: la zone IGN "${pluStore.lastSmartMatch.externalZoneLabel}" a été associée à la zone "${pluStore.lastSmartMatch.internalZoneName}".`,
+          'info'
+        )
+      }
       // Add scroll event listener for back to top button
       window.addEventListener('scroll', handleScroll)
     })
@@ -440,6 +435,13 @@ export default {
         // Only reload if relevant route params change
         if (newParams.city !== oldParams.city || newParams.zoning !== oldParams.zoning || newParams.zone !== oldParams.zone) {
           loadPluData()
+          // Re-emit reminder after navigation change if smart-match persisted
+          if (pluStore.lastSmartMatch?.usedSmartMatch && pluStore.lastSmartMatch.externalZoneLabel) {
+            uiStore.showNotification(
+              `Note: la zone IGN "${pluStore.lastSmartMatch.externalZoneLabel}" a été associée à la zone "${pluStore.lastSmartMatch.internalZoneName}".`,
+              'info'
+            )
+          }
         }
       },
       { deep: true }
@@ -453,6 +455,7 @@ export default {
       tabs,
       breadcrumbItems,
       authStore,
+      pluStore,
       documentStats,
       // Back to top functionality
       showBackToTop,
@@ -566,6 +569,36 @@ export default {
 .plu-zone-name,
 .plu-update-date {
   margin-right: var(--space-4);
+}
+
+/* Smart match banner */
+.smart-match-banner {
+  margin-top: var(--space-3);
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px dashed var(--color-gray-300);
+  border-radius: var(--radius-button);
+  background: var(--color-gray-50);
+}
+
+.smart-match-banner .banner-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-800);
+}
+
+.smart-match-banner .banner-value {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-black);
+}
+
+.smart-match-banner .banner-note {
+  color: var(--color-gray-700);
+}
+
+.smart-match-banner .banner-sep {
+  color: var(--color-gray-500);
 }
 
 .plu-stats-grid {

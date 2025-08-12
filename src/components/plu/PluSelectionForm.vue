@@ -52,6 +52,11 @@
                   <a href="https://www.geoportail.gouv.fr/" target="_blank">GeoPortail</a>.
                 </small>
                 <p v-if="zoneLabel" class="zone-label">Zone trouvée : <strong>{{ zoneLabel }}</strong></p>
+                <p v-if="externalZoneLabel && !zoneLabel" class="zone-label">
+                  Zone identifiée (IGN) : <strong>{{ externalZoneLabel }}</strong>. Sélectionnez-la
+                  manuellement si disponible dans la liste des zones.
+                </p>
+                <p v-if="smartMatchNotice" class="zone-label" v-html="smartMatchNotice"></p>
                 <p v-if="cityMismatch" class="city-mismatch">L'adresse indiquée ne semble pas se situer dans la
                   métropole sélectionnée.</p>
               </div>
@@ -158,6 +163,8 @@ const activeStep = computed(() => {
 // Address lookup state
 const address = ref('')
 const zoneLabel = ref('')
+const externalZoneLabel = ref('')
+const smartMatchNotice = ref('')
 const mapCenter = ref(null)
 const polygonGeoJSON = ref(null)
 const resolvedCity = ref('')
@@ -166,6 +173,8 @@ const cityMismatch = ref(false)
 const handleFindZone = async () => {
   if (!address.value.trim() || !selectedCity.value) return
   zoneLabel.value = ''
+  externalZoneLabel.value = ''
+  smartMatchNotice.value = ''
   polygonGeoJSON.value = null
   mapCenter.value = null
 
@@ -174,13 +183,19 @@ const handleFindZone = async () => {
   const result = await findZoneForAddress(address.value, cityName, cityId)
 
   if (!result?.success) {
+    if (result?.reason === 'ZONE_NOT_FOUND') {
+      if (result?.zone?.libelle) {
+        externalZoneLabel.value = result.zone.libelle
+      }
+    }
+
     const message =
       result?.reason === 'GEOCODING_FAILED'
         ? "Échec de la géolocalisation de l’adresse (BAN). Essayez de préciser le numéro et la voie."
         : result?.reason === 'ZONE_LOOKUP_FAILED'
           ? 'Zone urbaine introuvable à cette position (IGN). Essayez une adresse proche.'
           : result?.reason === 'ZONE_NOT_FOUND'
-            ? 'Zone trouvée mais non reconnue pour cette métropole.'
+            ? `Zone trouvée (IGN) mais non reconnue pour cette métropole.${externalZoneLabel.value ? ` (IGN: ${externalZoneLabel.value})` : ''}`
             : 'Recherche de zone impossible.'
     uiStore.showError(message)
     return
@@ -202,6 +217,19 @@ const handleFindZone = async () => {
     await pluStore.selectZoning(result.match.zoningId)
     pluStore.selectZone(result.match.zoneId)
     zoneLabel.value = result.match.zoneName
+    // If smart match was used, warn the user
+    if (result.match.usedSmartMatch) {
+      const msg = `<span style="text-decoration: underline;">Correspondance approximative utilisée</span>: la zone IGN "<strong>${externalZoneLabel.value || result.zone?.libelle}</strong>" a été associée à la zone "${zoneLabel.value}".`
+      smartMatchNotice.value = msg
+      const msg_raw = `Correspondance approximative utilisée: la zone IGN "${externalZoneLabel.value || result.zone?.libelle}" a été associée à la zone "${zoneLabel.value}".`
+      uiStore.showInfo(msg_raw)
+      // Persist for the next page
+      pluStore.setSmartMatch({
+        usedSmartMatch: true,
+        externalZoneLabel: externalZoneLabel.value || result.zone?.libelle || '',
+        internalZoneName: result.match.zoneName,
+      })
+    }
     trackEvent('zone_resolved', {
       city_id: cityId,
       zone_name: result.match.zoneName,

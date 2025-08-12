@@ -587,4 +587,30 @@ export const dbService = {
       return { success: false, error: error.message }
     }
   },
+
+  /**
+   * Fetch multiple profiles by their IDs
+   * @param {string[]} userIds
+   * @returns {Promise<{success: boolean, data: Array<{id: string, pseudo?: string, full_name?: string, email?: string}>}|{success:false,error:string}>}
+   */
+  async getProfilesByIds(userIds) {
+    try {
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        return { success: true, data: [] }
+      }
+
+      const uniqueIds = Array.from(new Set(userIds.filter(Boolean)))
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, pseudo, full_name, email')
+        .in('id', uniqueIds)
+
+      if (error) throw error
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error fetching profiles by IDs:', error)
+      return { success: false, error: error.message }
+    }
+  },
 }

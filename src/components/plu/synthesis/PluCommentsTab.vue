@@ -143,6 +143,7 @@ const loadComments = async () => {
     const result = await dbService.getComments(props.documentId)
     if (result.success) {
       comments.value = result.data
+      await hydrateCommentAuthors()
     } else {
       throw new Error(result.error)
     }
@@ -151,6 +152,38 @@ const loadComments = async () => {
     uiStore.showNotification('Erreur lors du chargement des commentaires', 'error')
   } finally {
     isLoadingComments.value = false
+  }
+}
+
+// Cache for user display names
+const userDisplayNameById = ref({})
+
+const resolveDisplayName = (profile) => {
+  if (!profile) return null
+  return (
+    profile.pseudo?.trim() ||
+    profile.full_name?.trim() ||
+    (profile.email ? profile.email.split('@')[0] : null)
+  )
+}
+
+const hydrateCommentAuthors = async () => {
+  try {
+    const missingIds = comments.value
+      .map((c) => c.user_id)
+      .filter((id) => id && !userDisplayNameById.value[id])
+
+    if (missingIds.length === 0) return
+
+    const profRes = await dbService.getProfilesByIds(missingIds)
+    if (!profRes.success) return
+
+    for (const p of profRes.data) {
+      const display = resolveDisplayName(p) || `Utilisateur ${p.id.substring(0, 8)}`
+      userDisplayNameById.value[p.id] = display
+    }
+  } catch (e) {
+    console.warn('Could not hydrate comment authors:', e)
   }
 }
 
@@ -253,11 +286,10 @@ const handleRemoveRating = async () => {
 }
 
 const getCommentAuthor = (comment) => {
-  // For now, we'll use the user_id as a placeholder
-  // In a real app, you'd fetch user info or store it with the comment
-  // Using a more user-friendly format
-  const shortId = comment.user_id.substring(0, 8)
-  return `Utilisateur ${shortId}`
+  return (
+    userDisplayNameById.value[comment.user_id] ||
+    `Utilisateur ${comment.user_id.substring(0, 8)}`
+  )
 }
 
 const formatDate = (dateString) => {

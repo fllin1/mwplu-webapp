@@ -18,33 +18,24 @@
             <h3 class="form-title">Informations personnelles</h3>
 
             <div class="form-group">
+              <label for="pseudo" class="form-label">Pseudo</label>
+              <input id="pseudo" v-model="form.pseudo" type="text" class="form-input" :disabled="isUpdating"
+                placeholder="Votre pseudo public" />
+              <small class="form-help">Ce pseudo sera affiché à côté de vos commentaires.</small>
+            </div>
+
+            <div class="form-group">
               <label for="name" class="form-label">Nom complet</label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                class="form-input"
-                :disabled="isUpdating"
-              />
+              <input id="name" v-model="form.name" type="text" class="form-input" :disabled="isUpdating" />
             </div>
 
             <div class="form-group">
               <label for="email" class="form-label">Adresse email</label>
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                class="form-input"
-                disabled
-              />
+              <input id="email" v-model="form.email" type="email" class="form-input" disabled />
               <small class="form-help">L'email ne peut pas être modifié</small>
             </div>
 
-            <button
-              type="submit"
-              :disabled="isUpdating"
-              class="btn btn-primary"
-            >
+            <button type="submit" :disabled="isUpdating" class="btn btn-primary">
               <BaseSpinner v-if="isUpdating" size="small" color="white" />
               {{ isUpdating ? 'Mise à jour...' : 'Mettre à jour' }}
             </button>
@@ -56,42 +47,23 @@
 
             <div class="form-group">
               <label for="current-password" class="form-label">Mot de passe actuel</label>
-              <input
-                id="current-password"
-                v-model="passwordForm.currentPassword"
-                type="password"
-                class="form-input"
-                :disabled="isChangingPassword"
-              />
+              <input id="current-password" v-model="passwordForm.currentPassword" type="password" class="form-input"
+                :disabled="isChangingPassword" />
             </div>
 
             <div class="form-group">
               <label for="new-password" class="form-label">Nouveau mot de passe</label>
-              <input
-                id="new-password"
-                v-model="passwordForm.newPassword"
-                type="password"
-                class="form-input"
-                :disabled="isChangingPassword"
-              />
+              <input id="new-password" v-model="passwordForm.newPassword" type="password" class="form-input"
+                :disabled="isChangingPassword" />
             </div>
 
             <div class="form-group">
               <label for="confirm-password" class="form-label">Confirmer le mot de passe</label>
-              <input
-                id="confirm-password"
-                v-model="passwordForm.confirmPassword"
-                type="password"
-                class="form-input"
-                :disabled="isChangingPassword"
-              />
+              <input id="confirm-password" v-model="passwordForm.confirmPassword" type="password" class="form-input"
+                :disabled="isChangingPassword" />
             </div>
 
-            <button
-              type="submit"
-              :disabled="!canChangePassword"
-              class="btn btn-primary"
-            >
+            <button type="submit" :disabled="!canChangePassword" class="btn btn-primary">
               <BaseSpinner v-if="isChangingPassword" size="small" color="white" />
               {{ isChangingPassword ? 'Modification...' : 'Changer le mot de passe' }}
             </button>
@@ -152,10 +124,11 @@
 </template>
 
 <script>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { dbService } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
@@ -180,7 +153,8 @@ export default {
 
     const form = reactive({
       name: authStore.user?.user_metadata?.name || '',
-      email: authStore.user?.email || ''
+      email: authStore.user?.email || '',
+      pseudo: ''
     })
 
     const passwordForm = reactive({
@@ -195,10 +169,10 @@ export default {
 
     const canChangePassword = computed(() => {
       return passwordForm.currentPassword &&
-             passwordForm.newPassword &&
-             passwordForm.confirmPassword &&
-             passwordForm.newPassword === passwordForm.confirmPassword &&
-             !isChangingPassword.value
+        passwordForm.newPassword &&
+        passwordForm.confirmPassword &&
+        passwordForm.newPassword === passwordForm.confirmPassword &&
+        !isChangingPassword.value
     })
 
     const formatDate = (dateString) => {
@@ -208,16 +182,39 @@ export default {
     }
 
     /**
-     * Handle profile update
+     * Load current profile (pseudo) from database
+     */
+    const loadProfile = async () => {
+      try {
+        const userId = authStore.user?.id
+        if (!userId) return
+        const res = await dbService.getUserProfile(userId)
+        if (res.success && res.data) {
+          form.pseudo = res.data.pseudo || ''
+        }
+      } catch (e) {
+        console.warn('Unable to load profile:', e)
+      }
+    }
+
+    /**
+     * Handle profile update (name + pseudo)
      */
     const handleUpdateProfile = async () => {
       if (isUpdating.value) return
       isUpdating.value = true
       try {
-        const { error } = await authStore.updateUserProfile({ name: form.name })
-        if (error) {
-          throw error
+        // 1) Update Supabase Auth user metadata (name)
+        const authUpdate = await authStore.updateProfile({ name: form.name, full_name: form.name })
+        if (authUpdate?.error) throw authUpdate.error
+
+        // 2) Upsert pseudo into public.profiles
+        const userId = authStore.user?.id
+        if (userId) {
+          const dbUpdate = await dbService.updateUserProfile(userId, { pseudo: form.pseudo })
+          if (!dbUpdate.success) throw new Error(dbUpdate.error)
         }
+
         uiStore.showNotification('Votre profil a été mis à jour.', 'success')
       } catch (error) {
         console.error('Error updating profile:', error)
@@ -282,6 +279,10 @@ export default {
         uiStore.showNotification(`Erreur lors de la suppression du compte : ${error.message || error.description || 'Une erreur inattendue est survenue.'}`, 'error')
       }
     }
+
+    onMounted(() => {
+      loadProfile()
+    })
 
     return {
       authStore,

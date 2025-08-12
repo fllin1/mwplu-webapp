@@ -22,13 +22,8 @@
     <AppFooter />
 
     <!-- Global Notifications -->
-    <BaseNotification
-      v-if="notification.show"
-      :type="notification.type"
-      :message="notification.message"
-      :auto-dismiss="notification.autoDismiss"
-      @dismiss="dismissNotification"
-    />
+    <BaseNotification v-if="notification.show" :type="notification.type" :message="notification.message"
+      :auto-dismiss="notification.autoDismiss" @dismiss="dismissNotification" />
 
     <!-- Global Loading Overlay -->
     <div v-if="isGlobalLoading" class="global-loading-overlay">
@@ -194,13 +189,15 @@ export default {
 /* Breadcrumbs Area */
 .breadcrumbs-area {
   padding: var(--space-3) var(--space-4);
-  margin-top: 56px; /* Same as main-content padding-top */
+  margin-top: 56px;
+  /* Same as main-content padding-top */
   margin-bottom: -36px;
 }
 
 /* Adjust main content spacing when breadcrumbs are present */
 .main-content.has-breadcrumbs {
-  padding-top: 0; /* Remove top padding since breadcrumbs handle the header spacing */
+  padding-top: 0;
+  /* Remove top padding since breadcrumbs handle the header spacing */
 }
 
 .breadcrumbs-container {
@@ -210,7 +207,8 @@ export default {
 }
 
 .main-content.full-height {
-  min-height: calc(100vh - 136px - 200px); /* Viewport minus header (72px + 64px) and footer approximate heights */
+  min-height: calc(100vh - 136px - 200px);
+  /* Viewport minus header (72px + 64px) and footer approximate heights */
 }
 
 .content-container {
@@ -249,15 +247,18 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
   .main-content {
-    padding-top: 64px; /* Smaller mobile header */
+    padding-top: 64px;
+    /* Smaller mobile header */
   }
 
   .main-content.has-breadcrumbs {
-    padding-top: 0; /* Remove top padding for mobile too */
+    padding-top: 0;
+    /* Remove top padding for mobile too */
   }
 
   .breadcrumbs-area {
-    margin-top: 64px; /* Match mobile header spacing */
+    margin-top: 64px;
+    /* Match mobile header spacing */
   }
 
   .breadcrumbs-container {
@@ -266,7 +267,8 @@ export default {
 
   .main-content.padded {
     padding: var(--space-4) 0;
-    padding-top: calc(64px + var(--space-4)); /* Header space + content padding */
+    padding-top: calc(64px + var(--space-4));
+    /* Header space + content padding */
   }
 
   .content-container {
@@ -274,7 +276,8 @@ export default {
   }
 
   .main-content.full-height {
-    min-height: calc(100vh - 120px - 180px); /* Adjusted for mobile header/footer heights */
+    min-height: calc(100vh - 120px - 180px);
+    /* Adjusted for mobile header/footer heights */
   }
 }
 

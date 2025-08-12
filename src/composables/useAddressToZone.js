@@ -110,9 +110,28 @@ export function useAddressToZone() {
       const zonesRes = await dbService.getZones(z.id)
       if (!zonesRes.success || !Array.isArray(zonesRes.data)) continue
       const zones = zonesRes.data
+      // 1) Exact match
       const found = zones.find((zone) => normalize(zone.name) === target)
       if (found) {
-        return { zoningId: z.id, zoneId: found.id, zoneName: found.name }
+        return { zoningId: z.id, zoneId: found.id, zoneName: found.name, usedSmartMatch: false }
+      }
+
+      // 2) Smart fallback: if target ends with a lowercase letter, try without the last letter
+      // Example: 'uc1a' -> try 'uc1'
+      const m = target.match(/^(.+)([a-z])$/)
+      if (m) {
+        const base = m[1]
+        const suffix = m[2]
+        const foundBase = zones.find((zone) => normalize(zone.name) === base)
+        if (foundBase) {
+          return {
+            zoningId: z.id,
+            zoneId: foundBase.id,
+            zoneName: foundBase.name,
+            usedSmartMatch: true,
+            smartMatch: { base, ignoredSuffix: suffix },
+          }
+        }
       }
     }
     return null

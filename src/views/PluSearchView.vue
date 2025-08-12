@@ -9,10 +9,7 @@
       </section>
 
       <div class="search-container">
-        <PluSelectionForm
-          variant="search"
-          button-text="Consulter la synthèse"
-        />
+        <PluSelectionForm variant="search" button-text="Consulter la synthèse" />
       </div>
     </main>
   </AppLayout>
@@ -25,7 +22,7 @@ import PluSelectionForm from '@/components/plu/PluSelectionForm.vue'
 
 <style scoped>
 .main-content {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: var(--space-8) var(--space-4);
 }
@@ -52,7 +49,7 @@ import PluSelectionForm from '@/components/plu/PluSelectionForm.vue'
 }
 
 .search-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 

@@ -4,6 +4,10 @@
 
 <script>
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+// Ensure Leaflet marker icons work in production by explicitly importing assets
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 // Lazy-load Leaflet and its CSS on demand
 let L = null
 
@@ -105,6 +109,15 @@ export default {
         const mod = await import('leaflet')
         L = mod.default || mod
         await import('leaflet/dist/leaflet.css')
+
+        // Configure default marker icons with bundled asset URLs
+        if (L?.Icon?.Default) {
+          L.Icon.Default.mergeOptions({
+            iconRetinaUrl: markerIcon2xUrl,
+            iconUrl: markerIconUrl,
+            shadowUrl: markerShadowUrl,
+          })
+        }
       }
       initMap()
     })
