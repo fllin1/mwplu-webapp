@@ -323,7 +323,7 @@ onMounted(async () => {
 }
 
 .step {
-  background: #fff;
+  background: var(--color-white);
   border: 1px solid var(--color-gray-200);
   text-align: center;
   padding: 12px 8px;
@@ -344,7 +344,7 @@ onMounted(async () => {
 /* Form card */
 .form-home,
 .form-search {
-  background: #fff;
+  background: var(--color-white);
   border-radius: 4px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);

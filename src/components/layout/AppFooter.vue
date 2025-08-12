@@ -38,34 +38,22 @@
           <div class="social-links">
             <a href="https://twitter.com/mwplu" class="social-link" aria-label="Twitter">
               <span class="social-icon">
-                <img
-                  src="/src/assets/icons/socials/twitter-x.svg"
-                  alt="Twitter Logo"
-                />
+                <img :src="twitterSrc" alt="Twitter Logo" />
               </span>
             </a>
             <a href="https://facebook.com/mwplu" class="social-link" aria-label="Facebook">
               <span class="social-icon">
-                <img
-                  src="/src/assets/icons/socials/facebook.svg"
-                  alt="Facebook Logo"
-                />
+                <img src="/src/assets/icons/socials/facebook.svg" alt="Facebook Logo" />
               </span>
             </a>
             <a href="https://linkedin.com/company/mwplu" class="social-link" aria-label="LinkedIn">
               <span class="social-icon">
-                <img
-                  src="/src/assets/icons/socials/linkedin.svg"
-                  alt="LinkedIn Logo"
-                />
+                <img src="/src/assets/icons/socials/linkedin.svg" alt="LinkedIn Logo" />
               </span>
             </a>
             <a href="https://youtube.com/@mwplu" class="social-link" aria-label="Youtube">
               <span class="social-icon">
-                <img
-                  src="/src/assets/icons/socials/youtube.svg"
-                  alt="Youtube Logo"
-                />
+                <img src="/src/assets/icons/socials/youtube.svg" alt="Youtube Logo" />
               </span>
             </a>
           </div>
@@ -107,19 +95,34 @@
  * - Accessible link navigation
  * - Consistent with header styling
  */
+import { computed } from 'vue'
+import { useUIStore } from '@/stores/ui'
+
 export default {
   name: 'AppFooter',
 
   setup() {
-    return {}
+    const uiStore = useUIStore()
+    const twitterSrc = computed(() => {
+      const theme = uiStore.theme
+      let effective = theme
+      if (theme === 'auto') {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        effective = prefersDark ? 'dark' : 'light'
+      }
+      return effective === 'dark'
+        ? '/src/assets/icons/socials/twitter-x_dark_mode.svg'
+        : '/src/assets/icons/socials/twitter-x.svg'
+    })
+    return { twitterSrc }
   }
 }
 </script>
 
 <style scoped>
 .site-footer {
-  background-color: var(--color-gray-50);
-  border-top: 1px solid var(--color-gray-200);
+  background-color: var(--footer-bg);
+  border-top: 1px solid var(--footer-border);
   margin-top: auto;
   padding: var(--space-8) 0 var(--space-6);
 }
@@ -132,7 +135,8 @@ export default {
 
 .footer-content {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Three columns for contact, quick links, social */
+  grid-template-columns: repeat(3, 1fr);
+  /* Three columns for contact, quick links, social */
   gap: var(--space-12);
   margin-bottom: var(--space-8);
 }
@@ -147,7 +151,7 @@ export default {
 .footer-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
-  color: var(--color-black);
+  color: var(--footer-text);
   margin: 0 0 var(--space-1) 0;
 }
 
@@ -160,7 +164,7 @@ export default {
 
 .contact-item {
   font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
+  color: var(--footer-muted);
 }
 
 .contact-item a:hover {
@@ -171,7 +175,8 @@ export default {
 /* Quick Links Section */
 .footer-links {
   display: flex;
-  gap: var(--space-8); /* Space between link columns */
+  gap: var(--space-8);
+  /* Space between link columns */
 }
 
 .footer-links-column {
@@ -181,7 +186,7 @@ export default {
 }
 
 .footer-link {
-  color: var(--color-gray-600);
+  color: var(--footer-muted);
   text-decoration: none;
   font-size: var(--font-size-sm);
   transition: color var(--transition-fast);
@@ -215,7 +220,7 @@ export default {
 }
 
 .social-link:hover {
-  background-color: var(--color-gray-200);
+  background-color: var(--footer-border);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -236,19 +241,20 @@ export default {
 
 /* Footer Bottom */
 .footer-bottom {
-  border-top: 1px solid var(--color-gray-200);
+  border-top: 1px solid var(--footer-border);
   padding-top: var(--space-6);
   margin-top: var(--space-6);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
+  /* Allow wrapping on small screens */
   gap: var(--space-4);
 }
 
 .footer-legal {
   display: flex;
-  color: var(--color-gray-500);
+  color: var(--footer-muted);
   font-size: var(--font-size-xs);
   gap: var(--space-6);
 }
@@ -261,13 +267,14 @@ export default {
 
 .footer-copyright {
   font-size: var(--font-size-xs);
-  color: var(--color-gray-500);
+  color: var(--footer-muted);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .footer-content {
-    grid-template-columns: 1fr; /* Stack columns on small screens */
+    grid-template-columns: 1fr;
+    /* Stack columns on small screens */
     gap: var(--space-8);
   }
 

@@ -4,7 +4,7 @@
       <!-- Logo and Brand -->
       <div class="header-brand">
         <router-link to="/" class="logo-link">
-          <img src="@/assets/icons/logos/mwplu.svg" alt="MWPLU Logo" class="header-logo" />
+          <img :src="logoSrc" alt="MWPLU Logo" class="header-logo" />
         </router-link>
       </div>
 
@@ -39,6 +39,12 @@
           </li>
         </ul>
 
+        <!-- Theme Switch (Light/Dark) -->
+        <button class="theme-switch" :class="{ 'is-dark': isDark }" :aria-pressed="isDark.toString()"
+          @click="toggleDark" aria-label="Basculer le thème clair/sombre">
+          <span class="switch-knob" />
+        </button>
+
         <!-- User Menu / Auth Buttons -->
         <div class="header-actions">
           <div v-if="isAuthenticated" class="user-menu">
@@ -72,12 +78,8 @@
       </nav>
 
       <!-- Mobile Menu Toggle -->
-      <button
-        class="mobile-menu-toggle"
-        @click="toggleMobileMenu"
-        :aria-expanded="isMobileMenuOpen"
-        aria-label="Menu de navigation"
-      >
+      <button class="mobile-menu-toggle" @click="toggleMobileMenu" :aria-expanded="isMobileMenuOpen"
+        aria-label="Menu de navigation">
         <div class="hamburger" :class="{ 'hamburger-open': isMobileMenuOpen }">
           <span></span>
           <span></span>
@@ -87,11 +89,7 @@
     </div>
 
     <!-- Mobile Menu Overlay -->
-    <div
-      v-show="isMobileMenuOpen"
-      class="mobile-overlay"
-      @click="closeMobileMenu"
-    ></div>
+    <div v-show="isMobileMenuOpen" class="mobile-overlay" @click="closeMobileMenu"></div>
   </header>
 </template>
 
@@ -117,6 +115,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
+import logoLight from '@/assets/icons/logos/mwplu.svg'
+import logoDark from '@/assets/icons/logos/mwplu_dark_theme.svg'
 
 export default {
   name: 'AppHeader',
@@ -124,11 +125,27 @@ export default {
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    const uiStore = useUIStore()
 
     // Component state
     const isMobileMenuOpen = ref(false)
     const isUserMenuOpen = ref(false)
     const isScrolled = ref(false)
+
+    // Theme state
+    const theme = computed(() => uiStore.theme)
+    const effectiveTheme = computed(() => {
+      if (theme.value === 'auto') {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        return prefersDark ? 'dark' : 'light'
+      }
+      return theme.value
+    })
+    const isDark = computed(() => effectiveTheme.value === 'dark')
+    const toggleDark = () => {
+      uiStore.setTheme(isDark.value ? 'light' : 'dark')
+    }
+    const logoSrc = computed(() => (isDark.value ? logoDark : logoLight))
 
     // Auth state
     const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -138,9 +155,9 @@ export default {
     const userName = computed(() => {
       if (!user.value) return ''
       return user.value.user_metadata?.name ||
-             user.value.user_metadata?.full_name ||
-             user.value.email?.split('@')[0] ||
-             'Utilisateur'
+        user.value.user_metadata?.full_name ||
+        user.value.email?.split('@')[0] ||
+        'Utilisateur'
     })
 
     const userInitials = computed(() => {
@@ -241,7 +258,12 @@ export default {
       closeMobileMenu,
       toggleUserMenu,
       closeUserMenu,
-      handleLogout
+      handleLogout,
+      theme,
+      effectiveTheme,
+      isDark,
+      toggleDark,
+      logoSrc
     }
   }
 }
@@ -252,11 +274,12 @@ export default {
   Header Styling
 */
 .app-header {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: var(--header-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  position: fixed; /* Changed from sticky to fixed for consistent scroll behavior */
+  border-bottom: 1px solid var(--header-border);
+  position: fixed;
+  /* Changed from sticky to fixed for consistent scroll behavior */
   width: 100%;
   top: 0;
   left: 0;
@@ -265,7 +288,7 @@ export default {
 }
 
 .app-header.scrolled {
-  background-color: rgba(255, 255, 255, 0.87);
+  background-color: var(--header-bg-scrolled);
   border-bottom-color: var(--border-gray, #eaeaea);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -273,7 +296,8 @@ export default {
 .header-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 9px 24px; /* Adjust padding as needed */
+  padding: 9px 24px;
+  /* Adjust padding as needed */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -291,12 +315,14 @@ export default {
 }
 
 .header-logo {
-  height: 39px; /* Default height */
+  height: 39px;
+  /* Default height */
   transition: all 0.3s ease;
 }
 
 .app-header.scrolled .header-logo {
-  height: 38px; /* Smaller height when scrolled */
+  height: 38px;
+  /* Smaller height when scrolled */
 }
 
 .logo-link:hover .header-logo {
@@ -348,6 +374,49 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* Elegant theme switch */
+.theme-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--color-gray-300);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.06)), var(--color-white);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 3px;
+}
+
+.theme-switch:hover {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.theme-switch .switch-knob {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  left: 3px;
+  transition: left 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.theme-switch.is-dark {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.2)), var(--color-gray-200);
+  border-color: var(--color-gray-400);
+}
+
+.theme-switch.is-dark .switch-knob {
+  left: 23px;
+  background: var(--color-gray-600);
+  border-color: var(--color-gray-400);
 }
 
 .auth-buttons {
@@ -432,6 +501,7 @@ export default {
   top: calc(100% + 10px);
   right: 0;
   background-color: var(--color-white);
+  background-color: var(--dropdown-bg);
   border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-md);
@@ -544,7 +614,7 @@ export default {
     right: 0;
     width: 280px;
     height: 100vh;
-    background-color: var(--color-white);
+    background-color: var(--mobile-nav-bg);
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
     padding: 80px 20px 20px;
     transform: translateX(100%);

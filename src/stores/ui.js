@@ -50,8 +50,8 @@ export const useUIStore = defineStore('ui', {
     // Navigation State
     isMobileMenuOpen: false,
 
-    // Theme Preferences (future feature)
-    theme: 'light', // 'light', 'dark', 'auto'
+    // Theme Preferences
+    theme: 'auto', // 'light', 'dark', 'auto'
 
     // Layout Preferences
     sidebarCollapsed: false,
@@ -87,6 +87,21 @@ export const useUIStore = defineStore('ui', {
    * Actions
    */
   actions: {
+    /**
+     * Apply current theme to <html> via data-theme attribute
+     * Handles 'auto' by respecting prefers-color-scheme
+     */
+    applyTheme() {
+      if (typeof document === 'undefined') return
+      const root = document.documentElement
+      let effective = this.theme
+      if (effective === 'auto') {
+        const prefersDark =
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        effective = prefersDark ? 'dark' : 'light'
+      }
+      root.setAttribute('data-theme', effective)
+    },
     /**
      * Show a notification
      * @param {Object} options - Notification options
@@ -268,6 +283,7 @@ export const useUIStore = defineStore('ui', {
         this.theme = theme
         // Save to localStorage for persistence
         localStorage.setItem('mwplu-theme', theme)
+        this.applyTheme()
       }
     },
 
@@ -278,6 +294,20 @@ export const useUIStore = defineStore('ui', {
       const savedTheme = localStorage.getItem('mwplu-theme')
       if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
         this.theme = savedTheme
+      }
+      this.applyTheme()
+      // Update on system change if in 'auto'
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        const media = window.matchMedia('(prefers-color-scheme: dark)')
+        const handler = () => {
+          if (this.theme === 'auto') this.applyTheme()
+        }
+        try {
+          media.addEventListener('change', handler)
+        } catch (_) {
+          // Safari < 14
+          media.addListener(handler)
+        }
       }
     },
 

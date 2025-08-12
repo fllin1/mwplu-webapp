@@ -6,6 +6,7 @@ import router from './router'
 import { errorHandlerPlugin } from './services/errorHandler'
 import { useAuthStore } from '@/stores/auth'
 import { useAnalytics } from '@/composables/useAnalytics'
+import { useUIStore } from '@/stores/ui'
 import './services/firebase' // Initialize Firebase Analytics
 
 // Import global styles
@@ -34,6 +35,7 @@ app.use(errorHandlerPlugin)
 const initializeApp = async () => {
   const authStore = useAuthStore()
   const { initialize: initializeAnalytics } = useAnalytics()
+  const uiStore = useUIStore()
 
   // Setup auth state change listener
   authStore.setupAuthListener()
@@ -43,6 +45,9 @@ const initializeApp = async () => {
 
   // Initialize analytics
   initializeAnalytics()
+
+  // Initialize and apply theme
+  uiStore.initializeTheme()
 
   // Mount app after auth initialization
   app.mount('#app')

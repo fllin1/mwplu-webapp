@@ -25,6 +25,7 @@
   --color-gray-600: #4B5563;
   --color-gray-700: #374151;
   --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
 
   /* Typography */
   --font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -99,4 +100,70 @@
 
   /* Status colors based on project context */
   --danger-bg: #FEF2F2;
+
+  /* Header and overlay surfaces */
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --header-bg-scrolled: rgba(255, 255, 255, 0.87);
+  --header-border: rgba(0, 0, 0, 0.1);
+  --mobile-nav-bg: var(--color-white);
+  --dropdown-bg: var(--color-white);
+
+  /* Footer surfaces */
+  --footer-bg: var(--color-gray-50);
+  --footer-text: var(--color-black);
+  --footer-muted: var(--color-gray-600);
+  --footer-border: var(--color-gray-200);
+}
+
+/*
+  Dark theme overrides
+  Applied when `document.documentElement` has `data-theme="dark"`.
+  We intentionally remap semantic base variables to ensure components
+  using `--color-black` (for text/primary surfaces) and `--color-white`
+  (for backgrounds) invert appropriately in dark mode without rewrites.
+*/
+[data-theme="dark"] {
+  /* Invert core surfaces */
+  --color-black: #e5e7eb;
+  /* text becomes light */
+  --color-white: #0b0f13;
+  /* backgrounds become dark */
+
+  /* Neutrals adjusted for dark UI */
+  --color-gray-50: #111827;
+  --color-gray-100: #1f2937;
+  --color-gray-200: #374151;
+  --color-gray-300: #4b5563;
+  --color-gray-400: #6b7280;
+  --color-gray-500: #9ca3af;
+  --color-gray-600: #d1d5db;
+  --color-gray-700: #e5e7eb;
+  --color-gray-800: #f3f4f6;
+  --color-gray-900: #f9fafb;
+
+  /* Borders and accents */
+  --accent-gray: #2a2f36;
+  --border-gray: #2f3a46;
+
+  /* Status backgrounds tuned for dark surfaces */
+  --color-success-bg: #064e3b;
+  --color-error-bg: #7f1d1d;
+  --color-error-border: #991b1b;
+  --color-info-bg: #1e3a8a;
+
+  /* Header and overlay surfaces */
+  --header-bg: rgba(10, 14, 18, 0.85);
+  --header-bg-scrolled: rgba(10, 14, 18, 0.92);
+  --header-border: rgba(255, 255, 255, 0.08);
+  --mobile-nav-bg: #0b0f13;
+  --dropdown-bg: #0f141a;
+
+  /* Footer */
+  --footer-bg: #0b0f13;
+  --footer-text: #e5e7eb;
+  --footer-muted: #cbd5e1;
+  --footer-border: #1f2937;
+
+  /* Prefer dark native UI (scrollbars, form controls) */
+  color-scheme: dark;
 }
