@@ -105,10 +105,17 @@
               <div class="download-item card">
                 <div class="download-info">
                   <h4 class="download-title">Document de Synthèse</h4>
+                  <p class="download-remaining">Téléchargements restants: {{ userDownloadInfo.remaining }} / {{
+                    userDownloadInfo.allowed }}</p>
                 </div>
-                <button @click="downloadFile('synthesis', 'pdf')" class="btn btn-primary">
+                <button @click="downloadFile('synthesis', 'pdf')" class="btn btn-primary"
+                  :disabled="!authStore.isAuthenticated || userDownloadInfo.remaining === 0">
                   Télécharger PDF
                 </button>
+                <p v-if="!authStore.isAuthenticated" class="download-hint">Connectez-vous pour télécharger des
+                  documents.</p>
+                <p v-else-if="userDownloadInfo.remaining === 0" class="download-hint">Vous avez atteint votre limite de
+                  téléchargements.</p>
               </div>
             </div>
           </section>
@@ -131,7 +138,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { usePluStore } from '@/stores/plu'
-import { dbService, supabase } from '@/services/supabase'
+import { dbService } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
@@ -161,6 +168,7 @@ export default {
     const pluData = ref(null)
     const activeTab = ref('synthesis') // Default active tab
     const documentStats = ref(null)
+    const userDownloadInfo = ref({ used: 0, remaining: 5, allowed: 5 })
 
     // Back to top functionality
     const showBackToTop = ref(false)
@@ -238,6 +246,17 @@ export default {
       }
     }
 
+    const loadUserDownloadInfo = async () => {
+      try {
+        const res = await dbService.getUserDownloadCount()
+        if (res.success) {
+          userDownloadInfo.value = { used: res.used, remaining: res.remaining, allowed: res.allowed }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     /**
      * Handles rating update events from the comments tab
      */
@@ -284,6 +303,10 @@ export default {
           pluData.value = result.data
           // Load document statistics
           await loadDocumentStats()
+          // If the document's zone matches exactly the selected zone, clear smart-match reminder
+          if (pluStore.selectedZone?.name && !pluStore.lastSmartMatch?.externalZoneLabel) {
+            pluStore.clearSmartMatch()
+          }
         } else {
           errorMessage.value = `Erreur: ${result.error || 'Document non trouvé'}`
         }
@@ -312,27 +335,17 @@ export default {
         }
 
         // Clean the storage path (remove leading slash if present)
-        const cleanPath = pluData.value.pdf_storage_path.replace(/^\//, '');
+        // const cleanPath = pluData.value.pdf_storage_path.replace(/^\//, '');
 
-        // Create signed download URL from Supabase storage
-        const { data: urlData, error: urlError } = await supabase.storage
-          .from('pdfs')
-          .createSignedUrl(cleanPath, 60, { download: true });
-
-        if (urlError) {
-          console.error('Storage URL error:', urlError);
-          throw urlError;
-        }
-
-        if (!urlData || !urlData.signedUrl) {
-          throw new Error('URL de téléchargement non générée');
-        }
-
-        // Track the download in database
-        if (authStore.isAuthenticated) {
-          await dbService.trackDownload(pluData.value.id, 'pdf');
-          // Refresh stats to update download count
-          await loadDocumentStats();
+        // Request a limited, signed URL via Edge Function (enforces 5 free downloads)
+        const limited = await dbService.requestLimitedDownload(pluData.value.id)
+        if (!limited.success) {
+          if (limited.code === 'download_limit_reached') {
+            uiStore.showWarning('Limite de téléchargements atteinte.', `Vous avez utilisé vos téléchargements (${userDownloadInfo.value.used}/${userDownloadInfo.value.allowed}).`);
+            return
+          }
+          uiStore.showError(limited.error || 'Échec lors de la demande de téléchargement.')
+          return
         }
 
         // Create proper filename based on document data
@@ -342,20 +355,28 @@ export default {
 
         // Force download using a temporary link element
         const link = document.createElement('a');
-        link.href = urlData.signedUrl;
+        link.href = limited.url;
         link.download = fileName;
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        uiStore.showNotification('Téléchargement lancé avec succès !', 'success');
+        uiStore.showSuccess('Téléchargement lancé avec succès !');
+        // refresh user download counter optimistically
+        if (typeof limited.used === 'number' && typeof limited.allowed === 'number') {
+          const used = limited.used
+          const allowed = limited.allowed
+          userDownloadInfo.value = { used, allowed, remaining: Math.max(0, allowed - used) }
+        } else {
+          await loadUserDownloadInfo()
+        }
 
       } catch (error) {
         console.error('Download error:', error);
 
         // Provide user-friendly error messages
-        let errorMessage = 'Une erreur inattendue est survenue lors du téléchargement.';
+        let errorMessage = "Une erreur inattendue s'est produite lors du téléchargement.";
 
         if (error.message?.includes('Object not found') || error.message?.includes('not found')) {
           errorMessage = 'Le fichier PDF n\'a pas été trouvé. Veuillez contacter l\'administrateur.';
@@ -367,7 +388,7 @@ export default {
           errorMessage = error.message;
         }
 
-        uiStore.showNotification(`Erreur de téléchargement : ${errorMessage}`, 'error');
+        uiStore.showError(errorMessage);
       }
     };
 
@@ -411,13 +432,13 @@ export default {
     }
 
     // Load data on component mount and when route changes
-    onMounted(() => {
+    onMounted(async () => {
       loadPluData()
+      await loadUserDownloadInfo()
       // Show smart-match reminder if present
       if (pluStore.lastSmartMatch?.usedSmartMatch && pluStore.lastSmartMatch.externalZoneLabel) {
-        uiStore.showNotification(
-          `Note: la zone IGN "${pluStore.lastSmartMatch.externalZoneLabel}" a été associée à la zone "${pluStore.lastSmartMatch.internalZoneName}".`,
-          'info'
+        uiStore.showInfo(
+          `Note: la zone IGN "${pluStore.lastSmartMatch.externalZoneLabel}" a été associée à la zone "${pluStore.lastSmartMatch.internalZoneName}".`
         )
       }
       // Add scroll event listener for back to top button
@@ -437,10 +458,12 @@ export default {
           loadPluData()
           // Re-emit reminder after navigation change if smart-match persisted
           if (pluStore.lastSmartMatch?.usedSmartMatch && pluStore.lastSmartMatch.externalZoneLabel) {
-            uiStore.showNotification(
-              `Note: la zone IGN "${pluStore.lastSmartMatch.externalZoneLabel}" a été associée à la zone "${pluStore.lastSmartMatch.internalZoneName}".`,
-              'info'
+            uiStore.showInfo(
+              `Note: la zone IGN "${pluStore.lastSmartMatch.externalZoneLabel}" a été associée à la zone "${pluStore.lastSmartMatch.internalZoneName}".`
             )
+          } else {
+            // If no smart-match info remains, ensure banner hides
+            pluStore.clearSmartMatch()
           }
         }
       },
@@ -462,12 +485,14 @@ export default {
       // Methods
       loadPluData,
       loadDocumentStats,
+      loadUserDownloadInfo,
       handleRatingUpdated,
       handleCommentAdded,
       downloadFile,
       scrollToTop,
       formatDate,
       formatFileSize,
+      userDownloadInfo,
     }
   },
 }
@@ -1072,6 +1097,7 @@ export default {
 
 .download-info {
   flex-grow: 1;
+  text-align: center;
 }
 
 .download-title {

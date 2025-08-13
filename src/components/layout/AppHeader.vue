@@ -39,11 +39,7 @@
           </li>
         </ul>
 
-        <!-- Theme Switch (Light/Dark) -->
-        <button class="theme-switch" :class="{ 'is-dark': isDark }" :aria-pressed="isDark.toString()"
-          @click="toggleDark" aria-label="Basculer le thème clair/sombre">
-          <span class="switch-knob" />
-        </button>
+
 
         <!-- User Menu / Auth Buttons -->
         <div class="header-actions">
@@ -142,9 +138,6 @@ export default {
       return theme.value
     })
     const isDark = computed(() => effectiveTheme.value === 'dark')
-    const toggleDark = () => {
-      uiStore.setTheme(isDark.value ? 'light' : 'dark')
-    }
     const logoSrc = computed(() => (isDark.value ? logoDark : logoLight))
 
     // Auth state
@@ -262,7 +255,6 @@ export default {
       theme,
       effectiveTheme,
       isDark,
-      toggleDark,
       logoSrc
     }
   }
@@ -377,47 +369,7 @@ export default {
 }
 
 /* Elegant theme switch */
-.theme-switch {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid var(--color-gray-300);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.06)), var(--color-white);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
-  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 3px;
-}
-
-.theme-switch:hover {
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.theme-switch .switch-knob {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--color-white);
-  border: 1px solid var(--color-gray-300);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  left: 3px;
-  transition: left 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
-}
-
-.theme-switch.is-dark {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.2)), var(--color-gray-200);
-  border-color: var(--color-gray-400);
-}
-
-.theme-switch.is-dark .switch-knob {
-  left: 23px;
-  background: var(--color-gray-600);
-  border-color: var(--color-gray-400);
-}
+/* Theme switch moved to Profile settings */
 
 .auth-buttons {
   display: flex;

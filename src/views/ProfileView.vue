@@ -13,6 +13,30 @@
       <div class="profile-content-grid">
         <!-- Profile Forms Section -->
         <section class="profile-forms-section">
+          <!-- Preferences: Theme -->
+          <div class="profile-form card">
+            <h3 class="form-title">Préférences</h3>
+            <div class="pref-row">
+              <div class="pref-item">
+                <div class="pref-label">Thème</div>
+                <div class="pref-control">
+                  <div class="theme-mode">
+                    <button class="mode-btn" :class="{ active: theme === 'light' }"
+                      @click="setTheme('light')">Clair</button>
+                    <button class="mode-btn" :class="{ active: theme === 'dark' }"
+                      @click="setTheme('dark')">Sombre</button>
+                    <button class="mode-btn" :class="{ active: theme === 'auto' }"
+                      @click="setTheme('auto')">Auto</button>
+                  </div>
+                  <button class="theme-switch" :class="{ 'is-dark': isDark }" :aria-pressed="isDark.toString()"
+                    @click="toggleDark" aria-label="Basculer le thème clair/sombre">
+                    <span class="switch-knob" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Personal Information Form -->
           <form @submit.prevent="handleUpdateProfile" class="profile-form card">
             <h3 class="form-title">Informations personnelles</h3>
@@ -146,6 +170,18 @@ export default {
     const router = useRouter()
     const authStore = useAuthStore()
     const uiStore = useUIStore()
+    // Theme control for preferences section
+    const theme = computed(() => uiStore.theme)
+    const effectiveTheme = computed(() => {
+      if (theme.value === 'auto') {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        return prefersDark ? 'dark' : 'light'
+      }
+      return theme.value
+    })
+    const isDark = computed(() => effectiveTheme.value === 'dark')
+    const setTheme = (value) => uiStore.setTheme(value)
+    const toggleDark = () => uiStore.setTheme(isDark.value ? 'light' : 'dark')
 
     const isUpdating = ref(false)
     const isChangingPassword = ref(false)
@@ -286,6 +322,11 @@ export default {
 
     return {
       authStore,
+      theme,
+      effectiveTheme,
+      isDark,
+      setTheme,
+      toggleDark,
       form,
       passwordForm,
       isUpdating,
@@ -362,6 +403,97 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+}
+
+.pref-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pref-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.pref-label {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+}
+
+.pref-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.theme-mode {
+  display: inline-flex;
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-300);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-black);
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.mode-btn.active {
+  background: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Elegant theme switch (duplicate of header style, kept local for cohesion) */
+.theme-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--color-gray-300);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.06)), var(--color-white);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 3px;
+}
+
+.theme-switch:hover {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.theme-switch .switch-knob {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  left: 3px;
+  transition: left 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.theme-switch.is-dark {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.2)), var(--color-gray-200);
+  border-color: var(--color-gray-400);
+}
+
+.theme-switch.is-dark .switch-knob {
+  left: 23px;
+  background: var(--color-gray-600);
+  border-color: var(--color-gray-400);
 }
 
 .form-title {

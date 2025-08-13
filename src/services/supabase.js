@@ -439,6 +439,91 @@ export const dbService = {
     }
   },
 
+  /**
+   * Request a signed download URL through Edge Function that enforces the 5 free downloads limit.
+   * Also records the download server-side when allowed.
+   * @param {string} documentId
+   * @returns {Promise<{success: true, url: string} | {success:false, error:string, code?:string}>}
+   */
+  async requestLimitedDownload(documentId) {
+    try {
+      if (!documentId) throw new Error('Document ID is required')
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        return {
+          success: false,
+          error: 'Vous devez être connecté pour télécharger.',
+          code: 'not_authenticated',
+        }
+      }
+
+      const { data, error } = await supabase.functions.invoke('download_with_limit', {
+        body: { documentId },
+      })
+
+      if (error) {
+        const normalized = String(error.message || '')
+        const serverErrorCode = data && typeof data === 'object' ? data.error : undefined
+        const isLimit = serverErrorCode === 'download_limit_reached' || error.status === 403
+        return {
+          success: false,
+          error: isLimit
+            ? 'Limite de téléchargements atteinte.'
+            : normalized || 'Erreur lors de la génération du lien de téléchargement.',
+          code: isLimit ? 'download_limit_reached' : undefined,
+        }
+      }
+
+      if (!data?.signedUrl) {
+        return { success: false, error: 'URL de téléchargement non générée.' }
+      }
+
+      return { success: true, url: data.signedUrl, used: data.used, allowed: data.allowed }
+    } catch (err) {
+      console.error('Error requesting limited download:', err)
+      return { success: false, error: err.message || 'Erreur inconnue.' }
+    }
+  },
+
+  /**
+   * Get the authenticated user's total download count
+   * @returns {Promise<{success:true, used:number, remaining:number} | {success:false, error:string}>}
+   */
+  async getUserDownloadCount() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        return { success: true, used: 0, remaining: 5, allowed: 5 }
+      }
+
+      const { count, error } = await supabase
+        .from('downloads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // fetch adaptive allowed value
+      const { data: allowedData, error: allowedErr } = await supabase.rpc('get_allowed_downloads', {
+        p_user_id: user.id,
+      })
+      if (allowedErr) throw allowedErr
+
+      const allowed = Number(allowedData ?? 5)
+      const used = count || 0
+      const remaining = Math.max(0, allowed - used)
+      return { success: true, used, remaining, allowed }
+    } catch (error) {
+      console.error('Error fetching user download count:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
   // Research history logging
   async logResearchHistory(entry) {
     try {

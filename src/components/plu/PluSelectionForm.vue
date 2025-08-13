@@ -229,6 +229,11 @@ const handleFindZone = async () => {
         externalZoneLabel: externalZoneLabel.value || result.zone?.libelle || '',
         internalZoneName: result.match.zoneName,
       })
+    } else {
+      // Clear any previous smart-match reminder if not used this time
+      if (pluStore.lastSmartMatch?.usedSmartMatch) {
+        pluStore.clearSmartMatch()
+      }
     }
     trackEvent('zone_resolved', {
       city_id: cityId,
