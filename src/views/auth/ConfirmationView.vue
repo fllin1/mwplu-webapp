@@ -8,11 +8,7 @@
 
         <div class="confirmation-card">
           <div class="confirmation-icon">
-            <img
-              src="@/assets/icons/elements/confirmation.svg"
-              alt="Confirmation icon"
-              class="confirmation-icon"
-            />
+            <img src="@/assets/icons/elements/confirmation.svg" alt="Confirmation icon" class="confirmation-icon" />
           </div>
 
           <div class="confirmation-content">
@@ -31,17 +27,13 @@
             </div>
 
             <div class="confirmation-actions">
-              <button
-                @click="resendConfirmation"
-                :disabled="isResending || !canResend"
-                class="btn btn-primary"
-              >
+              <button @click="resendConfirmation" :disabled="isResending || !canResend" class="btn btn-primary">
                 <BaseSpinner v-if="isResending" size="small" color="white" />
                 {{ isResending ? 'Envoi...' : 'Renvoyer l\'email' }}
               </button>
 
-              <router-link to="/login" class="btn btn-secondary">
-                Retour à la connexion
+              <router-link to="/signup" class="btn btn-secondary">
+                Retour à la création de compte
               </router-link>
             </div>
 
@@ -298,7 +290,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  width: 100%; /* Full width buttons */
+  width: 100%;
+  /* Full width buttons */
 }
 
 .btn-primary {

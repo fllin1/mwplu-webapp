@@ -14,7 +14,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/services/supabase'
+import { supabase, dbService } from '@/services/supabase'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -72,6 +72,11 @@ export const useAuthStore = defineStore('auth', () => {
       if (session) {
         setSession(session)
         setUser(session.user)
+        try {
+          await dbService.ensureUserProfile(session.user)
+        } catch (e) {
+          console.warn('ensureUserProfile on init failed:', e)
+        }
       }
 
       isInitialized.value = true
@@ -113,7 +118,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Signup function - with identities array checking for already existing user
-  const signup = async (email, password, name, captchaToken) => {
+  const signup = async (email, password, name, captchaToken, phone) => {
     try {
       setLoading(true)
       clearError()
@@ -125,6 +130,7 @@ export const useAuthStore = defineStore('auth', () => {
           data: {
             name: name,
             full_name: name,
+            ...(phone ? { phone } : {}),
           },
           captchaToken: captchaToken,
         },
@@ -395,6 +401,10 @@ export const useAuthStore = defineStore('auth', () => {
             setSession(session)
             setUser(session.user)
             clearError()
+            // Ensure a public.profiles row exists for this user
+            dbService
+              .ensureUserProfile(session.user)
+              .catch((e) => console.warn('ensureUserProfile on sign-in failed:', e))
           }
           break
         case 'SIGNED_OUT':
@@ -406,11 +416,17 @@ export const useAuthStore = defineStore('auth', () => {
           if (session) {
             setSession(session)
             setUser(session.user)
+            dbService
+              .ensureUserProfile(session.user)
+              .catch((e) => console.warn('ensureUserProfile on token refresh failed:', e))
           }
           break
         case 'USER_UPDATED':
           if (session) {
             setUser(session.user)
+            dbService
+              .ensureUserProfile(session.user)
+              .catch((e) => console.warn('ensureUserProfile on user update failed:', e))
           }
           break
       }

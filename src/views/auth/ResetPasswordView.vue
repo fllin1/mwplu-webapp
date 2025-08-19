@@ -15,42 +15,69 @@
 
         <!-- Reset Form -->
         <div class="auth-form-section">
-          <form @submit.prevent="handleResetPassword" class="reset-password-form">
+          <!-- Recovery mode: set new password -->
+          <form v-if="isRecovery" @submit.prevent="handleSetNewPassword" class="reset-password-form">
+            <div class="form-group">
+              <label for="new-password" class="form-label">Nouveau mot de passe</label>
+              <input id="new-password" v-model="newPasswordForm.newPassword" type="password" required class="form-input"
+                :class="{ 'input-error': errors.newPassword }" placeholder="Votre nouveau mot de passe"
+                :disabled="isSubmitting" @input="onNewPasswordInput" @blur="validateNewPassword" />
+              <div class="password-requirements-condensed">
+                <ul class="requirements-list">
+                  <li :class="{ 'met': newPasswordChecks.length }">8+ caractères</li>
+                  <li :class="{ 'met': newPasswordChecks.uppercase }">1 majuscule</li>
+                  <li :class="{ 'met': newPasswordChecks.lowercase }">1 minuscule</li>
+                  <li :class="{ 'met': newPasswordChecks.number }">1 chiffre</li>
+                </ul>
+              </div>
+              <span v-if="errors.newPassword" class="field-error">{{ errors.newPassword }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password" class="form-label">Confirmer le mot de passe</label>
+              <input id="confirm-password" v-model="newPasswordForm.confirmPassword" type="password" required
+                class="form-input" :class="{ 'input-error': errors.confirmPassword }"
+                placeholder="Confirmez le mot de passe" :disabled="isSubmitting"
+                @input="clearFieldError('confirmPassword')" @blur="validateConfirmNewPassword" />
+              <span v-if="errors.confirmPassword" class="field-error">{{ errors.confirmPassword }}</span>
+            </div>
+
+            <button type="submit" :disabled="!canSubmitNewPassword || isSubmitting"
+              class="btn btn-primary btn-full-width">
+              <BaseSpinner v-if="isSubmitting" size="small" color="white" />
+              {{ isSubmitting ? 'Mise à jour...' : 'Mettre à jour le mot de passe' }}
+            </button>
+          </form>
+
+          <!-- Request reset link mode -->
+          <form v-else @submit.prevent="handleResetPassword" class="reset-password-form">
             <!-- Email Field -->
             <div class="form-group">
               <label for="email" class="form-label">Adresse email</label>
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                required
-                class="form-input"
-                placeholder="votre@email.com"
-                :disabled="isSubmitting"
-              />
+              <input id="email" v-model="form.email" type="email" required class="form-input"
+                placeholder="votre@email.com" :disabled="isSubmitting" />
             </div>
 
             <!-- Submit Button -->
-            <button
-              type="submit"
-              :disabled="!form.email || isSubmitting"
-              class="btn btn-primary btn-full-width"
-            >
+            <button type="submit" :disabled="!form.email || isSubmitting" class="btn btn-primary btn-full-width">
               <BaseSpinner v-if="isSubmitting" size="small" color="white" />
               {{ isSubmitting ? 'Envoi en cours...' : 'Envoyer le lien' }}
             </button>
           </form>
 
           <!-- Success Message -->
-          <div v-if="emailSent" class="alert alert-success">
+          <div v-if="emailSent && !isRecovery" class="alert alert-success">
             <div class="alert-icon">
               <svg viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd" />
               </svg>
             </div>
             <div>
               <h3 class="alert-title">Email envoyé</h3>
-              <p class="alert-message-text">Un lien de réinitialisation a été envoyé à <strong>{{ form.email }}</strong></p>
+              <p class="alert-message-text">Un lien de réinitialisation a été envoyé à <strong>{{ form.email }}</strong>
+              </p>
               <p class="alert-help-text">Vérifiez votre boîte email et vos spams</p>
             </div>
           </div>
@@ -72,7 +99,7 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -92,9 +119,82 @@ export default {
 
     const isSubmitting = ref(false)
     const emailSent = ref(false)
+    const isRecovery = ref(false)
 
     const form = reactive({
       email: ''
+    })
+
+    const newPasswordForm = reactive({
+      newPassword: '',
+      confirmPassword: ''
+    })
+
+    const errors = reactive({})
+
+    const newPasswordChecks = computed(() => {
+      const pwd = newPasswordForm.newPassword || ''
+      return {
+        length: pwd.length >= 8,
+        uppercase: /[A-Z]/.test(pwd),
+        lowercase: /[a-z]/.test(pwd),
+        number: /\d/.test(pwd),
+      }
+    })
+
+    const validateNewPassword = () => {
+      const pwd = newPasswordForm.newPassword
+      if (!pwd) {
+        errors.newPassword = 'Le mot de passe est requis'
+        return false
+      }
+      const checks = newPasswordChecks.value
+      if (!checks.length) {
+        errors.newPassword = 'Le mot de passe doit contenir au moins 8 caractères'
+        return false
+      }
+      if (!checks.uppercase) {
+        errors.newPassword = 'Le mot de passe doit contenir au moins une majuscule'
+        return false
+      }
+      if (!checks.lowercase) {
+        errors.newPassword = 'Le mot de passe doit contenir au moins une minuscule'
+        return false
+      }
+      if (!checks.number) {
+        errors.newPassword = 'Le mot de passe doit contenir au moins un chiffre'
+        return false
+      }
+      delete errors.newPassword
+      return true
+    }
+
+    const validateConfirmNewPassword = () => {
+      if (!newPasswordForm.confirmPassword) {
+        errors.confirmPassword = 'Veuillez confirmer votre mot de passe'
+        return false
+      }
+      if (newPasswordForm.newPassword !== newPasswordForm.confirmPassword) {
+        errors.confirmPassword = 'Les mots de passe ne correspondent pas'
+        return false
+      }
+      delete errors.confirmPassword
+      return true
+    }
+
+    const onNewPasswordInput = () => {
+      clearFieldError('newPassword')
+      if (newPasswordForm.confirmPassword) {
+        validateConfirmNewPassword()
+      }
+    }
+
+    const clearFieldError = (field) => {
+      delete errors[field]
+    }
+
+    const canSubmitNewPassword = computed(() => {
+      return validateNewPassword() && validateConfirmNewPassword() && !isSubmitting.value
     })
 
     const handleResetPassword = async () => {
@@ -117,11 +217,61 @@ export default {
       }
     }
 
+    const detectRecovery = () => {
+      // Supabase redirects with hash parameters: #access_token=...&type=recovery
+      const hash = window.location.hash || ''
+      const params = new URLSearchParams(hash.replace(/^#/, ''))
+      const type = params.get('type')
+      isRecovery.value = type === 'recovery'
+    }
+
+    const handleSetNewPassword = async () => {
+      if (!validateNewPassword() || !validateConfirmNewPassword()) return
+      isSubmitting.value = true
+      try {
+        const { error } = await authStore.updatePassword(newPasswordForm.newPassword)
+        if (error) throw error
+        uiStore.showNotification('Votre mot de passe a été mis à jour.', 'success')
+        // Clear form
+        newPasswordForm.newPassword = ''
+        newPasswordForm.confirmPassword = ''
+      } catch (error) {
+        console.error('Set new password error:', error)
+        const message = (error && error.message) || (error && error.description) || ''
+        // Surface common server message patterns (e.g., same password)
+        const normalized = String(message)
+        const friendly = normalized.includes('same as the previous') || normalized.includes('previously used')
+          ? 'Le nouveau mot de passe ne peut pas être identique à l\'ancien.'
+          : (message || 'Une erreur inattendue est survenue.')
+        // Also map basic length rule if backend returns it
+        if (!errors.newPassword && normalized.includes('at least 6')) {
+          errors.newPassword = 'Le mot de passe doit contenir au moins 8 caractères'
+        }
+        uiStore.showNotification(`Erreur lors de la mise à jour : ${friendly}`, 'error')
+      } finally {
+        isSubmitting.value = false
+      }
+    }
+
+    onMounted(() => {
+      detectRecovery()
+    })
+
     return {
       form,
       isSubmitting,
       emailSent,
-      handleResetPassword
+      isRecovery,
+      newPasswordForm,
+      errors,
+      newPasswordChecks,
+      validateNewPassword,
+      validateConfirmNewPassword,
+      clearFieldError,
+      onNewPasswordInput,
+      canSubmitNewPassword,
+      handleResetPassword,
+      handleSetNewPassword
     }
   }
 }
@@ -226,6 +376,53 @@ export default {
   background-color: var(--color-gray-100);
   color: var(--color-gray-500);
   cursor: not-allowed;
+}
+
+/* Inline error styles for recovery form */
+.input-error {
+  border-color: var(--color-red-500);
+}
+
+.field-error {
+  color: var(--color-red-600);
+  font-size: var(--font-size-sm);
+}
+
+.password-requirements-condensed {
+  margin-top: var(--space-2);
+}
+
+.password-requirements-condensed .requirements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-600);
+}
+
+.password-requirements-condensed .requirements-list li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.password-requirements-condensed .requirements-list li::before {
+  content: '✗';
+  position: absolute;
+  left: 0;
+  color: var(--color-red-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.password-requirements-condensed .requirements-list li.met {
+  color: var(--color-green-600);
+}
+
+.password-requirements-condensed .requirements-list li.met::before {
+  content: '✓';
+  color: var(--color-green-600);
 }
 
 /* Alerts */

@@ -43,17 +43,17 @@
             </a>
             <a href="https://facebook.com/mwplu" class="social-link" aria-label="Facebook">
               <span class="social-icon">
-                <img src="/src/assets/icons/socials/facebook.svg" alt="Facebook Logo" />
+                <img :src="facebookIcon" alt="Facebook Logo" />
               </span>
             </a>
             <a href="https://linkedin.com/company/mwplu" class="social-link" aria-label="LinkedIn">
               <span class="social-icon">
-                <img src="/src/assets/icons/socials/linkedin.svg" alt="LinkedIn Logo" />
+                <img :src="linkedinIcon" alt="LinkedIn Logo" />
               </span>
             </a>
             <a href="https://youtube.com/@mwplu" class="social-link" aria-label="Youtube">
               <span class="social-icon">
-                <img src="/src/assets/icons/socials/youtube.svg" alt="Youtube Logo" />
+                <img :src="youtubeIcon" alt="Youtube Logo" />
               </span>
             </a>
           </div>
@@ -97,6 +97,11 @@
  */
 import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import twitterLight from '@/assets/icons/socials/twitter-x.svg'
+import twitterDark from '@/assets/icons/socials/twitter-x_dark_mode.svg'
+import facebookIcon from '@/assets/icons/socials/facebook.svg'
+import linkedinIcon from '@/assets/icons/socials/linkedin.svg'
+import youtubeIcon from '@/assets/icons/socials/youtube.svg'
 
 export default {
   name: 'AppFooter',
@@ -111,10 +116,10 @@ export default {
         effective = prefersDark ? 'dark' : 'light'
       }
       return effective === 'dark'
-        ? '/src/assets/icons/socials/twitter-x_dark_mode.svg'
-        : '/src/assets/icons/socials/twitter-x.svg'
+        ? twitterDark
+        : twitterLight
     })
-    return { twitterSrc }
+    return { twitterSrc, facebookIcon, linkedinIcon, youtubeIcon }
   }
 }
 </script>

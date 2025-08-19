@@ -28,10 +28,6 @@
                     <button class="mode-btn" :class="{ active: theme === 'auto' }"
                       @click="setTheme('auto')">Auto</button>
                   </div>
-                  <button class="theme-switch" :class="{ 'is-dark': isDark }" :aria-pressed="isDark.toString()"
-                    @click="toggleDark" aria-label="Basculer le thème clair/sombre">
-                    <span class="switch-knob" />
-                  </button>
                 </div>
               </div>
             </div>
@@ -54,6 +50,12 @@
             </div>
 
             <div class="form-group">
+              <label for="phone" class="form-label">Téléphone</label>
+              <input id="phone" v-model="form.phone" type="tel" class="form-input" :disabled="isUpdating"
+                placeholder="+33 1 23 45 67 89" />
+            </div>
+
+            <div class="form-group">
               <label for="email" class="form-label">Adresse email</label>
               <input id="email" v-model="form.email" type="email" class="form-input" disabled />
               <small class="form-help">L'email ne peut pas être modifié</small>
@@ -65,33 +67,7 @@
             </button>
           </form>
 
-          <!-- Password Change Form -->
-          <form @submit.prevent="handleChangePassword" class="profile-form card">
-            <h3 class="form-title">Changer le mot de passe</h3>
 
-            <div class="form-group">
-              <label for="current-password" class="form-label">Mot de passe actuel</label>
-              <input id="current-password" v-model="passwordForm.currentPassword" type="password" class="form-input"
-                :disabled="isChangingPassword" />
-            </div>
-
-            <div class="form-group">
-              <label for="new-password" class="form-label">Nouveau mot de passe</label>
-              <input id="new-password" v-model="passwordForm.newPassword" type="password" class="form-input"
-                :disabled="isChangingPassword" />
-            </div>
-
-            <div class="form-group">
-              <label for="confirm-password" class="form-label">Confirmer le mot de passe</label>
-              <input id="confirm-password" v-model="passwordForm.confirmPassword" type="password" class="form-input"
-                :disabled="isChangingPassword" />
-            </div>
-
-            <button type="submit" :disabled="!canChangePassword" class="btn btn-primary">
-              <BaseSpinner v-if="isChangingPassword" size="small" color="white" />
-              {{ isChangingPassword ? 'Modification...' : 'Changer le mot de passe' }}
-            </button>
-          </form>
         </section>
 
         <!-- Account Info & Actions Section -->
@@ -181,35 +157,24 @@ export default {
     })
     const isDark = computed(() => effectiveTheme.value === 'dark')
     const setTheme = (value) => uiStore.setTheme(value)
-    const toggleDark = () => uiStore.setTheme(isDark.value ? 'light' : 'dark')
 
     const isUpdating = ref(false)
-    const isChangingPassword = ref(false)
     const showDeleteConfirm = ref(false)
 
     const form = reactive({
       name: authStore.user?.user_metadata?.name || '',
       email: authStore.user?.email || '',
+      phone: authStore.user?.user_metadata?.phone || '',
       pseudo: ''
     })
 
-    const passwordForm = reactive({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    })
+
 
     const breadcrumbItems = [
       { label: 'Profil', to: '/profile' }
     ]
 
-    const canChangePassword = computed(() => {
-      return passwordForm.currentPassword &&
-        passwordForm.newPassword &&
-        passwordForm.confirmPassword &&
-        passwordForm.newPassword === passwordForm.confirmPassword &&
-        !isChangingPassword.value
-    })
+
 
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A'
@@ -227,6 +192,8 @@ export default {
         const res = await dbService.getUserProfile(userId)
         if (res.success && res.data) {
           form.pseudo = res.data.pseudo || ''
+          if (res.data.full_name) form.name = res.data.full_name
+          if (res.data.phone) form.phone = res.data.phone
         }
       } catch (e) {
         console.warn('Unable to load profile:', e)
@@ -241,13 +208,13 @@ export default {
       isUpdating.value = true
       try {
         // 1) Update Supabase Auth user metadata (name)
-        const authUpdate = await authStore.updateProfile({ name: form.name, full_name: form.name })
+        const authUpdate = await authStore.updateProfile({ name: form.name, full_name: form.name, phone: form.phone })
         if (authUpdate?.error) throw authUpdate.error
 
         // 2) Upsert pseudo into public.profiles
         const userId = authStore.user?.id
         if (userId) {
-          const dbUpdate = await dbService.updateUserProfile(userId, { pseudo: form.pseudo })
+          const dbUpdate = await dbService.updateUserProfile(userId, { pseudo: form.pseudo, full_name: form.name, phone: form.phone })
           if (!dbUpdate.success) throw new Error(dbUpdate.error)
         }
 
@@ -260,29 +227,7 @@ export default {
       }
     }
 
-    /**
-     * Handle password change
-     */
-    const handleChangePassword = async () => {
-      if (isChangingPassword.value || !canChangePassword.value) return
-      isChangingPassword.value = true
-      try {
-        const { error } = await authStore.changePassword(passwordForm.newPassword)
-        if (error) {
-          throw error
-        }
-        uiStore.showNotification('Votre mot de passe a été mis à jour.', 'success')
-        // Clear form
-        passwordForm.currentPassword = ''
-        passwordForm.newPassword = ''
-        passwordForm.confirmPassword = ''
-      } catch (error) {
-        console.error('Error changing password:', error)
-        uiStore.showNotification(`Erreur lors du changement de mot de passe : ${error.message || error.description || 'Une erreur inattendue est survenue.'}`, 'error')
-      } finally {
-        isChangingPassword.value = false
-      }
-    }
+
 
     /**
      * Handle user logout
@@ -326,17 +271,12 @@ export default {
       effectiveTheme,
       isDark,
       setTheme,
-      toggleDark,
       form,
-      passwordForm,
       isUpdating,
-      isChangingPassword,
       showDeleteConfirm,
       breadcrumbItems,
-      canChangePassword,
       formatDate,
       handleUpdateProfile,
-      handleChangePassword,
       handleLogout,
       handleDeleteAccount,
     }
@@ -453,48 +393,7 @@ export default {
   box-shadow: var(--shadow-sm);
 }
 
-/* Elegant theme switch (duplicate of header style, kept local for cohesion) */
-.theme-switch {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid var(--color-gray-300);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.06)), var(--color-white);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
-  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 3px;
-}
-
-.theme-switch:hover {
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.theme-switch .switch-knob {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--color-white);
-  border: 1px solid var(--color-gray-300);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  left: 3px;
-  transition: left 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
-}
-
-.theme-switch.is-dark {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.2)), var(--color-gray-200);
-  border-color: var(--color-gray-400);
-}
-
-.theme-switch.is-dark .switch-knob {
-  left: 23px;
-  background: var(--color-gray-600);
-  border-color: var(--color-gray-400);
-}
+/* Theme switch styles removed per request */
 
 .form-title {
   font-size: var(--font-size-xl);

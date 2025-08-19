@@ -94,6 +94,15 @@ const routes = [
     },
   },
   {
+    path: '/auth/confirmation',
+    name: 'auth-confirmation-redirect',
+    component: () => import('@/views/auth/EmailConfirmRedirect.vue'),
+    meta: {
+      title: 'Redirection de confirmation - MWPLU',
+      requiresAuth: false,
+    },
+  },
+  {
     path: '/reset-password',
     name: 'reset-password',
     component: ResetPasswordView,

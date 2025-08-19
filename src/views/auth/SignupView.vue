@@ -19,18 +19,9 @@
                 Nom complet
                 <span class="required">*</span>
               </label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                class="form-input"
-                :class="{ 'error': errors.name }"
-                placeholder="Prénom Nom"
-                required
-                autocomplete="name"
-                @blur="validateName"
-                @input="clearFieldError('name')"
-              />
+              <input id="name" v-model="form.name" type="text" class="form-input" :class="{ 'error': errors.name }"
+                placeholder="Prénom Nom" required autocomplete="name" @blur="validateName"
+                @input="clearFieldError('name')" />
               <span v-if="errors.name" class="error-message">
                 {{ errors.name }}
               </span>
@@ -42,18 +33,9 @@
                 Adresse e-mail
                 <span class="required">*</span>
               </label>
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                class="form-input"
-                :class="{ 'error': errors.email }"
-                placeholder="votre@email.com"
-                required
-                autocomplete="email"
-                @blur="validateEmail"
-                @input="clearFieldError('email')"
-              />
+              <input id="email" v-model="form.email" type="email" class="form-input" :class="{ 'error': errors.email }"
+                placeholder="votre@email.com" required autocomplete="email" @blur="validateEmail"
+                @input="clearFieldError('email')" />
               <span v-if="errors.email" class="error-message">
                 {{ errors.email }}
               </span>
@@ -65,17 +47,9 @@
                 Numéro de téléphone
                 <span class="optional">(optionnel)</span>
               </label>
-              <input
-                id="phone"
-                v-model="form.phone"
-                type="tel"
-                class="form-input"
-                :class="{ 'error': errors.phone }"
-                placeholder="+33 1 23 45 67 89"
-                autocomplete="tel"
-                @blur="validatePhone"
-                @input="clearFieldError('phone')"
-              />
+              <input id="phone" v-model="form.phone" type="tel" class="form-input" :class="{ 'error': errors.phone }"
+                placeholder="+33 1 23 45 67 89" autocomplete="tel" @blur="validatePhone"
+                @input="clearFieldError('phone')" />
               <span v-if="errors.phone" class="error-message">
                 {{ errors.phone }}
               </span>
@@ -89,24 +63,12 @@
                 <span class="required">*</span>
               </label>
               <div class="password-input-container">
-                <input
-                  id="password"
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  class="form-input password-input"
-                  :class="{ 'error': errors.password }"
-                  placeholder="Créez un mot de passe sécurisé"
-                  required
-                  autocomplete="new-password"
-                  @blur="validatePassword"
-                  @input="onPasswordInput"
-                />
-                <button
-                  type="button"
-                  @click="togglePasswordVisibility"
-                  class="password-toggle"
-                  :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-                >
+                <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'"
+                  class="form-input password-input" :class="{ 'error': errors.password }"
+                  placeholder="Créez un mot de passe sécurisé" required autocomplete="new-password"
+                  @blur="validatePassword" @input="onPasswordInput" />
+                <button type="button" @click="togglePasswordVisibility" class="password-toggle"
+                  :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
                   {{ showPassword ? '👁️' : '👁️‍🗨️' }}
                 </button>
               </div>
@@ -131,53 +93,35 @@
                 Confirmer le mot de passe
                 <span class="required">*</span>
               </label>
-              <input
-                id="confirmPassword"
-                v-model="form.confirmPassword"
-                type="password"
-                class="form-input"
-                :class="{ 'error': errors.confirmPassword }"
-                placeholder="Répétez votre mot de passe"
-                required
-                autocomplete="new-password"
-                @blur="validateConfirmPassword"
-                @input="clearFieldError('confirmPassword')"
-              />
+              <input id="confirmPassword" v-model="form.confirmPassword" type="password" class="form-input"
+                :class="{ 'error': errors.confirmPassword }" placeholder="Répétez votre mot de passe" required
+                autocomplete="new-password" @blur="validateConfirmPassword"
+                @input="clearFieldError('confirmPassword')" />
               <span v-if="errors.confirmPassword" class="error-message">
                 {{ errors.confirmPassword }}
               </span>
             </div>
 
-                          <!-- Terms and Privacy -->
-              <div class="form-group">
-                <label class="checkbox-container">
-                  <input
-                    v-model="form.acceptTerms"
-                    type="checkbox"
-                    class="checkbox"
-                    :disabled="!hasViewedTerms"
-                    required
-                    @change="clearFieldError('acceptTerms')"
-                  />
-                  <span class="checkmark"></span>
-                  <span class="checkbox-label">
-                    J'accepte les
-                    <button type="button" @click.prevent="showPolicy('terms')" class="link-button">conditions d'utilisation</button>
-                  </span>
-                </label>
-                <span v-if="errors.acceptTerms" class="error-message">
-                  {{ errors.acceptTerms }}
+            <!-- Terms and Privacy -->
+            <div class="form-group">
+              <label class="checkbox-container">
+                <input v-model="form.acceptTerms" type="checkbox" class="checkbox" :disabled="!hasViewedTerms" required
+                  @change="clearFieldError('acceptTerms')" />
+                <span class="checkmark"></span>
+                <span class="checkbox-label">
+                  J'accepte les
+                  <button type="button" @click.prevent="showPolicy('terms')" class="link-button">conditions
+                    d'utilisation</button>
                 </span>
-              </div>
+              </label>
+              <span v-if="errors.acceptTerms" class="error-message">
+                {{ errors.acceptTerms }}
+              </span>
+            </div>
 
             <!-- Turnstile CAPTCHA -->
-            <TurnstileWidget
-              v-if="showCaptcha"
-              :site-key="turnstileSiteKey"
-              @verified="onCaptchaVerified"
-              @error="onCaptchaError"
-              @expired="onCaptchaExpired"
-            />
+            <TurnstileWidget v-if="showCaptcha" :site-key="turnstileSiteKey" @verified="onCaptchaVerified"
+              @error="onCaptchaError" @expired="onCaptchaExpired" />
 
             <!-- Global Error Message -->
             <div v-if="globalError" class="global-error">
@@ -190,11 +134,7 @@
             </div>
 
             <!-- Submit Button -->
-            <button
-              type="submit"
-              class="submit-button"
-              :disabled="!canSubmit"
-            >
+            <button type="submit" class="submit-button" :disabled="!canSubmit">
               <BaseSpinner v-if="isLoading" size="small" color="white" />
               <span v-else>Créer mon compte</span>
             </button>
@@ -205,12 +145,7 @@
             </div>
 
             <!-- Google Sign Up Button -->
-            <button
-              type="button"
-              @click="handleGoogleSignUp"
-              class="social-button google-button"
-              :disabled="isLoading"
-            >
+            <button type="button" @click="handleGoogleSignUp" class="social-button google-button" :disabled="isLoading">
               <img src="@/assets/icons/socials/google.svg" alt="Google" class="social-icon" />
               <span>Continuer avec Google</span>
             </button>
@@ -242,12 +177,7 @@
   </AppLayout>
 
   <!-- Policy Modal -->
-  <PolicyModal
-    :visible="isModalVisible"
-    :title="modalTitle"
-    :content="modalContent"
-    @close="closeModal"
-  />
+  <PolicyModal :visible="isModalVisible" :title="modalTitle" :content="modalContent" @close="closeModal" />
 </template>
 
 <script>
@@ -480,10 +410,18 @@ export default {
     }
 
     const validateTerms = () => {
-      if (!form.acceptTerms) {
-        errors.acceptTerms = 'Vous devez accepter les conditions d\'utilisation'
+      // Step 1: ensure the user has opened/read the terms
+      if (!hasViewedTerms.value) {
+        errors.acceptTerms = 'Veuillez d\'abord lire les conditions d\'utilisation en cliquant sur le lien.'
         return false
       }
+
+      // Step 2: after reading, ensure the user checks the box
+      if (!form.acceptTerms) {
+        errors.acceptTerms = 'Après lecture, veuillez cocher la case pour accepter les conditions d\'utilisation.'
+        return false
+      }
+
       delete errors.acceptTerms
       return true
     }
@@ -515,13 +453,13 @@ export default {
      */
     const canSubmit = computed(() => {
       return validateName() &&
-             validateEmail() &&
-             validatePhone() &&
-             validatePassword() &&
-             validateConfirmPassword() &&
-             validateTerms() &&
-             captchaToken.value &&
-             !isLoading.value
+        validateEmail() &&
+        validatePhone() &&
+        validatePassword() &&
+        validateConfirmPassword() &&
+        validateTerms() &&
+        captchaToken.value &&
+        !isLoading.value
     })
 
     /**
@@ -547,7 +485,7 @@ export default {
      */
     const handleSubmit = async () => {
       if (!validateName() || !validateEmail() || !validatePhone() ||
-          !validatePassword() || !validateConfirmPassword() || !validateTerms()) {
+        !validatePassword() || !validateConfirmPassword() || !validateTerms()) {
         globalError.value = 'Veuillez corriger les erreurs ci-dessus'
         return
       }
@@ -566,7 +504,8 @@ export default {
           form.email,
           form.password,
           form.name,
-          captchaToken.value
+          captchaToken.value,
+          form.phone
         )
 
         if (result.success) {
@@ -698,7 +637,7 @@ export default {
       }
     }
 
-            const closeModal = () => {
+    const closeModal = () => {
       // Mark terms as viewed when modal is closed (user has seen the content)
       if (modalTitle.value.toLowerCase().includes('conditions') && modalTitle.value.toLowerCase().includes('utilisation')) {
         hasViewedTerms.value = true
@@ -875,7 +814,8 @@ export default {
 
 /* Form Container - REMOVED, REPLACED BY NEW LAYOUT */
 .auth-form-section {
-  display: none; /* Hide old container */
+  display: none;
+  /* Hide old container */
 }
 
 .signup-form-inner {
@@ -1030,18 +970,18 @@ export default {
   transition: all var(--transition-fast);
 }
 
-.checkbox:disabled + .checkmark {
+.checkbox:disabled+.checkmark {
   background-color: var(--color-gray-100);
   border-color: var(--color-gray-300);
   opacity: 0.6;
 }
 
-.checkbox:checked + .checkmark {
+.checkbox:checked+.checkmark {
   background-color: var(--color-blue);
   border-color: var(--color-blue);
 }
 
-.checkbox:checked + .checkmark::after {
+.checkbox:checked+.checkmark::after {
   content: '✓';
   position: absolute;
   top: -1px;
