@@ -1,0 +1,39 @@
+---
+description: UI, design principles, and key components
+globs:
+  - 'src/components/layout/**'
+  - 'src/components/common/**'
+  - 'src/styles/**'
+alwaysApply: false
+---
+
+# UI & Design
+
+## Design Philosophy
+
+- Minimalist and functional; French UI; responsive and accessible
+- Colors: black on white; status colors for success/error/info
+- Typography: Lato; consistent sizing and spacing (4px grid)
+- Buttons radius 2px; forms/cards radius 4px; subtle shadows
+
+## Global CSS
+
+- Variables, reset, base, focus, utilities, forms, buttons, messages
+
+## Layout
+
+- `AppLayout`: wraps header/footer, global notifications, loading overlay
+- `AppHeader`: responsive nav, auth-aware menu
+- `AppFooter`: legal links, quick links, socials
+- `BreadcrumbNav`: route-aware breadcrumb support
+
+## Notifications and Loading
+
+- `BaseNotification`: toast with types and auto-dismiss
+- `BaseSpinner`: configurable spinner used globally
+- Global notifications wired via `useUIStore`
+
+## Cookie Consent and Policies
+
+- `CookieBanner` for consent management
+- `PolicyModal` to display policy content inline

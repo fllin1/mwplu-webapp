@@ -1,0 +1,30 @@
+---
+description: Roadmap notes and current focus
+globs:
+  - 'references/update/v-1/refactor/refactor.md'
+alwaysApply: false
+---
+
+# Roadmap & Focus
+
+## Roadmap Notes
+
+- Follow the plan in `references/update/v-1/refactor/refactor.md` as baseline.
+- Phases 1–4 appear largely implemented in code (auth, layout, routing, selection flow, synthesis tabs, comments/ratings, basic downloads, analytics). Phase 2.5 GA setup is implemented via Firebase Analytics.
+
+## Adjustments
+
+- Blog: Put on standby (Phase 6.1 and related docs infra). Do not implement blog components/routes now.
+- New Priority: Implement address → urban zone resolution feature.
+  - Tentative flow: user inputs an address → geocoding → intersect with city/zoning/zone geometries → preselect or navigate to synthesis page.
+  - Will discuss APIs (e.g., BAN/Address API, IGN, OSM/Nominatim) and required Supabase PostGIS support and data model for geometries.
+
+## Deployment (Phases 7–8) Guidance
+
+- Phase 7 (Optimization):
+  - Route-level code splitting already partially used for some views; extend to large views/tabs.
+  - Add Suspense for async data where beneficial.
+  - Maintain accessibility and performance; prefer lazy-load heavy tabs.
+- Phase 8 (Deployment):
+  - Firebase Hosting config exists (`firebase.json` rewrite to `index.html`).
+  - Ensure env vars set for production, minimize bundle, and test preview channels before prod.

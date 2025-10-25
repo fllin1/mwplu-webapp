@@ -8,14 +8,14 @@ export const useChatStore = defineStore('chat', () => {
 
   const isPopupOpen = ref(false)
   const isLoading = ref(false)
-  const currentSessionId = ref(null)
+  const currentConversationId = ref(null)
   const currentDocumentId = ref(null)
   const messages = ref([])
   const error = ref(null)
   const isStreaming = ref(false)
 
   const hasMessages = computed(() => messages.value.length > 0)
-  const hasSession = computed(() => !!currentSessionId.value)
+  const hasConversation = computed(() => !!currentConversationId.value)
 
   /**
    * Initialize chat for a document
@@ -29,10 +29,10 @@ export const useChatStore = defineStore('chat', () => {
     try {
       currentDocumentId.value = documentId
 
-      const sessionResult = await dbService.hasActiveChatSession(authStore.userId, documentId)
+      const convResult = await dbService.getActiveConversationId(authStore.userId, documentId)
 
-      if (sessionResult.success && sessionResult.hasSession) {
-        currentSessionId.value = sessionResult.sessionId
+      if (convResult.success && convResult.hasConversation) {
+        currentConversationId.value = convResult.conversationId
         await loadMessages()
         return { success: true, hasExistingChat: true }
       }
@@ -46,14 +46,14 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   /**
-   * Load messages for the current session
+   * Load messages for the current conversation
    */
   const loadMessages = async () => {
-    if (!currentSessionId.value) return
+    if (!currentConversationId.value) return
 
     try {
       isLoading.value = true
-      const result = await dbService.getChatMessages(currentSessionId.value)
+      const result = await dbService.getChatMessages(currentConversationId.value)
 
       if (result.success) {
         messages.value = result.data
@@ -69,29 +69,29 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   /**
-   * Create a new chat session
+   * Create or get the active conversation
    */
-  const createSession = async () => {
+  const createConversation = async () => {
     if (!authStore.userId || !currentDocumentId.value) {
       error.value = 'User and document are required'
       return { success: false, error: error.value }
     }
 
     try {
-      const result = await dbService.getOrCreateChatSession(
+      const result = await dbService.getOrCreateConversation(
         authStore.userId,
         currentDocumentId.value
       )
 
       if (result.success) {
-        currentSessionId.value = result.data.id
-        return { success: true, sessionId: result.data.id }
+        currentConversationId.value = result.data.id
+        return { success: true, conversationId: result.data.id }
       } else {
         error.value = result.error
         return { success: false, error: result.error }
       }
     } catch (err) {
-      console.error('Error creating session:', err)
+      console.error('Error creating conversation:', err)
       error.value = err.message
       return { success: false, error: err.message }
     }
@@ -101,16 +101,16 @@ export const useChatStore = defineStore('chat', () => {
    * Add a message to the chat
    */
   const addMessage = async (role, content, metadata = {}) => {
-    if (!currentSessionId.value) {
-      const sessionResult = await createSession()
-      if (!sessionResult.success) {
-        return { success: false, error: sessionResult.error }
+    if (!currentConversationId.value) {
+      const convResult = await createConversation()
+      if (!convResult.success) {
+        return { success: false, error: convResult.error }
       }
     }
 
     try {
       const result = await dbService.saveChatMessage(
-        currentSessionId.value,
+        currentConversationId.value,
         authStore.userId,
         currentDocumentId.value,
         role,
@@ -127,6 +127,41 @@ export const useChatStore = defineStore('chat', () => {
       }
     } catch (err) {
       console.error('Error adding message:', err)
+      error.value = err.message
+      return { success: false, error: err.message }
+    }
+  }
+
+  /**
+   * Persist a message without pushing it to the in-memory list.
+   * Useful to replace a temporary message in place after persistence.
+   */
+  const saveMessageOnly = async (role, content, metadata = {}) => {
+    if (!currentConversationId.value) {
+      const convResult = await createConversation()
+      if (!convResult.success) {
+        return { success: false, error: convResult.error }
+      }
+    }
+
+    try {
+      const result = await dbService.saveChatMessage(
+        currentConversationId.value,
+        authStore.userId,
+        currentDocumentId.value,
+        role,
+        content,
+        metadata
+      )
+
+      if (result.success) {
+        return { success: true, data: result.data }
+      } else {
+        error.value = result.error
+        return { success: false, error: result.error }
+      }
+    } catch (err) {
+      console.error('Error saving message:', err)
       error.value = err.message
       return { success: false, error: err.message }
     }
@@ -154,6 +189,27 @@ export const useChatStore = defineStore('chat', () => {
     const index = messages.value.findIndex((m) => m.id === tempId)
     if (index !== -1) {
       messages.value[index] = savedMessage
+    }
+  }
+
+  /**
+   * Update the content of a temporary message
+   */
+  const updateTemporaryMessageContent = (tempId, content) => {
+    const index = messages.value.findIndex((m) => m.id === tempId && m.isTemporary)
+    if (index !== -1) {
+      messages.value[index] = { ...messages.value[index], message: content }
+    }
+  }
+
+  /**
+   * Append delta text to a temporary message's content
+   */
+  const appendToTemporaryMessage = (tempId, delta) => {
+    const index = messages.value.findIndex((m) => m.id === tempId && m.isTemporary)
+    if (index !== -1) {
+      const current = messages.value[index].message || ''
+      messages.value[index] = { ...messages.value[index], message: current + delta }
     }
   }
 
@@ -192,11 +248,11 @@ export const useChatStore = defineStore('chat', () => {
    * Clear the current chat
    */
   const clearChat = async () => {
-    if (currentSessionId.value) {
-      await dbService.deactivateChatSession(currentSessionId.value)
+    if (currentConversationId.value) {
+      await dbService.deactivateConversation(currentConversationId.value)
     }
     messages.value = []
-    currentSessionId.value = null
+    currentConversationId.value = null
     isPopupOpen.value = false
     error.value = null
   }
@@ -206,7 +262,7 @@ export const useChatStore = defineStore('chat', () => {
    */
   const resetChat = () => {
     messages.value = []
-    currentSessionId.value = null
+    currentConversationId.value = null
     currentDocumentId.value = null
     isPopupOpen.value = false
     isLoading.value = false
@@ -239,19 +295,22 @@ export const useChatStore = defineStore('chat', () => {
     isPopupOpen,
     isLoading,
     isStreaming,
-    currentSessionId,
+    currentConversationId,
     currentDocumentId,
     messages,
     error,
     hasMessages,
-    hasSession,
+    hasConversation,
     initializeChat,
     loadMessages,
-    createSession,
+    createConversation,
     addMessage,
     addTemporaryMessage,
     replaceTemporaryMessage,
     removeTemporaryMessage,
+    updateTemporaryMessageContent,
+    appendToTemporaryMessage,
+    saveMessageOnly,
     openPopup,
     closePopup,
     togglePopup,

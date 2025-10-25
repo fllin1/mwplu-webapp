@@ -23,7 +23,7 @@
                   :message="message"
                 />
 
-                <div v-if="chatStore.isLoading" class="typing-indicator">
+                <div v-if="chatStore.isLoading && !hasTemporaryAssistant" class="typing-indicator">
                   <div class="typing-dot"></div>
                   <div class="typing-dot"></div>
                   <div class="typing-dot"></div>
@@ -87,6 +87,9 @@ const { sendMessage } = useAiChat()
 
 const inputMessage = ref('')
 const messagesContainer = ref(null)
+const hasTemporaryAssistant = computed(() =>
+  chatStore.messages.some((m) => m.isTemporary && m.role === 'assistant')
+)
 
 const handleClose = () => {
   chatStore.closePopup()
@@ -131,6 +134,17 @@ watch(
       scrollToBottom()
     })
   }
+)
+
+// Also scroll on content updates (e.g., streaming temp message grows)
+watch(
+  () => chatStore.messages,
+  () => {
+    nextTick(() => {
+      scrollToBottom()
+    })
+  },
+  { deep: true }
 )
 
 watch(

@@ -1,0 +1,41 @@
+---
+description: Routing and navigation structure
+globs:
+  - 'src/router/**'
+  - 'src/views/**'
+alwaysApply: false
+---
+
+# Routing
+
+Defined in `src/router/index.js` with meta flags for titles and auth requirements. Key routes:
+
+- `/` name `home` → `HomeView`
+- `/login` (guest-only), `/signup` (guest-only)
+- `/confirmation`, `/reset-password`
+- `/profile` (auth), `/dashboard` (auth)
+- `/plu-repository/` (auth) → `PluSearchView` (lazy-loaded)
+- `/plu-repository/:city/:zoning/:zone` (auth) → `PluSynthesisView`
+- Info: `/contact`, `/info/about`, `/info/donation`, donation outcome routes
+- Docs: `/docs/documentation`, `/docs/faq`
+- Policies: `/policies/legal|terms|privacy|cookies|sales`
+- `/test/analytics` (public test view)
+- `/404` + catch-all redirect
+
+## Guards
+
+- Global `beforeEach`:
+
+  - Cleans expired confirmation URL hashes and shows an error via `useUIStore`
+  - Sets `document.title` from meta
+  - Ensures auth init (`auth.isInitialized || initializeAuth()`)
+  - Redirects unauthenticated users to `login` for `requiresAuth`
+  - Redirects authenticated users away from guest routes
+
+- Composable `useAuthGuard` available for per-route guards and role-based checks, though current routes use global guard only.
+
+## Slug-based PLU Routing
+
+- The PLU synthesis route uses slugs: `:city/:zoning/:zone`
+- `stores/plu.initializeFromSlugs(citySlug, zoningSlug, zoneSlug)` resolves IDs, then `dbService.getDocument(zoningId, zoneId)` fetches content.
+- Breadcrumbs for PLU pages are assembled in `PluSynthesisView` using `stores/plu` selection.

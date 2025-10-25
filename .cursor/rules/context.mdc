@@ -1,0 +1,34 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# MWPLU Project Context (Index)
+
+This is the top-level context for the MWPLU Vue 3 web application. The context is now split into focused documents:
+
+- Architecture and Stack: see Architecture
+- Routing and Navigation: see Routing
+- State Management: see State
+- Services and Integrations: see Services
+- Analytics and Privacy: see Analytics & Privacy
+- UI/Design System: see UI & Design
+- Features Status: see Features Status
+- Roadmap and Focus: see Roadmap & Focus
+
+Documents
+
+- Architecture: `.cursor/rules/architecture.mdc`
+- Routing: `.cursor/rules/routing.mdc`
+- State: `.cursor/rules/state.mdc`
+- Services: `.cursor/rules/services.mdc`
+- Analytics & Privacy: `.cursor/rules/analytics_privacy.mdc`
+- UI & Design: `.cursor/rules/ui_design.mdc`
+- Features Status: `.cursor/rules/features_status.mdc`
+- Roadmap & Focus: `.cursor/rules/roadmap_focus.mdc`
+
+Notes
+
+- The app uses Vue 3 Composition API with `<script setup>`, Pinia, Vue Router, Supabase, and Firebase Analytics. Cloudflare Turnstile is integrated client-side; server validation endpoint is a placeholder.
+- PLU document routes are slug-based and protected; selections are handled in `stores/plu.js` and navigated via `PluSelectionForm`.

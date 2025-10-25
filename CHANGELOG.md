@@ -1,3 +1,9 @@
+### 2025-10-25
+
+- Chat: fixed duplicate assistant message at the end of streaming by persisting the final message without pushing a second item and replacing the temporary bubble in place.
+- Chat: smoother streaming UI — the typing indicator hides while streaming and the growing assistant bubble updates in place; auto-scroll now reacts to content changes during streaming.
+- 2025-10-25T21:10:00+00:00 (assistant) - fix[chat]: eliminate double n8n webhook POSTs by refactoring `useAiChat.sendMessage` to a single fetch-based path (handles streaming NDJSON and non-streaming JSON); added tests for JSON, streaming, and error paths to ensure only one POST per message.
+
 # Changelog
 
 ## 2025-06-02
@@ -60,3 +66,9 @@
 
 ## 2025-08-19
 - 2025-08-19T22:58:17+02:00 (fllin1) 742fa3d - feat[auth]: Reset password and signup confirmation feature functional
+ 
+## 2025-10-25
+- 2025-10-25T00:00:00+00:00 (assistant) - feat[chat]: migrate chat to conversations model (`chat_conversations`, `conversation_id`), update webhook payload, add unit tests for chat store and useAiChat
+ - 2025-10-25T18:35:00+00:00 (assistant) - fix[chat]: updated n8n webhook to use `public.chat_conversations` instead of `public.chat_sessions`; resolved "relation does not exist" error when sending messages
+ - 2025-10-25T18:50:00+00:00 (assistant) - chore[chat]: add console.debug logging of webhook response in `useAiChat.js`; add unit test asserting log
+ - 2025-10-25T20:00:00+00:00 (assistant) - feat[chat]: streaming NDJSON responses in `useAiChat.js` with temporary assistant message and final persistence; sanitized Markdown rendering in `AiChatMessage.vue` via `marked` + `dompurify`; added unit tests for streaming and markdown; added store helpers to update/append temporary messages

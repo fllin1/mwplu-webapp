@@ -1,0 +1,27 @@
+---
+description: Implemented features and current status
+globs:
+  - 'src/**'
+alwaysApply: false
+---
+
+# Features Status
+
+## Implemented (as per codebase)
+
+- Auth system with Supabase (email+password, Google OAuth stubs), Turnstile CAPTCHA in login/signup UIs
+- Global error handling and UI notifications
+- Routing with protected PLU routes and guest-only auth routes
+- PLU repository selection flow (city → zoning → zone) via `stores/plu` and selectors
+- PLU synthesis view with tabs: Synthesis, Comments (with ratings), Sources, Downloads (UI)
+- Comments and ratings wired to Supabase (incl. realtime updates)
+- Download tracking in DB; signed URL generation for PDF from Storage in `PluSynthesisView`
+- Cookie consent and privacy controls for analytics
+- Profile view (basic info update, password change stub)
+
+## Pending / Partial
+
+- Server validation for Turnstile (`/api/validate-turnstile`) missing
+- Some download formats in Sources tab are mocked; only PDF download implemented in `PluSynthesisView`
+- Contact form view and Edge Function not present (service method exists)
+- Blog not implemented (to be paused)

@@ -1,0 +1,33 @@
+---
+description: Analytics, events, privacy & cookies
+globs:
+  - 'src/composables/useAnalytics.js'
+  - 'src/components/common/PrivacyPrompt.vue'
+  - 'src/services/firebase.js'
+alwaysApply: false
+---
+
+# Analytics & Privacy
+
+## Analytics
+
+- Implemented via Firebase Analytics wrappers in `src/services/firebase.js`
+- `useAnalytics` provides:
+  - `initialize`, `setUserProperties(user)` with hashed userId and custom dimensions
+  - `trackEvent`, `trackPageView`
+  - Auth events: `trackLogin`, `trackSignup`, `trackLogout`
+  - PLU events: `trackPluView`, `trackPluDownload`, `trackPluComment`, `trackPluRating`
+  - Flow events: `trackCitySelected`, `trackZoneSelected`, `trackSearch`
+  - Conversion events: `contact_form_submitted`, `begin_checkout`, `purchase`
+  - Privacy controls: `optIn`, `optOut` (persisted in `localStorage` `ga-opt-out`)
+
+## Cookie Consent
+
+- `PrivacyPrompt.vue` manages consent, versioned by `PREFS_VERSION`
+- Applies `optIn`/`optOut` to analytics based on user choice
+- Link to `/policies/cookies` for details
+
+## Notes
+
+- `window.gtag` fallback exists in `useAnalytics`, but primary tracking uses Firebase helpers
+- Ensure GA4 settings (IP anonymization, signals off) are respected as per composable config

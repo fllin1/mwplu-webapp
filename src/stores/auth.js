@@ -479,6 +479,8 @@ export const useAuthStore = defineStore('auth', () => {
     signInWithGoogle,
     signUpWithGoogle,
     setupAuthListener,
+    setUser,
+    setSession,
     setError,
     clearError,
   }

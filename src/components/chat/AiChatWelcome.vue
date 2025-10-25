@@ -18,9 +18,10 @@
         :key="prompt.id"
         variant="secondary"
         size="md"
+        class="prompt-badge"
         @click="handlePromptClick(prompt.text)"
       >
-        <component :is="prompt.icon" :size="16" :class="`icon-${prompt.color}`" />
+        <component :is="prompt.icon" :size="16" />
         {{ prompt.label }}
       </Badge>
     </div>
@@ -29,7 +30,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Sparkles, Ruler, Building2, MapPin, TreePine, ParkingCircle, Maximize } from 'lucide-vue-next'
+import { Sparkles, Ruler, Building2, MapPin, Maximize } from 'lucide-vue-next'
 import Badge from '@/components/ui/Badge.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -50,42 +51,24 @@ const quickPrompts = [
     label: 'Règles de construction',
     text: 'Quelles sont les principales règles de construction dans cette zone ?',
     icon: Building2,
-    color: 'blue',
   },
   {
     id: 'height',
     label: 'Limites de hauteur',
     text: 'Quelles sont les limites de hauteur pour les constructions ?',
     icon: Ruler,
-    color: 'orange',
   },
   {
     id: 'cos',
     label: 'Calculer le COS',
     text: 'Comment calculer le coefficient d\'occupation des sols (COS) ?',
     icon: Maximize,
-    color: 'green',
   },
   {
     id: 'setback',
     label: 'Reculs obligatoires',
     text: 'Quels sont les reculs obligatoires par rapport aux limites ?',
     icon: MapPin,
-    color: 'pink',
-  },
-  {
-    id: 'environmental',
-    label: 'Contraintes environnementales',
-    text: 'Quelles sont les contraintes environnementales à respecter ?',
-    icon: TreePine,
-    color: 'teal',
-  },
-  {
-    id: 'parking',
-    label: 'Stationnement',
-    text: 'Quelles sont les exigences en matière de stationnement ?',
-    icon: ParkingCircle,
-    color: 'yellow',
   },
 ]
 
@@ -110,9 +93,10 @@ const handlePromptClick = (text) => {
   justify-content: center;
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  background: linear-gradient(135deg, var(--color-black) 0%, var(--color-gray-700) 100%);
   border-radius: 50%;
-  color: var(--color-black);
+  color: var(--color-white);
+  box-shadow: var(--shadow-md);
 }
 
 .welcome-content {
@@ -122,16 +106,16 @@ const handlePromptClick = (text) => {
 }
 
 .welcome-title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-gray-600);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-black);
   margin: 0;
 }
 
 .welcome-subtitle {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-medium);
-  color: var(--color-black);
+  color: var(--color-gray-600);
   margin: 0;
 }
 
@@ -144,36 +128,22 @@ const handlePromptClick = (text) => {
 }
 
 .quick-prompts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-2);
-  max-width: 500px;
+  width: 100%;
+  max-width: 450px;
 }
 
-.icon-blue {
-  color: #3b82f6;
+.prompt-badge {
+  justify-content: flex-start;
+  padding: var(--space-3) var(--space-4);
+  transition: all var(--transition-fast);
 }
 
-.icon-orange {
-  color: #f97316;
-}
-
-.icon-green {
-  color: #10b981;
-}
-
-.icon-pink {
-  color: #ec4899;
-}
-
-.icon-teal {
-  color: #14b8a6;
-}
-
-.icon-yellow {
-  color: #eab308;
+.prompt-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 768px) {
@@ -193,15 +163,24 @@ const handlePromptClick = (text) => {
   }
 
   .welcome-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
   }
 
   .welcome-subtitle {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-lg);
   }
 
   .welcome-description {
     font-size: var(--font-size-xs);
+  }
+
+  .quick-prompts {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .prompt-badge {
+    padding: var(--space-2) var(--space-3);
   }
 }
 </style>

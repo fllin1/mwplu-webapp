@@ -1,0 +1,30 @@
+---
+description: Pinia stores and state responsibilities
+globs:
+  - 'src/stores/**'
+alwaysApply: false
+---
+
+# State Management
+
+## Stores
+
+### `stores/auth.js`
+
+- State: `user`, `session`, `isLoading`, `isInitialized`, `error`
+- Getters: `isAuthenticated`, `userEmail`, `userName`, `userId`
+- Actions: `initializeAuth`, `login`, `signup` (Turnstile-aware), `logout`, `resetPassword`, `updatePassword`, `updateProfile`, `resendConfirmation`, OAuth Google sign-in/up, `setupAuthListener`
+- Error mapping for common auth flows
+
+### `stores/plu.js`
+
+- Manages PLU selection: `cities`, `zonings`, `zones`; selection IDs; computed selection objects
+- Loads cities/zonings/zones via `dbService`
+- Emits analytics on selection events
+- Slug helpers: `getSelectionSlugs`, `initializeFromSlugs`, breadcrumbs builder
+
+### `stores/ui.js`
+
+- Global notification system: `showNotification` + typed helpers (`showSuccess`, `showError`, etc.)
+- Global loading overlay, modal state, theme, mobile menu
+- Utilities: API error handler, theme init, sidebar toggles

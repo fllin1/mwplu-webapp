@@ -699,22 +699,22 @@ export const dbService = {
     }
   },
 
-  // Chat operations
+  // Chat operations (conversations)
   /**
-   * Get or create a chat session for a user and document
+   * Get or create a chat conversation for a user and document
    * @param {string} userId - The user ID
    * @param {string} documentId - The document ID
    * @returns {Promise<{success: boolean, data: Object}>}
    */
-  async getOrCreateChatSession(userId, documentId) {
+  async getOrCreateConversation(userId, documentId) {
     try {
       if (!userId || !documentId) {
         throw new Error('User ID and document ID are required')
       }
 
-      // Check for existing active session
-      const { data: existingSession, error: fetchError } = await supabase
-        .from('chat_sessions')
+      // Check for existing active conversation
+      const { data: existingConversation, error: fetchError } = await supabase
+        .from('chat_conversations')
         .select('*')
         .eq('user_id', userId)
         .eq('document_id', documentId)
@@ -725,13 +725,13 @@ export const dbService = {
 
       if (fetchError) throw fetchError
 
-      if (existingSession) {
-        return { success: true, data: existingSession }
+      if (existingConversation) {
+        return { success: true, data: existingConversation }
       }
 
-      // Create new session
-      const { data: newSession, error: insertError } = await supabase
-        .from('chat_sessions')
+      // Create new conversation
+      const { data: newConversation, error: insertError } = await supabase
+        .from('chat_conversations')
         .insert({
           user_id: userId,
           document_id: documentId,
@@ -741,28 +741,28 @@ export const dbService = {
         .single()
 
       if (insertError) throw insertError
-      return { success: true, data: newSession }
+      return { success: true, data: newConversation }
     } catch (error) {
-      console.error('Error getting or creating chat session:', error)
+      console.error('Error getting or creating chat conversation:', error)
       return { success: false, error: error.message }
     }
   },
 
   /**
-   * Get chat messages for a session
-   * @param {string} sessionId - The session ID
+   * Get chat messages for a conversation
+   * @param {string} conversationId - The conversation ID
    * @returns {Promise<{success: boolean, data: Array}>}
    */
-  async getChatMessages(sessionId) {
+  async getChatMessages(conversationId) {
     try {
-      if (!sessionId) {
-        throw new Error('Session ID is required')
+      if (!conversationId) {
+        throw new Error('Conversation ID is required')
       }
 
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
-        .eq('session_id', sessionId)
+        .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
 
       if (error) throw error
@@ -775,7 +775,7 @@ export const dbService = {
 
   /**
    * Save a chat message
-   * @param {string} sessionId - The session ID
+   * @param {string} conversationId - The conversation ID
    * @param {string} userId - The user ID
    * @param {string} documentId - The document ID
    * @param {string} role - Message role ('user' or 'assistant')
@@ -783,10 +783,10 @@ export const dbService = {
    * @param {Object} metadata - Optional metadata
    * @returns {Promise<{success: boolean, data: Object}>}
    */
-  async saveChatMessage(sessionId, userId, documentId, role, message, metadata = {}) {
+  async saveChatMessage(conversationId, userId, documentId, role, message, metadata = {}) {
     try {
-      if (!sessionId || !userId || !documentId || !role || !message) {
-        throw new Error('Session ID, user ID, document ID, role, and message are required')
+      if (!conversationId || !userId || !documentId || !role || !message) {
+        throw new Error('Conversation ID, user ID, document ID, role, and message are required')
       }
 
       if (role !== 'user' && role !== 'assistant') {
@@ -796,7 +796,7 @@ export const dbService = {
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
-          session_id: sessionId,
+          conversation_id: conversationId,
           user_id: userId,
           document_id: documentId,
           role,
@@ -808,11 +808,11 @@ export const dbService = {
 
       if (error) throw error
 
-      // Update session's last_message_at
+      // Update conversation's last_message_at
       await supabase
-        .from('chat_sessions')
+        .from('chat_conversations')
         .update({ last_message_at: new Date().toISOString() })
-        .eq('id', sessionId)
+        .eq('id', conversationId)
 
       return { success: true, data }
     } catch (error) {
@@ -822,19 +822,19 @@ export const dbService = {
   },
 
   /**
-   * Check if user has an active chat session for a document
+   * Get active conversation ID for a user and document
    * @param {string} userId - The user ID
    * @param {string} documentId - The document ID
-   * @returns {Promise<{success: boolean, hasSession: boolean, sessionId: string|null}>}
+   * @returns {Promise<{success: boolean, hasConversation: boolean, conversationId: string|null}>}
    */
-  async hasActiveChatSession(userId, documentId) {
+  async getActiveConversationId(userId, documentId) {
     try {
       if (!userId || !documentId) {
-        return { success: true, hasSession: false, sessionId: null }
+        return { success: true, hasConversation: false, conversationId: null }
       }
 
       const { data, error } = await supabase
-        .from('chat_sessions')
+        .from('chat_conversations')
         .select('id')
         .eq('user_id', userId)
         .eq('document_id', documentId)
@@ -846,35 +846,35 @@ export const dbService = {
 
       return {
         success: true,
-        hasSession: !!data,
-        sessionId: data?.id || null,
+        hasConversation: !!data,
+        conversationId: data?.id || null,
       }
     } catch (error) {
-      console.error('Error checking for active chat session:', error)
-      return { success: false, hasSession: false, sessionId: null, error: error.message }
+      console.error('Error checking for active conversation:', error)
+      return { success: false, hasConversation: false, conversationId: null, error: error.message }
     }
   },
 
   /**
-   * Clear/deactivate a chat session
-   * @param {string} sessionId - The session ID
+   * Clear/deactivate a chat conversation
+   * @param {string} conversationId - The conversation ID
    * @returns {Promise<{success: boolean}>}
    */
-  async deactivateChatSession(sessionId) {
+  async deactivateConversation(conversationId) {
     try {
-      if (!sessionId) {
-        throw new Error('Session ID is required')
+      if (!conversationId) {
+        throw new Error('Conversation ID is required')
       }
 
       const { error } = await supabase
-        .from('chat_sessions')
+        .from('chat_conversations')
         .update({ is_active: false })
-        .eq('id', sessionId)
+        .eq('id', conversationId)
 
       if (error) throw error
       return { success: true }
     } catch (error) {
-      console.error('Error deactivating chat session:', error)
+      console.error('Error deactivating chat conversation:', error)
       return { success: false, error: error.message }
     }
   },
