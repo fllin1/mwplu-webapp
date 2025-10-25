@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&display=swap');
+
+/* Global base styles */
+
+/* CSS Purging Protection - DO NOT REMOVE */
+/* These classes must be preserved for dynamic components */
+/*
+.prefs-prompt {}
+.prefs-prompt__container {}
+.prefs-prompt__content {}
+.prefs-prompt__text {}
+.prefs-prompt__actions {}
+.prefs-prompt__link {}
+.modal-backdrop {}
+.modal-content {}
+.modal-header {}
+.modal-body {}
+.modal-footer {}
+.modal-close {}
+.prefs-category {}
+.prefs-category__header {}
+*/
+/* End CSS Purging Protection */
+
+/* Base document styles */
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-black);
+  background-color: var(--color-white);
+}
+
+/* Base typography that affects semantic HTML */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+h1 {
+  font-size: var(--font-size-3xl);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+}
+
+h3 {
+  font-size: var(--font-size-xl);
+}
+
+h4 {
+  font-size: var(--font-size-lg);
+}
+
+h5 {
+  font-size: var(--font-size-base);
+}
+
+h6 {
+  font-size: var(--font-size-sm);
+}
+
+/* Base link styles */
+a {
+  color: var(--color-gray-500);
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-blue-hover);
+  opacity: 0.8;
+}
+
+/* Strong and emphasis */
+strong,
+b {
+  font-weight: var(--font-weight-bold);
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+/* Code and pre */
+code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875em;
+  background-color: var(--color-gray-100);
+  padding: 0.125rem 0.25rem;
+  border-radius: var(--radius-button);
+}
+
+pre {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875rem;
+  background-color: var(--color-gray-100);
+  padding: var(--space-4);
+  border-radius: var(--radius-form);
+  overflow-x: auto;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-blue);
+  color: var(--color-white);
+}
+
+/* Lead text style */
+.lead {
+  font-size: 1.8rem;
+  font-weight: var(--font-weight-light);
+  color: var(--color-gray-500);
+  max-width: 700px;
+  margin: 0 auto 0.5rem auto;
+}
