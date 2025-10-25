@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-chat-input-wrapper">
+  <div class="ai-chat-input-wrapper" v-if="!chatStore.isPopupOpen">
     <form @submit.prevent="handleSubmit" class="ai-chat-input-container" @click="handleInputClick">
       <input
         ref="inputRef"
@@ -111,7 +111,7 @@ const handleSubmit = async () => {
   background-color: var(--color-white);
   border: 1px solid var(--color-gray-300);
   border-radius: var(--radius-button);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   transition: all var(--transition-fast);
 }
 

@@ -3,6 +3,7 @@
 - Chat: fixed duplicate assistant message at the end of streaming by persisting the final message without pushing a second item and replacing the temporary bubble in place.
 - Chat: smoother streaming UI — the typing indicator hides while streaming and the growing assistant bubble updates in place; auto-scroll now reacts to content changes during streaming.
 - 2025-10-25T21:10:00+00:00 (assistant) - fix[chat]: eliminate double n8n webhook POSTs by refactoring `useAiChat.sendMessage` to a single fetch-based path (handles streaming NDJSON and non-streaming JSON); added tests for JSON, streaming, and error paths to ensure only one POST per message.
+ - 2025-10-25T22:00:00+00:00 (assistant) - feat[chat]: hide inline chat bar (`AiChatInput.vue`) whenever popup is open (`isPopupOpen`), restore on close; increased chat bar shadow to `var(--shadow-md)`; added unit test to assert hide/show behavior.
 
 # Changelog
 
