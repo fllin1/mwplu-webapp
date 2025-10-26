@@ -38,7 +38,7 @@ describe('useAiChat composable', () => {
       ok: true,
       status: 200,
       headers: new Headers({ 'Content-Type': 'application/json' }),
-      json: async () => jsonBody,
+      text: async () => JSON.stringify(jsonBody),
       body: null,
     }))
 
@@ -98,9 +98,11 @@ describe('useAiChat composable', () => {
       },
     }))
 
-    // mock saveChatMessage for final persistence
+    // mock saveChatMessage for both user and assistant messages
     const { dbService } = await import('@/services/supabase')
-    dbService.saveChatMessage.mockResolvedValue({ success: true, data: { id: 'm-final', role: 'assistant', message: 'Hello World' } })
+    dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
+      Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user' : 'm-final', role, message, metadata } })
+    )
 
     const { sendMessage } = useAiChat()
     await sendMessage('Hi', 'doc-1')
@@ -147,6 +149,44 @@ describe('useAiChat composable', () => {
     expect(assistantCalls.length).toBe(1)
     const saved = chatStore.messages.find((m) => m.id === 'm-assistant') || chatStore.messages.find((m) => m.role === 'assistant')
     expect(saved?.message).toMatch(/Désolé/)
+  })
+
+  it('handles NDJSON response without proper content-type header (fallback parser)', async () => {
+    const chatStore = useChatStore()
+    await chatStore.initializeChat('doc-1')
+
+    // Mock fetch returning NDJSON as plain text (without application/x-ndjson header)
+    const ndjsonResponse = [
+      JSON.stringify({ type: 'begin', metadata: {} }),
+      JSON.stringify({ type: 'item', content: 'Hello ' }),
+      JSON.stringify({ type: 'item', content: 'from ' }),
+      JSON.stringify({ type: 'item', content: 'NDJSON' }),
+      JSON.stringify({ type: 'end', metadata: {} }),
+    ].join('\n')
+
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'Content-Type': 'application/json' }), // Wrong header, but NDJSON content
+      text: async () => ndjsonResponse,
+      body: null,
+    }))
+
+    const { dbService } = await import('@/services/supabase')
+    dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
+      Promise.resolve({ success: true, data: { id: 'm-assist', role, message, metadata } }),
+    )
+
+    const { sendMessage } = useAiChat()
+    await sendMessage('Test', 'doc-1')
+
+    // Only fetch called once
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+
+    // Assistant message should have combined text from all NDJSON lines
+    const assistantSaves = dbService.saveChatMessage.mock.calls.filter((c) => c[3] === 'assistant')
+    expect(assistantSaves.length).toBe(1)
+    expect(assistantSaves[0][4]).toBe('Hello from NDJSON')
   })
 })
 

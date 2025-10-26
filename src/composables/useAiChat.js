@@ -42,15 +42,32 @@ export function useAiChat() {
 
       // Single-path webhook call via fetch; support streaming or JSON
       const webhookUrl = 'https://n8n.automationdfy.com/webhook/mwplu/chat'
+      const requestPayload = {
+        message: userMessage,
+        document_id: documentId,
+        user_id: authStore.userId,
+        conversation_id: chatStore.currentConversationId,
+      }
+      
+      console.log('[WEBHOOK DEBUG] Sending request:', {
+        url: webhookUrl,
+        payload: requestPayload,
+      })
+
       const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          document_id: documentId,
-          user_id: authStore.userId,
-          conversation_id: chatStore.currentConversationId,
-        }),
+        body: JSON.stringify(requestPayload),
+      })
+
+      console.log('[WEBHOOK DEBUG] Response received:', {
+        ok: res.ok,
+        status: res.status,
+        statusText: res.statusText,
+        headers: {
+          contentType: res.headers.get('content-type'),
+          contentLength: res.headers.get('content-length'),
+        },
       })
 
       // Handle non-2xx without issuing another POST
@@ -73,7 +90,14 @@ export function useAiChat() {
       const contentType = (res.headers.get('content-type') || '').toLowerCase()
       const isStream = !!res.body && (contentType.includes('text/event-stream') || contentType.includes('application/x-ndjson'))
 
+      console.log('[WEBHOOK DEBUG] Response type detection:', {
+        contentType,
+        hasBody: !!res.body,
+        isStream,
+      })
+
       if (isStream) {
+        console.log('[WEBHOOK DEBUG] Processing as STREAMING response')
         chatStore.setStreaming(true)
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
@@ -111,6 +135,11 @@ export function useAiChat() {
         }
 
         chatStore.setStreaming(false)
+        console.log('[WEBHOOK DEBUG] Streaming completed:', {
+          fullTextLength: fullText?.length || 0,
+          hasTemp: !!temp,
+        })
+
         if (fullText && temp) {
           const assistantMessageResult = await chatStore.saveMessageOnly('assistant', fullText)
           if (assistantMessageResult.success) {
@@ -127,13 +156,88 @@ export function useAiChat() {
       }
 
       // Non-streaming JSON
-      const data = await res.json().catch(() => ({}))
+      console.log('[WEBHOOK DEBUG] Processing as NON-STREAMING JSON response')
+      
+      // Get raw text first to debug
+      const rawText = await res.text()
+      console.log('[WEBHOOK DEBUG] Raw response text:', {
+        text: rawText,
+        length: rawText.length,
+        firstChars: rawText.substring(0, 200),
+      })
+
+      let data
+      try {
+        // Try parsing as regular JSON
+        data = JSON.parse(rawText)
+        console.log('[WEBHOOK DEBUG] Parsed JSON response:', {
+          fullData: data,
+          dataKeys: Object.keys(data || {}),
+          hasResponse: !!data?.response,
+          hasMessage: !!data?.message,
+        })
+      } catch (parseError) {
+        console.error('[WEBHOOK DEBUG] Failed to parse as single JSON:', parseError)
+        
+        // Try parsing as NDJSON (multiple JSON objects separated by newlines)
+        try {
+          console.log('[WEBHOOK DEBUG] Attempting to parse as NDJSON...')
+          const lines = rawText.trim().split('\n').filter(line => line.trim())
+          console.log('[WEBHOOK DEBUG] Found', lines.length, 'lines')
+          
+          let fullText = ''
+          for (const line of lines) {
+            try {
+              const lineData = JSON.parse(line)
+              console.log('[WEBHOOK DEBUG] Parsed NDJSON line:', lineData)
+              
+              // Extract content from each line
+              if (lineData.type === 'item' && lineData.content) {
+                fullText += lineData.content
+              } else if (lineData.response) {
+                fullText += lineData.response
+              } else if (lineData.message) {
+                fullText += lineData.message
+              }
+            } catch (lineError) {
+              console.warn('[WEBHOOK DEBUG] Failed to parse line:', line, lineError)
+            }
+          }
+          
+          if (fullText) {
+            console.log('[WEBHOOK DEBUG] Assembled text from NDJSON:', {
+              text: fullText,
+              length: fullText.length,
+            })
+            data = { response: fullText }
+          } else {
+            data = {}
+          }
+        } catch (ndjsonError) {
+          console.error('[WEBHOOK DEBUG] Failed to parse as NDJSON:', ndjsonError)
+          data = {}
+        }
+      }
+
       const aiResponse = data?.response || data?.message || ''
+      console.log('[WEBHOOK DEBUG] Extracted AI response:', {
+        aiResponse,
+        aiResponseLength: aiResponse?.length || 0,
+        willAddMessage: !!aiResponse,
+      })
+
       if (aiResponse) {
         const assistantMessageResult = await chatStore.addMessage('assistant', aiResponse, { webhook_response: data })
+        console.log('[WEBHOOK DEBUG] Added assistant message:', {
+          success: assistantMessageResult.success,
+          error: assistantMessageResult.error,
+          messageId: assistantMessageResult.data?.id,
+        })
         if (!assistantMessageResult.success) {
           throw new Error(assistantMessageResult.error)
         }
+      } else {
+        console.warn('[WEBHOOK DEBUG] No AI response found in data. Response will not be displayed.')
       }
 
       isLoading.value = false

@@ -1,3 +1,9 @@
+### 2025-10-26
+
+- 2025-10-26T00:00:00+00:00 (assistant) - debug[chat]: added comprehensive console logging to webhook response handling in `useAiChat.js` to diagnose asynchronous webhook response format and identify why messages aren't displaying; logs request payload, response status/headers, content-type detection, parsed data structure, and message addition results.
+- 2025-10-26T00:15:00+00:00 (assistant) - fix[chat]: added fallback NDJSON parser for webhook responses that return newline-delimited JSON without proper content-type header; fixes "Unexpected non-whitespace character after JSON" error by parsing each line individually and assembling the response text from `type: 'item'` content fields or `response`/`message` fields.
+- 2025-10-26T00:30:00+00:00 (assistant) - test[chat]: updated `useAiChat.spec.js` to use `text()` method instead of `json()` to match new implementation; added test case for NDJSON fallback parser; fixed streaming test mock to properly distinguish user and assistant messages; all 4 tests passing.
+
 ### 2025-10-25
 
 - Chat: fixed duplicate assistant message at the end of streaming by persisting the final message without pushing a second item and replacing the temporary bubble in place.
