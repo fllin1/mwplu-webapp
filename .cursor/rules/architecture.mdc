@@ -31,16 +31,25 @@ alwaysApply: false
 - `src/components/layout/`: `AppLayout`, `AppHeader`, `AppFooter`, `BreadcrumbNav`
 - `src/components/common/`: `BaseNotification`, `BaseSpinner`, `CookieBanner`, `PolicyModal`, `TurnstileWidget`
 - `src/components/plu/`: `CitySelector`, `ZoningSelector`, `ZoneSelector`, selection form and synthesis tabs
+- `src/components/chat/`: `AiChatWidget`, `AiChatHeader`, `AiChatMessage`, `AiChatWelcome`
 - `src/services/`: `supabase.js`, `errorHandler.js`, `firebase.js`, `turnstile.js`, `donationService.js`
-- `src/stores/`: `auth.js`, `plu.js`, `ui.js`
-- `src/composables/`: `useAuth`, `useAuthGuard`, `useAnalytics`, `useTurnstile`
+- `src/stores/`: `auth.js`, `plu.js`, `ui.js`, `chat.js`
+- `src/composables/`: `useAuth`, `useAuthGuard`, `useAnalytics`, `useTurnstile`, `useAiChat`, `useTextStream`
 - `src/views/`: `HomeView`, `PluSearchView`, `PluSynthesisView`, auth views, profile, docs, policies, dashboard
 
 ## Supabase
 
 - Client from `@supabase/supabase-js` using `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`
-- Data access via `dbService`: cities, zonings, zones, typologies, documents; comments/ratings; downloads; profiles; contact messages
-- RLS expected on tables; comments deletion via RPC `soft_delete_comment`
+- Data access: cities, zonings, zones, typologies, documents; comments/ratings; downloads; profiles; contact messages; chat
+- RLS enabled on tables; comments are hard-deleted with backup in `public.comments_deleted`
+- Chat uses conversation model: `public.chat_conversations` and `public.chat_messages` (webhook writes to `public.chat_conversations`)
+
+- Analytics schema: `analytics` with raw `chat_events` and aggregates `user_daily_usage`, `user_monthly_usage`, `document_usage`, `system_daily_metrics`
+- Materialized views: `mv_user_monthly_summary`, `mv_document_popularity`; refresh via `analytics.refresh_all_views()`
+- Triggers: maintain daily/monthly aggregates on insert into `analytics.chat_events`
+- Views for UI: `v_user_current_month`, `v_user_recent_activity` (JSON paths on `public.documents.content_json`)
+- RLS: user-scoped selects; admin read via `public.profiles.is_admin`; service role can insert events
+- Ops: `pg_cron` scheduled hourly view refresh and weekly cleanup (idempotent)
 
 ## Firebase Analytics
 

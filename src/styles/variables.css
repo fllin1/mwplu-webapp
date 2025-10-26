@@ -76,6 +76,7 @@
   --radius-button: 2px;
   --radius-form: 4px;
   --radius-card: 8px;
+  --radius-pill: 999px;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
