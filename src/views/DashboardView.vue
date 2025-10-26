@@ -58,6 +58,9 @@
               <div class="stat-label">Téléchargements</div>
             </div>
           </div>
+
+          <!-- Chatbot Analytics Card -->
+          <ChatAnalyticsCard />
         </div>
       </section>
 
@@ -165,6 +168,7 @@ import { supabase } from '@/services/supabase'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BreadcrumbNav from '@/components/layout/BreadcrumbNav.vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
+import ChatAnalyticsCard from '@/components/dashboard/ChatAnalyticsCard.vue'
 
 export default {
   name: 'DashboardView',
@@ -172,7 +176,8 @@ export default {
   components: {
     AppLayout,
     BreadcrumbNav,
-    BaseSpinner
+    BaseSpinner,
+    ChatAnalyticsCard
   },
 
   setup() {

@@ -879,4 +879,71 @@ export const dbService = {
       return { success: false, error: error.message }
     }
   },
+
+  /**
+   * Get current user's monthly chat usage metrics (messages and cost)
+   * Prefers analytics.user_monthly_usage; falls back to counting chat_messages for the month.
+   * @param {number} year
+   * @param {number} month 1-12
+   * @returns {Promise<{success:true, data:{messageCount:number, costTotal:number}}|{success:false, error:string}>}
+   */
+  async getUserMonthlyChatUsage(year, month) {
+    try {
+      if (!Number.isInteger(year) || !Number.isInteger(month)) {
+        throw new Error('Year and month must be integers')
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        // Unauthenticated users have no usage
+        return { success: true, data: { messageCount: 0, costTotal: 0 } }
+      }
+
+      // 1) Try aggregated monthly usage first
+      const { data: agg, error: aggErr } = await supabase
+        .schema('analytics')
+        .from('user_monthly_usage')
+        .select('message_count, cost_total')
+        .eq('user_id', user.id)
+        .eq('year', year)
+        .eq('month', month)
+        .maybeSingle()
+
+      if (aggErr) throw aggErr
+
+      if (agg) {
+        const messageCount = Number(agg.message_count || 0)
+        const costTotal = Number(agg.cost_total || 0)
+        return { success: true, data: { messageCount, costTotal } }
+      }
+
+      // 2) Fallback: derive from analytics.chat_events only (stay within analytics schema)
+      const monthStart = new Date(Date.UTC(year, month - 1, 1))
+      const nextMonthStart = new Date(Date.UTC(year, month, 1))
+      const monthStartISO = monthStart.toISOString()
+      const nextMonthStartISO = nextMonthStart.toISOString()
+
+      const { data: events, count: msgCount, error: eventsErr } = await supabase
+        .schema('analytics')
+        .from('chat_events')
+        .select('cost_total', { count: 'exact' })
+        .eq('user_id', user.id)
+        .gte('created_at', monthStartISO)
+        .lt('created_at', nextMonthStartISO)
+
+      if (eventsErr) throw eventsErr
+
+      const costSum = Array.isArray(events)
+        ? events.reduce((sum, e) => sum + Number(e?.cost_total || 0), 0)
+        : 0
+
+      return { success: true, data: { messageCount: Number(msgCount || 0), costTotal: costSum } }
+    } catch (error) {
+      console.error('Error fetching monthly chat usage:', error)
+      return { success: false, error: error.message }
+    }
+  },
 }

@@ -95,3 +95,6 @@
 - fix[chat-widget]: restore typewriter when props are reactive. Unwrap reactive props in `useTextStream` (`speed`, `mode`, `fadeDuration`, `segmentDelay`, `characterChunkSize`, `onComplete`, `onError`, and `textStream`) using `unref`; remove fragile watchers. Added regression tests for computed refs in `ResponseStream.spec.js` and `useTextStream.spec.js`.
 
 - merge[main]: merged marcel/chatwidget into main branch. Resolved conflicts in package.json, vite.config.js, vitest.config.js, supabase.js, auth.js, variables.css, PluSynthesisView.vue, and documentation files. Added dompurify and marked dependencies for chat widget functionality.
+
+- feat[dashboard]: added `ChatAnalyticsCard` to `DashboardView` stats showing current user's monthly messages and cost (EUR); cohesive UI per design rules.
+- feat[service]: implemented `dbService.getUserMonthlyChatUsage(year, month)` using `analytics.user_monthly_usage` with fallback to `chat_messages` count; added tests.
