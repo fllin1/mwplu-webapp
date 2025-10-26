@@ -186,6 +186,8 @@ export const useChatStore = defineStore('chat', () => {
       message: content,
       created_at: new Date().toISOString(),
       isTemporary: true,
+      // Mark as newly received to trigger typewriter effect in UI for assistant
+      isNewlyReceived: true,
     }
     messages.value.push(tempMessage)
     return tempMessage
@@ -197,7 +199,12 @@ export const useChatStore = defineStore('chat', () => {
   const replaceTemporaryMessage = (tempId, savedMessage) => {
     const index = messages.value.findIndex((m) => m.id === tempId)
     if (index !== -1) {
-      messages.value[index] = savedMessage
+      const preserveNewFlag = messages.value[index].isNewlyReceived === true
+      messages.value[index] = {
+        ...savedMessage,
+        // Preserve the isNewlyReceived flag so the typewriter animation can complete
+        isNewlyReceived: preserveNewFlag || savedMessage.isNewlyReceived === true,
+      }
     }
   }
 

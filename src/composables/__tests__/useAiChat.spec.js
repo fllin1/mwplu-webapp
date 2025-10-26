@@ -110,6 +110,60 @@ describe('useAiChat composable', () => {
     expect(capturedBody.conversation_id).toBe(chatStore.currentConversationId)
   })
 
+  it('falls back to locally appending assistant when server does not persist and links reply_to_message_id', async () => {
+    const chatStore = useChatStore()
+
+    const { dbService } = await import('@/services/supabase')
+    dbService.getActiveConversationId.mockResolvedValue({ success: true, hasConversation: false, conversationId: null })
+    dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-fallback' } })
+
+    await chatStore.initializeChat('doc-1')
+
+    // Webhook returns a response but no server persistence
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+      json: async () => ({ response: 'AI says hello' }),
+    }))
+
+    // First save is the user message; second save should be assistant from fallback
+    const saveSpy = vi.fn()
+    dbService.saveChatMessage.mockImplementation((_convId, _userId, _docId, role, message) => {
+      saveSpy(role, message)
+      const id = role === 'user' ? 'm-user-fallback' : 'm-assist-fallback'
+      return Promise.resolve({ success: true, data: { id, role, message, created_at: new Date().toISOString() } })
+    })
+
+    // Simulate that loading messages would NOT return assistant yet
+    dbService.getChatMessages = vi.fn(async () => ({
+      success: true,
+      data: [
+        { id: 'm-user-fallback', role: 'user', message: 'Hi', created_at: new Date().toISOString() },
+      ],
+    }))
+
+    const { sendMessage } = useAiChat()
+    const result = await sendMessage('Hi', 'doc-1')
+
+    expect(result.success).toBe(true)
+
+    // ensure assistant save was called with reply_to_message_id
+    const roles = saveSpy.mock.calls.map((c) => c[0])
+    expect(roles).toEqual(['user', 'assistant'])
+
+    // The assistant save should be linked to the user message id
+    // saveChatMessage signature: (conversationId, userId, documentId, role, message, metadata)
+    const lastCall = saveSpy.mock.calls[1]
+    const metadata = lastCall[5]
+    expect(metadata).toBeTruthy()
+    expect(metadata.reply_to_message_id).toBe('m-user-fallback')
+
+    // UI should now include assistant message content
+    const assistant = chatStore.messages.find((m) => m.role === 'assistant')
+    expect(assistant).toBeTruthy()
+    expect(assistant.message).toBe('AI says hello')
+    expect(assistant?.metadata?.reply_to_message_id).toBe('m-user-fallback')
+  })
   it('handles non-2xx error with a single POST and shows error message', async () => {
     const chatStore = useChatStore()
 

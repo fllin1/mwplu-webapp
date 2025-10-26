@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { nextTick, computed } from 'vue'
 import { useTextStream } from '@/composables/useTextStream'
 
 describe('useTextStream', () => {
@@ -174,6 +174,24 @@ describe('useTextStream', () => {
     
     // onError should be available even if not called
     expect(typeof onError).toBe('function')
+  })
+
+  it('progresses when options are computed refs', async () => {
+    const textRef = computed(() => 'Hi there')
+    const speedRef = computed(() => 100)
+    const modeRef = computed(() => 'typewriter')
+
+    const { displayedText } = useTextStream({
+      textStream: textRef,
+      speed: speedRef,
+      mode: modeRef,
+    })
+
+    await nextTick()
+    vi.advanceTimersByTime(100)
+    await nextTick()
+
+    expect(displayedText.value.length).toBeGreaterThan(0)
   })
 })
 

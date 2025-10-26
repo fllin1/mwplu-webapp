@@ -88,3 +88,9 @@
 - feat[chat]: switch to single-writer finalize-turn workflow — frontend saves user only; assistant and analytics are inserted server-side via RPC; UI reloads messages.
 - tests[chat]: update `useAiChat` tests to expect server-inserted assistant via `loadMessages`.
 
+- fix[chat-widget]: ensure assistant responses render in UI even if server persistence lags. Added fallback in `useAiChat.sendMessage` to append a temporary assistant message and persist it, then replace once saved. Added unit test for this path.
+ - fix[chat-widget]: per-turn detection using `reply_to_message_id` so each user prompt maps to its assistant reply; test updated to assert metadata.
+ - fix[chat-widget]: restore typewriter effect for assistant replies by marking temp and server-loaded assistant messages as `isNewlyReceived` and preserving it when replacing temp with saved.
+
+- fix[chat-widget]: restore typewriter when props are reactive. Unwrap reactive props in `useTextStream` (`speed`, `mode`, `fadeDuration`, `segmentDelay`, `characterChunkSize`, `onComplete`, `onError`, and `textStream`) using `unref`; remove fragile watchers. Added regression tests for computed refs in `ResponseStream.spec.js` and `useTextStream.spec.js`.
+

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, computed } from 'vue'
 import ResponseStream from '@/components/ui/ResponseStream.vue'
 
 describe('ResponseStream', () => {
@@ -237,6 +237,25 @@ describe('ResponseStream', () => {
     await nextTick()
     
     // Should start streaming
+    expect(wrapper.text().length).toBeGreaterThan(0)
+  })
+
+  it('streams when props are provided as computed refs', async () => {
+    const textRef = computed(() => 'Hello computed')
+    const speedRef = computed(() => 100)
+
+    const wrapper = mount(ResponseStream, {
+      props: {
+        textStream: textRef,
+        mode: 'typewriter',
+        speed: speedRef,
+      },
+    })
+
+    await nextTick()
+    vi.advanceTimersByTime(100)
+    await nextTick()
+
     expect(wrapper.text().length).toBeGreaterThan(0)
   })
 })

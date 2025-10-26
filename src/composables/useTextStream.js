@@ -1,4 +1,4 @@
-import { ref, computed, watch, onUnmounted, getCurrentInstance } from 'vue'
+import { ref, computed, watch, onUnmounted, getCurrentInstance, unref } from 'vue'
 
 /**
  * Vue 3 composable for streaming text with typewriter or fade effects
@@ -35,32 +35,27 @@ export function useTextStream(options = {}) {
   const streamController = ref(null)
   const completedFlag = ref(false)
 
-  // Reactive settings
-  const speedRef = ref(speed)
-  const modeRef = ref(mode)
-  const fadeDurationRef = ref(fadeDuration)
-  const segmentDelayRef = ref(segmentDelay)
-  const characterChunkSizeRef = ref(characterChunkSize)
-  const onCompleteRef = ref(onComplete)
-  const onErrorRef = ref(onError)
-
-  // Update refs when props change
-  watch(() => options.speed, (newSpeed) => { speedRef.value = newSpeed ?? 20 })
-  watch(() => options.mode, (newMode) => { modeRef.value = newMode ?? 'typewriter' })
-  watch(() => options.fadeDuration, (newVal) => { fadeDurationRef.value = newVal })
-  watch(() => options.segmentDelay, (newVal) => { segmentDelayRef.value = newVal })
-  watch(() => options.characterChunkSize, (newVal) => { characterChunkSizeRef.value = newVal })
-  watch(() => options.onComplete, (newVal) => { onCompleteRef.value = newVal })
-  watch(() => options.onError, (newVal) => { onErrorRef.value = newVal })
+  // Reactive settings (unwrap options reactively)
+  const speedValue = computed(() => {
+    const val = unref(options.speed)
+    const normalized = Math.min(100, Math.max(1, val ?? 20))
+    return normalized
+  })
+  const modeValue = computed(() => unref(options.mode) ?? 'typewriter')
+  const fadeDurationValue = computed(() => unref(options.fadeDuration))
+  const segmentDelayValue = computed(() => unref(options.segmentDelay))
+  const characterChunkSizeValue = computed(() => unref(options.characterChunkSize))
+  const onCompleteValue = computed(() => unref(options.onComplete) || null)
+  const onErrorValue = computed(() => unref(options.onError) || null)
 
   const getChunkSize = () => {
-    if (typeof characterChunkSizeRef.value === 'number') {
+    if (typeof characterChunkSizeValue.value === 'number') {
       return Math.max(1, characterChunkSizeRef.value)
     }
 
-    const normalizedSpeed = Math.min(100, Math.max(1, speedRef.value))
+    const normalizedSpeed = speedValue.value
 
-    if (modeRef.value === 'typewriter') {
+    if (modeValue.value === 'typewriter') {
       if (normalizedSpeed < 25) return 1
       return Math.max(1, Math.round((normalizedSpeed - 25) / 10))
     } else if (modeRef.value === 'fade') {
@@ -71,34 +66,34 @@ export function useTextStream(options = {}) {
   }
 
   const getProcessingDelay = () => {
-    if (typeof segmentDelayRef.value === 'number') {
-      return Math.max(0, segmentDelayRef.value)
+    if (typeof segmentDelayValue.value === 'number') {
+      return Math.max(0, segmentDelayValue.value)
     }
 
-    const normalizedSpeed = Math.min(100, Math.max(1, speedRef.value))
+    const normalizedSpeed = speedValue.value
     return Math.max(1, Math.round(100 / Math.sqrt(normalizedSpeed)))
   }
 
   const getFadeDuration = () => {
-    if (typeof fadeDurationRef.value === 'number') {
-      return Math.max(10, fadeDurationRef.value)
+    if (typeof fadeDurationValue.value === 'number') {
+      return Math.max(10, fadeDurationValue.value)
     }
 
-    const normalizedSpeed = Math.min(100, Math.max(1, speedRef.value))
+    const normalizedSpeed = speedValue.value
     return Math.round(1000 / Math.sqrt(normalizedSpeed))
   }
 
   const getSegmentDelay = () => {
-    if (typeof segmentDelayRef.value === 'number') {
-      return Math.max(0, segmentDelayRef.value)
+    if (typeof segmentDelayValue.value === 'number') {
+      return Math.max(0, segmentDelayValue.value)
     }
 
-    const normalizedSpeed = Math.min(100, Math.max(1, speedRef.value))
+    const normalizedSpeed = speedValue.value
     return Math.max(1, Math.round(100 / Math.sqrt(normalizedSpeed)))
   }
 
   const updateSegments = (text) => {
-    if (modeRef.value === 'fade') {
+    if (modeValue.value === 'fade') {
       try {
         const segmenter = new Intl.Segmenter(navigator.language, {
           granularity: 'word',
@@ -119,8 +114,8 @@ export function useTextStream(options = {}) {
             index,
           }))
         segments.value = newSegments
-        if (onErrorRef.value) {
-          onErrorRef.value(error)
+        if (onErrorValue.value) {
+          onErrorValue.value(error)
         }
       }
     }
@@ -130,8 +125,8 @@ export function useTextStream(options = {}) {
     if (!completedFlag.value) {
       completedFlag.value = true
       isComplete.value = true
-      if (onCompleteRef.value) {
-        onCompleteRef.value()
+      if (onCompleteValue.value) {
+        onCompleteValue.value()
       }
     }
   }
@@ -170,7 +165,7 @@ export function useTextStream(options = {}) {
       const newDisplayedText = text.slice(0, endIndex)
 
       displayedText.value = newDisplayedText
-      if (modeRef.value === 'fade') {
+      if (modeValue.value === 'fade') {
         updateSegments(newDisplayedText)
       }
 
@@ -205,8 +200,8 @@ export function useTextStream(options = {}) {
     } catch (error) {
       console.error('Error processing text stream:', error)
       markComplete()
-      if (onErrorRef.value) {
-        onErrorRef.value(error)
+      if (onErrorValue.value) {
+        onErrorValue.value(error)
       }
     }
   }
@@ -215,9 +210,7 @@ export function useTextStream(options = {}) {
     reset()
 
     // Get the actual value (unwrap if reactive)
-    const actualValue = typeof textStream === 'object' && textStream !== null && 'value' in textStream 
-      ? textStream.value 
-      : textStream
+    const actualValue = unref(textStream)
 
     if (typeof actualValue === 'string') {
       processStringTypewriter(actualValue)
@@ -235,9 +228,7 @@ export function useTextStream(options = {}) {
 
   const resume = () => {
     // Get the actual value (unwrap if reactive)
-    const actualValue = typeof textStream === 'object' && textStream !== null && 'value' in textStream 
-      ? textStream.value 
-      : textStream
+    const actualValue = unref(textStream)
 
     if (typeof actualValue === 'string' && !isComplete.value) {
       processStringTypewriter(actualValue)
@@ -246,12 +237,7 @@ export function useTextStream(options = {}) {
 
   // Auto-start on mount
   // Handle both plain values and reactive refs/computed
-  const textStreamValue = computed(() => {
-    if (typeof textStream === 'object' && textStream !== null && 'value' in textStream) {
-      return textStream.value
-    }
-    return textStream
-  })
+  const textStreamValue = computed(() => unref(textStream))
 
   watch(
     textStreamValue,

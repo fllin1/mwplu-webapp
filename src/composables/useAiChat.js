@@ -81,9 +81,43 @@ export function useAiChat() {
       console.log('Extracted AI response:', aiResponse)
 
       if (aiResponse) {
-        // Assistant message is written server-side via RPC in the webhook workflow.
-        // Reload the conversation messages to include the assistant response.
+        // Attempt to reload messages in case the assistant was persisted server-side
         await chatStore.loadMessages()
+
+        // Check specifically for an assistant message replying to THIS user message id
+        const hasAssistantForTurn = chatStore.messages.some(
+          (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
+        )
+
+        if (!hasAssistantForTurn) {
+          // Add temporary assistant for immediate UI feedback
+          const temp = chatStore.addTemporaryMessage('assistant', aiResponse)
+          // Persist the assistant message with linkage to the user message; then replace temp with final saved message
+          const saved = await chatStore.saveMessageOnly('assistant', aiResponse, {
+            reply_to_message_id: messageId,
+          })
+          if (saved?.success && saved.data) {
+            chatStore.replaceTemporaryMessage(temp.id, saved.data)
+          } else {
+            // if persistence failed, keep temp but mark as non-temp to display normally
+            chatStore.replaceTemporaryMessage(temp.id, {
+              ...temp,
+              isTemporary: false,
+              isNewlyReceived: true,
+            })
+          }
+        } else {
+          // If assistant exists from server, mark only that assistant as newly received for animation
+          const lastAssistantIdx = chatStore.messages.findIndex(
+            (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
+          )
+          if (lastAssistantIdx !== -1) {
+            chatStore.messages[lastAssistantIdx] = {
+              ...chatStore.messages[lastAssistantIdx],
+              isNewlyReceived: true,
+            }
+          }
+        }
       }
 
       isLoading.value = false
