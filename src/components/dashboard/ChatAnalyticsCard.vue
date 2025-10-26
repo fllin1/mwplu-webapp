@@ -1,8 +1,9 @@
 <template>
   <div class="stat-card">
-    <div class="stat-content" style="width: 100%">
-      <div class="card-title">Chatbot</div>
-
+    <div class="stat-icon">
+      <Icon name="robot" size="md" color="#ffffff" decorative />
+    </div>
+    <div class="stat-content">
       <div v-if="isLoading" class="loading-state">
         <BaseSpinner size="small" />
         <span>Chargement...</span>
@@ -10,12 +11,12 @@
 
       <div v-else class="kpi-grid">
         <div class="kpi">
-          <div class="kpi-label">Messages ce mois</div>
           <div class="kpi-value">{{ formattedMessages }}</div>
+          <div class="kpi-label">Messages ce mois</div>
         </div>
         <div class="kpi">
-          <div class="kpi-label">Coût ce mois</div>
           <div class="kpi-value">{{ formattedCost }}</div>
+          <div class="kpi-label">Coût ce mois</div>
         </div>
       </div>
 
@@ -28,6 +29,7 @@
 import { ref, onMounted, computed } from 'vue'
 import BaseSpinner from '@/components/common/BaseSpinner.vue'
 import { dbService } from '@/services/supabase'
+import Icon from '@/components/ui/Icon.vue'
 
 const isLoading = ref(true)
 const error = ref('')
@@ -59,7 +61,33 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.card-title {
+
+/* Align structure and visuals with other .stat-card usage */
+.stat-card {
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  background-color: var(--color-blue);
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-content { flex: 1; }
+
+.stat-heading {
   font-size: var(--font-size-base);
   color: var(--color-gray-700);
   margin-bottom: var(--space-4);
@@ -71,10 +99,16 @@ onMounted(async () => {
   gap: var(--space-6);
 }
 
+.kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
 .kpi-label {
   font-size: var(--font-size-xs);
   color: var(--color-gray-600);
-  margin-bottom: var(--space-1);
 }
 
 .kpi-value {

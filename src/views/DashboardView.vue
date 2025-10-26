@@ -15,17 +15,23 @@
         </div>
         <div class="quick-actions">
           <router-link to="/plu-repository" class="action-card">
-            <div class="action-icon">🏛️</div>
+            <div class="action-icon">
+              <Icon name="compass" size="lg" decorative />
+            </div>
             <h3>Parcourir les PLU</h3>
             <p>Explorer les documents d'urbanisme</p>
           </router-link>
           <router-link to="/profile" class="action-card">
-            <div class="action-icon">👤</div>
+            <div class="action-icon">
+              <Icon name="user" size="lg" decorative />
+            </div>
             <h3>Mon Profil</h3>
             <p>Gérer mes informations</p>
           </router-link>
           <router-link to="/contact" class="action-card">
-            <div class="action-icon">💬</div>
+            <div class="action-icon">
+              <Icon name="comment" size="lg" decorative />
+            </div>
             <h3>Contact</h3>
             <p>Nous contacter</p>
           </router-link>
@@ -38,21 +44,27 @@
         <div class="stats-grid">
 
           <div class="stat-card">
-            <div class="stat-icon">💬</div>
+            <div class="stat-icon">
+              <Icon name="comment" size="md" color="#ffffff" decorative />
+            </div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats.commentsCount }}</div>
               <div class="stat-label">Commentaires postés</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">⭐</div>
+            <div class="stat-icon">
+              <Icon name="star" size="md" color="#ffffff" decorative />
+            </div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats.ratingsCount }}</div>
               <div class="stat-label">Évaluations données</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📥</div>
+            <div class="stat-icon">
+              <Icon name="download" size="md" color="#ffffff" decorative />
+            </div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats.downloadsCount }}</div>
               <div class="stat-label">Téléchargements</div>
@@ -71,7 +83,7 @@
           <!-- Recent Comments -->
           <div class="activity-card">
             <h3 class="activity-title">
-              <span class="activity-icon">💭</span>
+              <span class="activity-icon"><Icon name="comment" decorative /></span>
               Mes derniers commentaires
             </h3>
             <div v-if="isLoadingComments" class="loading-state">
@@ -102,7 +114,7 @@
           <!-- Recent Downloads -->
           <div class="activity-card">
             <h3 class="activity-title">
-              <span class="activity-icon">📥</span>
+              <span class="activity-icon"><Icon name="download" decorative /></span>
               Téléchargements récents
             </h3>
             <div v-if="isLoadingDownloads" class="loading-state">
@@ -162,6 +174,7 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
+import Icon from '@/components/ui/Icon.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/services/supabase'
@@ -177,7 +190,8 @@ export default {
     AppLayout,
     BreadcrumbNav,
     BaseSpinner,
-    ChatAnalyticsCard
+    ChatAnalyticsCard,
+    Icon
   },
 
   setup() {

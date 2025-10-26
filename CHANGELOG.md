@@ -1,3 +1,11 @@
+## 2025-10-26
+
+- Dashboard: Replaced emoji with consistent SVG icons per UI rules.
+  - Added `Icon.vue` component with size/color/title props.
+  - New SVGs: comment, download, user, robot, mail (24x24, 2px stroke).
+  - Updated `DashboardView.vue` quick actions, stats, and activity headers to use icons.
+  - Updated `ChatAnalyticsCard.vue` title with robot icon.
+
 # Changelog
 
 ## 2025-06-02
