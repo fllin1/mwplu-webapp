@@ -7,8 +7,20 @@
     </div>
     
     <div class="message-content">
-      <div class="message-text" v-html="formattedMessage"></div>
-      <div class="message-actions" v-if="!message.isTemporary">
+      <div class="message-text">
+        <!-- Typewriter effect for NEW assistant messages only -->
+        <ResponseStream
+          v-if="message.isNewlyReceived && message.role === 'assistant' && !message.isError"
+          :text-stream="message.message || ''"
+          mode="typewriter"
+          :speed="50"
+          class="streaming-text"
+          :on-complete="() => handleAnimationComplete(message.id)"
+        />
+        <!-- Regular display for everything else -->
+        <div v-else v-html="formattedMessage"></div>
+      </div>
+      <div class="message-actions" v-if="!message.isTemporary && !message.isNewlyReceived">
         <button
           class="action-button"
           @click="copyMessage"
@@ -44,6 +56,8 @@ import DOMPurify from 'dompurify'
 import { MessageSquare, User, Copy, RotateCcw } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { useChatStore } from '@/stores/chat'
+import ResponseStream from '@/components/ui/ResponseStream.vue'
 
 const props = defineProps({
   message: {
@@ -56,6 +70,7 @@ const emit = defineEmits(['regenerate'])
 
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const chatStore = useChatStore()
 
 const userAvatar = computed(() => {
   return authStore.user?.user_metadata?.avatar_url || null
@@ -109,6 +124,11 @@ const copyMessage = async () => {
 
 const regenerateMessage = () => {
   emit('regenerate', props.message)
+}
+
+const handleAnimationComplete = (messageId) => {
+  // Clear the isNewlyReceived flag after animation completes
+  chatStore.clearNewlyReceivedFlag(messageId)
 }
 </script>
 
@@ -194,6 +214,10 @@ const regenerateMessage = () => {
   font-size: var(--font-size-md);
   line-height: 1.5;
   margin-bottom: var(--space-2);
+}
+
+.streaming-text {
+  display: inline;
 }
 
 .message-text :deep(br) {

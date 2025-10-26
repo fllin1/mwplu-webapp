@@ -56,7 +56,11 @@ export const useChatStore = defineStore('chat', () => {
       const result = await dbService.getChatMessages(currentConversationId.value)
 
       if (result.success) {
-        messages.value = result.data
+        // Mark historical messages as not newly received
+        messages.value = result.data.map(msg => ({
+          ...msg,
+          isNewlyReceived: false
+        }))
       } else {
         error.value = result.error
       }
@@ -119,8 +123,13 @@ export const useChatStore = defineStore('chat', () => {
       )
 
       if (result.success) {
-        messages.value.push(result.data)
-        return { success: true, data: result.data }
+        // Mark new messages as newly received for typewriter effect
+        const messageWithFlag = {
+          ...result.data,
+          isNewlyReceived: true
+        }
+        messages.value.push(messageWithFlag)
+        return { success: true, data: messageWithFlag }
       } else {
         error.value = result.error
         return { success: false, error: result.error }
@@ -291,6 +300,19 @@ export const useChatStore = defineStore('chat', () => {
     error.value = err
   }
 
+  /**
+   * Clear the isNewlyReceived flag for a message (after animation completes)
+   */
+  const clearNewlyReceivedFlag = (messageId) => {
+    const index = messages.value.findIndex((m) => m.id === messageId)
+    if (index !== -1) {
+      messages.value[index] = {
+        ...messages.value[index],
+        isNewlyReceived: false
+      }
+    }
+  }
+
   return {
     isPopupOpen,
     isLoading,
@@ -319,5 +341,6 @@ export const useChatStore = defineStore('chat', () => {
     setLoading,
     setStreaming,
     setError,
+    clearNewlyReceivedFlag,
   }
 })
