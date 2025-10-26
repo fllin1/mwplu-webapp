@@ -214,10 +214,15 @@ export function useTextStream(options = {}) {
   const startStreaming = () => {
     reset()
 
-    if (typeof textStream === 'string') {
-      processStringTypewriter(textStream)
-    } else if (textStream && typeof textStream[Symbol.asyncIterator] === 'function') {
-      processAsyncIterable(textStream)
+    // Get the actual value (unwrap if reactive)
+    const actualValue = typeof textStream === 'object' && textStream !== null && 'value' in textStream 
+      ? textStream.value 
+      : textStream
+
+    if (typeof actualValue === 'string') {
+      processStringTypewriter(actualValue)
+    } else if (actualValue && typeof actualValue[Symbol.asyncIterator] === 'function') {
+      processAsyncIterable(actualValue)
     }
   }
 
@@ -229,14 +234,27 @@ export function useTextStream(options = {}) {
   }
 
   const resume = () => {
-    if (typeof textStream === 'string' && !isComplete.value) {
-      processStringTypewriter(textStream)
+    // Get the actual value (unwrap if reactive)
+    const actualValue = typeof textStream === 'object' && textStream !== null && 'value' in textStream 
+      ? textStream.value 
+      : textStream
+
+    if (typeof actualValue === 'string' && !isComplete.value) {
+      processStringTypewriter(actualValue)
     }
   }
 
   // Auto-start on mount
+  // Handle both plain values and reactive refs/computed
+  const textStreamValue = computed(() => {
+    if (typeof textStream === 'object' && textStream !== null && 'value' in textStream) {
+      return textStream.value
+    }
+    return textStream
+  })
+
   watch(
-    () => textStream,
+    textStreamValue,
     () => {
       startStreaming()
     },
