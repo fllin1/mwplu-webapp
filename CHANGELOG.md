@@ -82,4 +82,9 @@
 - db[analytics]: added triggers `trigger_update_daily_usage` and `trigger_update_monthly_usage` to maintain aggregates; created helper views `v_user_current_month` and `v_user_recent_activity`.
 - ops[cron]: ensured `pg_cron` extension exists; scheduled hourly refresh for analytics materialized views and weekly cleanup of old events (idempotent job creation).
  - feat[chat]: include `message_id` (Supabase `chat_messages.id`) in webhook payload from `useAiChat.sendMessage`; added unit test asserting presence of `message_id`.
+- db[chat]: add `conversation_turn` and `reply_to_message_id` to `public.chat_messages`; create `compute_conversation_turn` and `chat_finalize_turn` RPC.
+- feat[chat]: pass `reply_to_message_id` when saving assistant messages; map it in `dbService.saveChatMessage`.
+- tests[chat]: add unit test to assert `reply_to_message_id` is included in assistant metadata.
+- feat[chat]: switch to single-writer finalize-turn workflow — frontend saves user only; assistant and analytics are inserted server-side via RPC; UI reloads messages.
+- tests[chat]: update `useAiChat` tests to expect server-inserted assistant via `loadMessages`.
 

@@ -25,7 +25,7 @@ describe('useAiChat composable', () => {
     vi.clearAllMocks()
   })
 
-  it('sends one POST (non-streaming JSON) and persists one assistant message', async () => {
+  it('sends one POST (non-streaming JSON) and reloads messages to include assistant', async () => {
     const chatStore = useChatStore()
 
     const { dbService } = await import('@/services/supabase')
@@ -40,10 +40,19 @@ describe('useAiChat composable', () => {
       json: async () => ({ response: 'Hello AI' }),
     }))
 
-    // mock saveChatMessage for both user and assistant messages
+    // user message persisted by frontend, assistant will be loaded via getChatMessages
     dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
       Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user' : 'm-assist', role, message, metadata } })
     )
+
+    // when loadMessages is called, simulate assistant already persisted server-side
+    dbService.getChatMessages = vi.fn(async () => ({
+      success: true,
+      data: [
+        { id: 'm-user', role: 'user', message: 'Hello', created_at: new Date().toISOString() },
+        { id: 'm-assist', role: 'assistant', message: 'Hello AI', created_at: new Date().toISOString() }
+      ]
+    }))
 
     const { sendMessage } = useAiChat()
     const result = await sendMessage('Hello', 'doc-1')
@@ -51,16 +60,12 @@ describe('useAiChat composable', () => {
     expect(result.success).toBe(true)
     expect(global.fetch).toHaveBeenCalledTimes(1)
 
-    // Should have both user and assistant messages
     const userMsg = chatStore.messages.find((m) => m.id === 'm-user')
     const assistantMsg = chatStore.messages.find((m) => m.id === 'm-assist')
-    
+
     expect(userMsg).toBeDefined()
     expect(assistantMsg).toBeDefined()
     expect(assistantMsg.message).toBe('Hello AI')
-    
-    // Assistant message should be marked as newly received
-    expect(assistantMsg.isNewlyReceived).toBe(true)
   })
 
   it('includes message_id from saved user message in webhook payload', async () => {
@@ -71,7 +76,6 @@ describe('useAiChat composable', () => {
     dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-1' } })
     await chatStore.initializeChat('doc-1')
 
-    // Capture body of fetch
     let capturedBody = null
     global.fetch = vi.fn(async (_url, init) => {
       capturedBody = JSON.parse(init.body)
@@ -85,6 +89,14 @@ describe('useAiChat composable', () => {
     dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
       Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user-123' : 'm-assist-456', role, message, metadata } })
     )
+
+    dbService.getChatMessages = vi.fn(async () => ({
+      success: true,
+      data: [
+        { id: 'm-user-123', role: 'user', message: 'Hello', created_at: new Date().toISOString() },
+        { id: 'm-assist-456', role: 'assistant', message: 'Hello AI', created_at: new Date().toISOString() }
+      ]
+    }))
 
     const { sendMessage } = useAiChat()
     const result = await sendMessage('Hello', 'doc-1')
@@ -106,7 +118,6 @@ describe('useAiChat composable', () => {
     dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-1' } })
     await chatStore.initializeChat('doc-1')
 
-    // mock fetch failing
     global.fetch = vi.fn(async () => ({
       ok: false,
       status: 500,
@@ -125,7 +136,6 @@ describe('useAiChat composable', () => {
     expect(result.error).toContain('Server error')
     expect(global.fetch).toHaveBeenCalledTimes(1)
 
-    // Error message should be added
     const errorMsg = chatStore.messages.find((m) => m.metadata?.isError)
     expect(errorMsg).toBeDefined()
   })

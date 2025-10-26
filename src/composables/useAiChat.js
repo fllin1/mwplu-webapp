@@ -81,10 +81,9 @@ export function useAiChat() {
       console.log('Extracted AI response:', aiResponse)
 
       if (aiResponse) {
-        const assistantMessageResult = await chatStore.addMessage('assistant', aiResponse, { webhook_response: data })
-        if (!assistantMessageResult.success) {
-          throw new Error(assistantMessageResult.error)
-        }
+        // Assistant message is written server-side via RPC in the webhook workflow.
+        // Reload the conversation messages to include the assistant response.
+        await chatStore.loadMessages()
       }
 
       isLoading.value = false

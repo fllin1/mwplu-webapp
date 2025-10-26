@@ -802,6 +802,7 @@ export const dbService = {
           role,
           message: message.trim(),
           metadata,
+          reply_to_message_id: metadata && metadata.reply_to_message_id ? metadata.reply_to_message_id : null,
         })
         .select()
         .single()
