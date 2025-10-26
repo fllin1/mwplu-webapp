@@ -31,9 +31,10 @@ alwaysApply: false
 - `src/components/layout/`: `AppLayout`, `AppHeader`, `AppFooter`, `BreadcrumbNav`
 - `src/components/common/`: `BaseNotification`, `BaseSpinner`, `CookieBanner`, `PolicyModal`, `TurnstileWidget`
 - `src/components/plu/`: `CitySelector`, `ZoningSelector`, `ZoneSelector`, selection form and synthesis tabs
+- `src/components/chat/`: `AiChatWidget`, `AiChatHeader`, `AiChatMessage`, `AiChatWelcome`
 - `src/services/`: `supabase.js`, `errorHandler.js`, `firebase.js`, `turnstile.js`, `donationService.js`
-- `src/stores/`: `auth.js`, `plu.js`, `ui.js`
-- `src/composables/`: `useAuth`, `useAuthGuard`, `useAnalytics`, `useTurnstile`
+- `src/stores/`: `auth.js`, `plu.js`, `ui.js`, `chat.js`
+- `src/composables/`: `useAuth`, `useAuthGuard`, `useAnalytics`, `useTurnstile`, `useAiChat`, `useTextStream`
 - `src/views/`: `HomeView`, `PluSearchView`, `PluSynthesisView`, auth views, profile, docs, policies, dashboard
 
 ## Supabase

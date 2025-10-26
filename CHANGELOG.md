@@ -1,24 +1,3 @@
-### 2025-10-26
-
-- 2025-10-26T00:00:00+00:00 (assistant) - debug[chat]: added comprehensive console logging to webhook response handling in `useAiChat.js` to diagnose asynchronous webhook response format and identify why messages aren't displaying; logs request payload, response status/headers, content-type detection, parsed data structure, and message addition results.
-- 2025-10-26T10:00:00+00:00 (assistant) - debug[chat]: added console logs for webhook response data in `useAiChat.js`; logs full response object, error responses, and extracted AI response for debugging purposes.
-- 2025-10-26T00:15:00+00:00 (assistant) - fix[chat]: added fallback NDJSON parser for webhook responses that return newline-delimited JSON without proper content-type header; fixes "Unexpected non-whitespace character after JSON" error by parsing each line individually and assembling the response text from `type: 'item'` content fields or `response`/`message` fields.
-- 2025-10-26T00:30:00+00:00 (assistant) - test[chat]: updated `useAiChat.spec.js` to use `text()` method instead of `json()` to match new implementation; added test case for NDJSON fallback parser; fixed streaming test mock to properly distinguish user and assistant messages; all 4 tests passing.
-- 2025-10-26T01:00:00+00:00 (assistant) - feat[chat]: enhanced NDJSON fallback parser to simulate progressive streaming like ChatGPT; creates temporary message and updates it incrementally as each chunk is parsed, providing smooth streaming UX even when webhook lacks proper `Content-Type: application/x-ndjson` header; added code comments explaining n8n webhook header configuration for true streaming.
-- 2025-10-26T01:15:00+00:00 (assistant) - docs[chat]: created `N8N_WEBHOOK_STREAMING_SETUP.md` with comprehensive guide on configuring n8n webhook for optimal streaming performance; explains both proper streaming (with header) and fallback streaming (without header) approaches.
-- 2025-10-26T08:30:00+00:00 (assistant) - feat[chat]: integrated typewriter/fade text streaming effects for assistant messages; created Vue 3 composable `useTextStream.js` with support for both typewriter and fade animation modes, configurable speed (1-100), custom character chunking, and async iterable support; created `ResponseStream.vue` component to render streaming text with animation; updated `AiChatMessage.vue` to use streaming effects for temporary (streaming) messages while keeping markdown formatting for completed messages.
-- 2025-10-26T08:45:00+00:00 (assistant) - test[chat]: added comprehensive unit tests for streaming functionality; created `useTextStream.spec.js` with 9 tests covering initialization, typewriter/fade modes, speed settings, pause/resume, reset, and custom options; created `ResponseStream.spec.js` with 14 tests covering rendering, prop handling, and edge cases; updated `AiChatMessage.spec.js` to handle Pinia setup and test streaming vs non-streaming message rendering; fixed composable to work outside component context for testing.
-- 2025-10-26T09:00:00+00:00 (assistant) - refactor[chat]: simplified webhook integration by removing NDJSON streaming; n8n now returns simple JSON responses; applied typewriter effect (speed=50) only to newly received assistant messages while historical messages display instantly for better UX; added `isNewlyReceived` flag to chat store; removed all streaming complexity from `useAiChat.js`; updated tests to reflect new implementation; deleted streaming documentation.
-- 2025-10-26T15:30:00+00:00 (assistant) - fix[chat]: fixed typewriter effect not displaying in UI by properly unwrapping reactive computed refs in `useTextStream.js`; the watcher was watching the ref itself instead of its value, preventing the streaming animation from triggering; added helper computed to unwrap both plain values and reactive refs/computed in `startStreaming()`, `resume()`, and the main watcher.
- - 2025-10-26T16:00:00+00:00 (assistant) - docs[features]: updated `/.cursor/rules/features_status.mdc` to reflect chat implementation and pending streaming status.
-
-### 2025-10-25
-
-- Chat: fixed duplicate assistant message at the end of streaming by persisting the final message without pushing a second item and replacing the temporary bubble in place.
-- Chat: smoother streaming UI — the typing indicator hides while streaming and the growing assistant bubble updates in place; auto-scroll now reacts to content changes during streaming.
-- 2025-10-25T21:10:00+00:00 (assistant) - fix[chat]: eliminate double n8n webhook POSTs by refactoring `useAiChat.sendMessage` to a single fetch-based path (handles streaming NDJSON and non-streaming JSON); added tests for JSON, streaming, and error paths to ensure only one POST per message.
- - 2025-10-25T22:00:00+00:00 (assistant) - feat[chat]: hide inline chat bar (`AiChatInput.vue`) whenever popup is open (`isPopupOpen`), restore on close; increased chat bar shadow to `var(--shadow-md)`; added unit test to assert hide/show behavior.
-
 # Changelog
 
 ## 2025-06-02
@@ -83,7 +62,17 @@
 - 2025-08-19T22:58:17+02:00 (fllin1) 742fa3d - feat[auth]: Reset password and signup confirmation feature functional
  
 ## 2025-10-25
-- 2025-10-25T00:00:00+00:00 (assistant) - feat[chat]: migrate chat to conversations model (`chat_conversations`, `conversation_id`), update webhook payload, add unit tests for chat store and useAiChat
- - 2025-10-25T18:35:00+00:00 (assistant) - fix[chat]: updated n8n webhook to use `public.chat_conversations` instead of `public.chat_sessions`; resolved "relation does not exist" error when sending messages
- - 2025-10-25T18:50:00+00:00 (assistant) - chore[chat]: add console.debug logging of webhook response in `useAiChat.js`; add unit test asserting log
- - 2025-10-25T20:00:00+00:00 (assistant) - feat[chat]: streaming NDJSON responses in `useAiChat.js` with temporary assistant message and final persistence; sanitized Markdown rendering in `AiChatMessage.vue` via `marked` + `dompurify`; added unit tests for streaming and markdown; added store helpers to update/append temporary messages
+- feat[chat]: migrate to conversations model; update webhook payload; add unit tests for chat store and `useAiChat`.
+- fix[chat]: n8n webhook now targets `public.chat_conversations` (resolved "relation does not exist" error); single fetch-based path eliminates double webhook POSTs.
+- chore[chat]: add webhook response logging; implement NDJSON streaming with temporary assistant message and sanitized Markdown in `AiChatMessage.vue`; add store helpers and tests.
+- ui[chat]: smoother streaming UX (typing indicator/auto-scroll); hide inline chat bar while popup is open.
+
+## 2025-10-26
+
+- debug[chat]: comprehensive webhook response logging in `useAiChat.js` to inspect payload, headers, and parsed data.
+- fix[chat]: NDJSON fallback parser for newline-delimited JSON responses; updated tests accordingly.
+- feat[chat]: streaming effects via `useTextStream.js` and `ResponseStream.vue`; keep markdown rendering for completed messages; added tests.
+- refactor[chat]: removed NDJSON streaming; switched to simple JSON with typewriter effect for newly received messages; introduced `isNewlyReceived`; updated tests.
+- fix[chat]: resolved typewriter animation bug by correctly unwrapping reactive refs in `useTextStream.js`.
+- docs[chat]: added `N8N_WEBHOOK_STREAMING_SETUP.md`; updated architecture and features status.
+
