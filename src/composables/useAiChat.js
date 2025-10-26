@@ -61,7 +61,6 @@ export function useAiChat() {
           const contentType = res.headers.get('content-type') || ''
           if (contentType.includes('application/json')) {
             const body = await res.json()
-            console.log('Webhook error response:', body)
             serverMessage = body?.message || JSON.stringify(body)
           } else {
             serverMessage = await res.text()

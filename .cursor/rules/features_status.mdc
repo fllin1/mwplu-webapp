@@ -18,6 +18,10 @@ alwaysApply: false
 - Download tracking in DB; signed URL generation for PDF from Storage in `PluSynthesisView`
 - Cookie consent and privacy controls for analytics
 - Profile view (basic info update, password change stub)
+ - Chat assistant widget with conversations (`public.chat_conversations`, `conversation_id`) and persisted history
+ - Chat UI components (`AiChatWidget`, `AiChatHeader`, `AiChatMessage`, `AiChatWelcome`) with sanitized Markdown
+ - Chat webhook integration (simple JSON responses) with typewriter effect for newly received assistant messages
+ - Unit tests for chat store, composables, and components
 
 ## Pending / Partial
 
