@@ -3,6 +3,8 @@
 - 2025-10-26T00:00:00+00:00 (assistant) - debug[chat]: added comprehensive console logging to webhook response handling in `useAiChat.js` to diagnose asynchronous webhook response format and identify why messages aren't displaying; logs request payload, response status/headers, content-type detection, parsed data structure, and message addition results.
 - 2025-10-26T00:15:00+00:00 (assistant) - fix[chat]: added fallback NDJSON parser for webhook responses that return newline-delimited JSON without proper content-type header; fixes "Unexpected non-whitespace character after JSON" error by parsing each line individually and assembling the response text from `type: 'item'` content fields or `response`/`message` fields.
 - 2025-10-26T00:30:00+00:00 (assistant) - test[chat]: updated `useAiChat.spec.js` to use `text()` method instead of `json()` to match new implementation; added test case for NDJSON fallback parser; fixed streaming test mock to properly distinguish user and assistant messages; all 4 tests passing.
+- 2025-10-26T01:00:00+00:00 (assistant) - feat[chat]: enhanced NDJSON fallback parser to simulate progressive streaming like ChatGPT; creates temporary message and updates it incrementally as each chunk is parsed, providing smooth streaming UX even when webhook lacks proper `Content-Type: application/x-ndjson` header; added code comments explaining n8n webhook header configuration for true streaming.
+- 2025-10-26T01:15:00+00:00 (assistant) - docs[chat]: created `N8N_WEBHOOK_STREAMING_SETUP.md` with comprehensive guide on configuring n8n webhook for optimal streaming performance; explains both proper streaming (with header) and fallback streaming (without header) approaches.
 
 ### 2025-10-25
 

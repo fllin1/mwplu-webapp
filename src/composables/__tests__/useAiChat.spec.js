@@ -151,7 +151,7 @@ describe('useAiChat composable', () => {
     expect(saved?.message).toMatch(/Désolé/)
   })
 
-  it('handles NDJSON response without proper content-type header (fallback parser)', async () => {
+  it('handles NDJSON response without proper content-type header (fallback parser with streaming)', async () => {
     const chatStore = useChatStore()
     await chatStore.initializeChat('doc-1')
 
@@ -174,7 +174,7 @@ describe('useAiChat composable', () => {
 
     const { dbService } = await import('@/services/supabase')
     dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
-      Promise.resolve({ success: true, data: { id: 'm-assist', role, message, metadata } }),
+      Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user' : 'm-final', role, message, metadata } })
     )
 
     const { sendMessage } = useAiChat()
@@ -183,7 +183,14 @@ describe('useAiChat composable', () => {
     // Only fetch called once
     expect(global.fetch).toHaveBeenCalledTimes(1)
 
-    // Assistant message should have combined text from all NDJSON lines
+    // Should have final assistant message with combined text
+    expect(chatStore.messages.find((m) => m.id === 'm-final')?.message).toBe('Hello from NDJSON')
+    
+    // Should have exactly one assistant message (temporary was replaced)
+    const assistantMessages = chatStore.messages.filter((m) => m.role === 'assistant')
+    expect(assistantMessages.length).toBe(1)
+
+    // Verify the assistant message was saved via saveMessageOnly (not addMessage)
     const assistantSaves = dbService.saveChatMessage.mock.calls.filter((c) => c[3] === 'assistant')
     expect(assistantSaves.length).toBe(1)
     expect(assistantSaves[0][4]).toBe('Hello from NDJSON')

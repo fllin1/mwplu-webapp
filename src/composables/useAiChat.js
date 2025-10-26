@@ -180,41 +180,78 @@ export function useAiChat() {
         console.error('[WEBHOOK DEBUG] Failed to parse as single JSON:', parseError)
         
         // Try parsing as NDJSON (multiple JSON objects separated by newlines)
+        // NOTE: If webhook returns NDJSON without proper Content-Type header,
+        // this fallback simulates streaming by progressively updating a temporary message.
+        // For true streaming, set Content-Type: application/x-ndjson in your n8n webhook.
         try {
-          console.log('[WEBHOOK DEBUG] Attempting to parse as NDJSON...')
+          console.log('[WEBHOOK DEBUG] Attempting to parse as NDJSON with simulated streaming...')
           const lines = rawText.trim().split('\n').filter(line => line.trim())
           console.log('[WEBHOOK DEBUG] Found', lines.length, 'lines')
           
+          // Enable streaming mode and create temporary message
+          chatStore.setStreaming(true)
           let fullText = ''
+          let temp = null
+          
           for (const line of lines) {
             try {
               const lineData = JSON.parse(line)
               console.log('[WEBHOOK DEBUG] Parsed NDJSON line:', lineData)
               
               // Extract content from each line
+              let delta = ''
               if (lineData.type === 'item' && lineData.content) {
-                fullText += lineData.content
+                delta = lineData.content
               } else if (lineData.response) {
-                fullText += lineData.response
+                delta = lineData.response
               } else if (lineData.message) {
-                fullText += lineData.message
+                delta = lineData.message
+              }
+              
+              // Update temporary message progressively for streaming effect
+              if (delta) {
+                if (!temp) {
+                  fullText = delta
+                  temp = chatStore.addTemporaryMessage('assistant', fullText)
+                  console.log('[WEBHOOK DEBUG] Created temporary message for streaming')
+                } else {
+                  fullText += delta
+                  chatStore.updateTemporaryMessageContent(temp.id, fullText)
+                  console.log('[WEBHOOK DEBUG] Updated temporary message, length:', fullText.length)
+                }
               }
             } catch (lineError) {
               console.warn('[WEBHOOK DEBUG] Failed to parse line:', line, lineError)
             }
           }
           
-          if (fullText) {
-            console.log('[WEBHOOK DEBUG] Assembled text from NDJSON:', {
+          chatStore.setStreaming(false)
+          
+          if (fullText && temp) {
+            console.log('[WEBHOOK DEBUG] NDJSON streaming completed:', {
               text: fullText,
               length: fullText.length,
             })
-            data = { response: fullText }
+            
+            // Save final message and replace temporary one
+            const assistantMessageResult = await chatStore.saveMessageOnly('assistant', fullText)
+            if (assistantMessageResult.success) {
+              chatStore.replaceTemporaryMessage(temp.id, assistantMessageResult.data)
+              console.log('[WEBHOOK DEBUG] Replaced temporary with saved message')
+            } else {
+              chatStore.removeTemporaryMessage(temp.id)
+              throw new Error(assistantMessageResult.error)
+            }
+            
+            isLoading.value = false
+            chatStore.setLoading(false)
+            return { success: true, data: { response: fullText } }
           } else {
             data = {}
           }
         } catch (ndjsonError) {
           console.error('[WEBHOOK DEBUG] Failed to parse as NDJSON:', ndjsonError)
+          chatStore.setStreaming(false)
           data = {}
         }
       }
