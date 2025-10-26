@@ -37,11 +37,14 @@ export function useAiChat() {
         throw new Error(userMessageResult.error)
       }
 
+      const messageId = userMessageResult.data?.id
+
       chatStore.openPopup()
 
       // Simple JSON webhook call
       const webhookUrl = 'https://n8n.automationdfy.com/webhook/mwplu/chat'
       const requestPayload = {
+        message_id: messageId,
         message: userMessage,
         document_id: documentId,
         user_id: authStore.userId,

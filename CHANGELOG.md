@@ -75,4 +75,11 @@
 - refactor[chat]: removed NDJSON streaming; switched to simple JSON with typewriter effect for newly received messages; introduced `isNewlyReceived`; updated tests.
 - fix[chat]: resolved typewriter animation bug by correctly unwrapping reactive refs in `useTextStream.js`.
 - docs[chat]: added `N8N_WEBHOOK_STREAMING_SETUP.md`; updated architecture and features status.
+- docs[supabase]: updated architecture Supabase section to reflect current DB (chat tables, RLS, comments hard-delete with backup).
+ - docs[supabase]: documented new analytics schema, materialized views, triggers, helper views, and pg_cron jobs in `.cursor/rules/architecture.mdc`.
+- db[analytics]: created `analytics` schema on Supabase (project `mwplu`, eu-west-3) with core tables `chat_events`, `user_daily_usage`, `user_monthly_usage`, `document_usage`, `system_daily_metrics`; added indexes and RLS policies (including admin overrides via `public.profiles.is_admin`).
+- db[analytics]: added materialized views `mv_user_monthly_summary` and `mv_document_popularity` with supporting indexes and `analytics.refresh_all_views()` function.
+- db[analytics]: added triggers `trigger_update_daily_usage` and `trigger_update_monthly_usage` to maintain aggregates; created helper views `v_user_current_month` and `v_user_recent_activity`.
+- ops[cron]: ensured `pg_cron` extension exists; scheduled hourly refresh for analytics materialized views and weekly cleanup of old events (idempotent job creation).
+ - feat[chat]: include `message_id` (Supabase `chat_messages.id`) in webhook payload from `useAiChat.sendMessage`; added unit test asserting presence of `message_id`.
 

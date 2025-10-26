@@ -27,6 +27,10 @@ describe('useAiChat composable', () => {
 
   it('sends one POST (non-streaming JSON) and persists one assistant message', async () => {
     const chatStore = useChatStore()
+
+    const { dbService } = await import('@/services/supabase')
+    dbService.getActiveConversationId.mockResolvedValue({ success: true, hasConversation: false, conversationId: null })
+    dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-1' } })
     await chatStore.initializeChat('doc-1')
 
     // mock fetch returning plain JSON
@@ -37,7 +41,6 @@ describe('useAiChat composable', () => {
     }))
 
     // mock saveChatMessage for both user and assistant messages
-    const { dbService } = await import('@/services/supabase')
     dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
       Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user' : 'm-assist', role, message, metadata } })
     )
@@ -60,8 +63,47 @@ describe('useAiChat composable', () => {
     expect(assistantMsg.isNewlyReceived).toBe(true)
   })
 
+  it('includes message_id from saved user message in webhook payload', async () => {
+    const chatStore = useChatStore()
+
+    const { dbService } = await import('@/services/supabase')
+    dbService.getActiveConversationId.mockResolvedValue({ success: true, hasConversation: false, conversationId: null })
+    dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-1' } })
+    await chatStore.initializeChat('doc-1')
+
+    // Capture body of fetch
+    let capturedBody = null
+    global.fetch = vi.fn(async (_url, init) => {
+      capturedBody = JSON.parse(init.body)
+      return {
+        ok: true,
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        json: async () => ({ response: 'Hello AI' }),
+      }
+    })
+
+    dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
+      Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user-123' : 'm-assist-456', role, message, metadata } })
+    )
+
+    const { sendMessage } = useAiChat()
+    const result = await sendMessage('Hello', 'doc-1')
+
+    expect(result.success).toBe(true)
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+    expect(capturedBody).toBeTruthy()
+    expect(capturedBody.message_id).toBe('m-user-123')
+    expect(capturedBody.message).toBe('Hello')
+    expect(capturedBody.document_id).toBe('doc-1')
+    expect(capturedBody.conversation_id).toBe(chatStore.currentConversationId)
+  })
+
   it('handles non-2xx error with a single POST and shows error message', async () => {
     const chatStore = useChatStore()
+
+    const { dbService } = await import('@/services/supabase')
+    dbService.getActiveConversationId.mockResolvedValue({ success: true, hasConversation: false, conversationId: null })
+    dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-1' } })
     await chatStore.initializeChat('doc-1')
 
     // mock fetch failing
@@ -72,7 +114,6 @@ describe('useAiChat composable', () => {
       json: async () => ({ message: 'Server error' }),
     }))
 
-    const { dbService } = await import('@/services/supabase')
     dbService.saveChatMessage.mockImplementation((conversationId, userId, documentId, role, message, metadata) =>
       Promise.resolve({ success: true, data: { id: role === 'user' ? 'm-user' : 'm-error', role, message, metadata } })
     )
