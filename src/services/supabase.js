@@ -823,6 +823,48 @@ export const dbService = {
   },
 
   /**
+   * Finalize a chat turn server-side via RPC (single-writer path)
+   * @param {Object} params
+   * @param {string} params.conversationId
+   * @param {string} params.userId
+   * @param {string} params.documentId
+   * @param {string} params.userMessageId
+   * @param {string} params.aiText
+   * @param {Object} [params.model]
+   * @returns {Promise<{success: boolean, data?: Object, error?: string}>}
+   */
+  async finalizeChatTurn({ conversationId, userId, documentId, userMessageId, aiText, model = {} }) {
+    try {
+      const payload = {
+        p_conversation_id: conversationId,
+        p_user_id: userId,
+        p_document_id: documentId,
+        p_user_message_id: userMessageId,
+        p_ai_text: aiText,
+        p_model_name: model.model_name || null,
+        p_model_provider: model.model_provider || null,
+        p_model_version: model.model_version || null,
+        p_tokens_prompt: model.tokens_prompt || 0,
+        p_tokens_completion: model.tokens_completion || 0,
+        p_tokens_cached: model.tokens_cached || 0,
+        p_cost_prompt: model.cost_prompt || 0,
+        p_cost_completion: model.cost_completion || 0,
+        p_cost_cached: model.cost_cached || 0,
+        p_response_time_ms: model.response_time_ms || null,
+        p_execution_id: model.execution_id || null,
+        p_extra_metadata: model.extra_metadata || {},
+      }
+
+      const { data, error } = await supabase.rpc('chat_finalize_turn', payload)
+      if (error) throw error
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error finalizing chat turn via RPC:', error)
+      return { success: false, error: error.message }
+    }
+  },
+
+  /**
    * Get active conversation ID for a user and document
    * @param {string} userId - The user ID
    * @param {string} documentId - The document ID

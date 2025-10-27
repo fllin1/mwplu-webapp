@@ -106,3 +106,9 @@
 
 - feat[dashboard]: added `ChatAnalyticsCard` to `DashboardView` stats showing current user's monthly messages and cost (EUR); cohesive UI per design rules.
 - feat[service]: implemented `dbService.getUserMonthlyChatUsage(year, month)` using `analytics.user_monthly_usage` with fallback to `chat_messages` count; added tests.
+
+## 2025-10-27
+
+- fix[chat]: enforce single-writer assistant path; frontend no longer persists fallback assistant. Adds polling and idempotent RPC fallback.
+- db[chat]: add unique index to prevent >1 assistant per `reply_to_message_id`; add triggers to set `conversation_turn` for user and assistant inserts; backfill existing NULL turns. Migration in `docs/DB_2025-10-27_conversation_turn.sql`.
+- tests[chat]: update `useAiChat.spec` to reflect temp-only + polling and RPC fallback; ensure no client-side assistant insert path.

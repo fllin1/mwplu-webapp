@@ -11,7 +11,9 @@ vi.mock('@/services/supabase', async () => {
     dbService: {
       getActiveConversationId: vi.fn(),
       getOrCreateConversation: vi.fn(),
+      getChatMessages: vi.fn(),
       saveChatMessage: vi.fn(),
+      finalizeChatTurn: vi.fn(),
     },
   }
 })
@@ -110,7 +112,7 @@ describe('useAiChat composable', () => {
     expect(capturedBody.conversation_id).toBe(chatStore.currentConversationId)
   })
 
-  it('falls back to locally appending assistant when server does not persist and links reply_to_message_id', async () => {
+  it('keeps a temporary assistant and replaces it when server inserts, without direct persistence', async () => {
     const chatStore = useChatStore()
 
     const { dbService } = await import('@/services/supabase')
@@ -126,43 +128,80 @@ describe('useAiChat composable', () => {
       json: async () => ({ response: 'AI says hello' }),
     }))
 
-    // First save is the user message; second save should be assistant from fallback
-    const saveSpy = vi.fn()
+    // First save is the user message only
     dbService.saveChatMessage.mockImplementation((_convId, _userId, _docId, role, message) => {
-      saveSpy(role, message)
-      const id = role === 'user' ? 'm-user-fallback' : 'm-assist-fallback'
-      return Promise.resolve({ success: true, data: { id, role, message, created_at: new Date().toISOString() } })
+      const id = role === 'user' ? 'm-user-fallback' : 'm-assist-should-not-be-saved'
+      return Promise.resolve({ success: true, data: { id, role, message, created_at: new Date().toISOString(), metadata: {} } })
     })
 
-    // Simulate that loading messages would NOT return assistant yet
-    dbService.getChatMessages = vi.fn(async () => ({
-      success: true,
-      data: [
-        { id: 'm-user-fallback', role: 'user', message: 'Hi', created_at: new Date().toISOString() },
+    // First load returns only the user; second load returns server assistant
+    const loads = [
+      [ { id: 'm-user-fallback', role: 'user', message: 'Hi', created_at: new Date().toISOString(), metadata: {} } ],
+      [
+        { id: 'm-user-fallback', role: 'user', message: 'Hi', created_at: new Date().toISOString(), metadata: {} },
+        { id: 'm-assist-server', role: 'assistant', message: 'AI says hello', created_at: new Date().toISOString(), metadata: { reply_to_message_id: 'm-user-fallback' } },
       ],
-    }))
+    ]
+    let call = 0
+    dbService.getChatMessages.mockImplementation(async () => ({ success: true, data: loads[Math.min(call++, loads.length - 1)] }))
 
     const { sendMessage } = useAiChat()
     const result = await sendMessage('Hi', 'doc-1')
 
     expect(result.success).toBe(true)
-
-    // ensure assistant save was called with reply_to_message_id
-    const roles = saveSpy.mock.calls.map((c) => c[0])
-    expect(roles).toEqual(['user', 'assistant'])
-
-    // The assistant save should be linked to the user message id
-    // saveChatMessage signature: (conversationId, userId, documentId, role, message, metadata)
-    const lastCall = saveSpy.mock.calls[1]
-    const metadata = lastCall[5]
-    expect(metadata).toBeTruthy()
-    expect(metadata.reply_to_message_id).toBe('m-user-fallback')
-
-    // UI should now include assistant message content
-    const assistant = chatStore.messages.find((m) => m.role === 'assistant')
+    // UI should show only server assistant (temp removed)
+    const assistant = chatStore.messages.find((m) => m.role === 'assistant' && m.id === 'm-assist-server')
     expect(assistant).toBeTruthy()
     expect(assistant.message).toBe('AI says hello')
     expect(assistant?.metadata?.reply_to_message_id).toBe('m-user-fallback')
+  })
+
+  it('falls back to finalize-turn RPC if server insert does not arrive in time', async () => {
+    const chatStore = useChatStore()
+
+    const { dbService } = await import('@/services/supabase')
+    dbService.getActiveConversationId.mockResolvedValue({ success: true, hasConversation: false, conversationId: null })
+    dbService.getOrCreateConversation.mockResolvedValue({ success: true, data: { id: 'conv-rpc' } })
+
+    await chatStore.initializeChat('doc-1')
+
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+      json: async () => ({ response: 'AI delayed' }),
+    }))
+
+    // Only user is saved
+    dbService.saveChatMessage.mockImplementation((_convId, _userId, _docId, role, message) => {
+      const id = role === 'user' ? 'm-user-rpc' : 'm-assist-should-not-be-saved'
+      return Promise.resolve({ success: true, data: { id, role, message, created_at: new Date().toISOString(), metadata: {} } })
+    })
+
+    // Always return only user (simulate server lag); after RPC call, return assistant
+    let rpcCalled = false
+    dbService.getChatMessages.mockImplementation(async () => ({
+      success: true,
+      data: rpcCalled
+        ? [
+            { id: 'm-user-rpc', role: 'user', message: 'Hi', created_at: new Date().toISOString(), metadata: {} },
+            { id: 'm-assist-rpc', role: 'assistant', message: 'AI delayed', created_at: new Date().toISOString(), metadata: { reply_to_message_id: 'm-user-rpc' } },
+          ]
+        : [ { id: 'm-user-rpc', role: 'user', message: 'Hi', created_at: new Date().toISOString(), metadata: {} } ],
+    }))
+
+    dbService.finalizeChatTurn.mockImplementation(async () => {
+      rpcCalled = true
+      return { success: true, data: { assistant_message_id: 'm-assist-rpc', conversation_turn: 1 } }
+    })
+
+    const { sendMessage } = useAiChat()
+    const result = await sendMessage('Hi', 'doc-1')
+
+    expect(result.success).toBe(true)
+    expect(dbService.finalizeChatTurn).toHaveBeenCalled()
+    const assistant = chatStore.messages.find((m) => m.id === 'm-assist-rpc')
+    expect(assistant).toBeTruthy()
+    expect(assistant?.metadata?.reply_to_message_id).toBe('m-user-rpc')
   })
   it('handles non-2xx error with a single POST and shows error message', async () => {
     const chatStore = useChatStore()

@@ -81,40 +81,96 @@ export function useAiChat() {
       console.log('Extracted AI response:', aiResponse)
 
       if (aiResponse) {
-        // Attempt to reload messages in case the assistant was persisted server-side
+        // Try to load server-persisted assistant first
         await chatStore.loadMessages()
 
-        // Check specifically for an assistant message replying to THIS user message id
-        const hasAssistantForTurn = chatStore.messages.some(
+        const assistantExists = chatStore.messages.some(
           (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
         )
 
-        if (!hasAssistantForTurn) {
-          // Add temporary assistant for immediate UI feedback
-          const temp = chatStore.addTemporaryMessage('assistant', aiResponse)
-          // Persist the assistant message with linkage to the user message; then replace temp with final saved message
-          const saved = await chatStore.saveMessageOnly('assistant', aiResponse, {
-            reply_to_message_id: messageId,
-          })
-          if (saved?.success && saved.data) {
-            chatStore.replaceTemporaryMessage(temp.id, saved.data)
-          } else {
-            // if persistence failed, keep temp but mark as non-temp to display normally
-            chatStore.replaceTemporaryMessage(temp.id, {
-              ...temp,
-              isTemporary: false,
-              isNewlyReceived: true,
-            })
-          }
-        } else {
-          // If assistant exists from server, mark only that assistant as newly received for animation
-          const lastAssistantIdx = chatStore.messages.findIndex(
+        if (assistantExists) {
+          // Mark server-persisted assistant as newly received for animation
+          const idx = chatStore.messages.findIndex(
             (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
           )
-          if (lastAssistantIdx !== -1) {
-            chatStore.messages[lastAssistantIdx] = {
-              ...chatStore.messages[lastAssistantIdx],
+          if (idx !== -1) {
+            chatStore.messages[idx] = {
+              ...chatStore.messages[idx],
               isNewlyReceived: true,
+            }
+          }
+        } else {
+          // Add temporary assistant for immediate UX and poll for server insert
+          const temp = chatStore.addTemporaryMessage('assistant', aiResponse)
+
+          const pollUntil = Date.now() + 3000
+          let found = false
+          while (Date.now() < pollUntil) {
+            // eslint-disable-next-line no-await-in-loop
+            await chatStore.loadMessages()
+            const exists = chatStore.messages.some(
+              (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
+            )
+            if (exists) {
+              found = true
+              break
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise((resolve) => setTimeout(resolve, 350))
+          }
+
+          if (found) {
+            // Remove temporary; server message is present
+            chatStore.removeTemporaryMessage(temp.id)
+            const idx = chatStore.messages.findIndex(
+              (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
+            )
+            if (idx !== -1) {
+              chatStore.messages[idx] = {
+                ...chatStore.messages[idx],
+                isNewlyReceived: true,
+              }
+            }
+          } else {
+            // As a last resort, ask server to finalize turn idempotently via RPC
+            try {
+              const { dbService } = await import('@/services/supabase')
+              await dbService.finalizeChatTurn({
+                conversationId: chatStore.currentConversationId,
+                userId: authStore.userId,
+                documentId,
+                userMessageId: messageId,
+                aiText: aiResponse,
+              })
+              await chatStore.loadMessages()
+              const existsAfter = chatStore.messages.some(
+                (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
+              )
+              if (existsAfter) {
+                chatStore.removeTemporaryMessage(temp.id)
+                const idx2 = chatStore.messages.findIndex(
+                  (m) => m.role === 'assistant' && m?.metadata?.reply_to_message_id === messageId
+                )
+                if (idx2 !== -1) {
+                  chatStore.messages[idx2] = {
+                    ...chatStore.messages[idx2],
+                    isNewlyReceived: true,
+                  }
+                }
+              } else {
+                // Could not persist server-side; show non-temporary content
+                chatStore.replaceTemporaryMessage(temp.id, {
+                  ...temp,
+                  isTemporary: false,
+                  isNewlyReceived: true,
+                })
+              }
+            } catch (_) {
+              chatStore.replaceTemporaryMessage(temp.id, {
+                ...temp,
+                isTemporary: false,
+                isNewlyReceived: true,
+              })
             }
           }
         }
